@@ -1,0 +1,48 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@config/*": ["config/*"],
+      "@pages/*": ["pages/*"],
+      "@components/*": ["components/*"],
+      "@fixtures/*": ["fixtures/*"],
+      "@test-data/*": ["test-data/*"],
+      "@utils/*": ["utils/*"],
+      "@helpers/*": ["helpers/*"],
+      "@services/*": ["services/*"],
+      "@constants/*": ["constants/*"],
+      "@enums/*": ["enums/*"],
+      "@interfaces/*": ["interfaces/*"],
+      "@hooks/*": ["hooks/*"],
+      "@reporters/*": ["reporters/*"]
+    }
+  },
+  "include": ["**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "allure-results",
+    "allure-report",
+    "playwright-report",
+    "test-results"
+  ]
+}

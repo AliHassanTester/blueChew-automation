@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Test artifacts
+allure-results/
+allure-report/
+playwright-report/
+test-results/
+playwright-auth/
+
+# Runtime output directories
+logs/
+screenshots/
+videos/
+traces/
+
+# Environment files (never commit secrets)
+.env
+.env.dev
+.env.prod
+.env.local
+
+# Keep the example safe to commit
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Visual regression baselines (commit these — CI needs them)
+# tests/visual/__snapshots__/

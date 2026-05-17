@@ -1,0 +1,13 @@
+node_modules/
+dist/
+allure-results/
+allure-report/
+playwright-report/
+test-results/
+logs/
+screenshots/
+videos/
+traces/
+playwright-auth/
+*.xml
+*.html

@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\BrainNotFound\\\\Documents\\\\automation\" -Recurse -File | Where-Object { $_.FullName -notmatch 'node_modules' } | Select-Object @{N='Path';E={$_.FullName.Replace\\('C:\\\\Users\\\\BrainNotFound\\\\Documents\\\\automation\\\\',''\\)}} | Sort-Object Path | Format-Table -AutoSize)"
+    ]
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "name": "enterprise-playwright-framework",
+  "version": "1.0.0",
+  "description": "Enterprise-grade test automation framework — Playwright, TypeScript, Allure, Jenkins",
+  "private": true,
+  "scripts": {
+    "test": "cross-env NODE_ENV=development playwright test",
+    "test:dev": "cross-env NODE_ENV=development playwright test",
+    "test:prod": "cross-env NODE_ENV=production playwright test",
+    "test:e2e": "cross-env NODE_ENV=development playwright test tests/e2e/",
+    "test:smoke": "cross-env NODE_ENV=development playwright test --grep @smoke",
+    "test:regression": "cross-env NODE_ENV=development playwright test --grep @regression",
+    "test:accessibility": "cross-env NODE_ENV=development playwright test tests/accessibility/",
+    "test:login": "cross-env NODE_ENV=development playwright test tests/e2e/login.spec.ts --project=chromium --workers=1",
+    "test:login:all": "cross-env NODE_ENV=development playwright test tests/e2e/login.spec.ts --workers=1",
+    "test:login:functional": "cross-env NODE_ENV=development playwright test tests/e2e/login.spec.ts --grep \"Functional\" --project=chromium --workers=1",
+    "test:login:regression": "cross-env NODE_ENV=development playwright test tests/e2e/login.spec.ts --grep \"Regression\" --project=chromium --workers=1",
+    "test:membership": "cross-env NODE_ENV=development playwright test tests/e2e/membership.spec.ts --project=chromium --workers=1",
+    "test:orders": "cross-env NODE_ENV=development playwright test tests/e2e/orders.spec.ts --project=chromium --workers=1",
+    "test:profile": "cross-env NODE_ENV=development playwright test tests/e2e/profile.spec.ts --project=chromium --workers=1",
+    "test:plans": "cross-env NODE_ENV=development playwright test tests/e2e/plans.spec.ts --project=chromium --workers=1",
+    "test:navigation": "cross-env NODE_ENV=development playwright test tests/e2e/navigation.spec.ts --project=chromium --workers=1",
+    "test:visual": "cross-env NODE_ENV=development playwright test tests/visual/ --project=chromium",
+    "test:visual:login": "cross-env NODE_ENV=development playwright test tests/visual/login.visual.spec.ts --project=chromium",
+    "test:visual:membership": "cross-env NODE_ENV=development playwright test tests/visual/membership.visual.spec.ts --project=chromium",
+    "test:visual:orders": "cross-env NODE_ENV=development playwright test tests/visual/orders.visual.spec.ts --project=chromium",
+    "test:visual:profile": "cross-env NODE_ENV=development playwright test tests/visual/profile.visual.spec.ts --project=chromium",
+    "test:visual:plans": "cross-env NODE_ENV=development playwright test tests/visual/plans.visual.spec.ts --project=chromium",
+    "test:visual:update": "cross-env NODE_ENV=development playwright test tests/visual/ --project=chromium --update-snapshots",
+    "test:chrome": "cross-env NODE_ENV=development playwright test --project=chromium",
+    "test:firefox": "cross-env NODE_ENV=development playwright test --project=firefox",
+    "test:webkit": "cross-env NODE_ENV=development playwright test --project=webkit",
+    "test:mobile": "cross-env NODE_ENV=development playwright test --project=\"Mobile Chrome\" --project=\"Mobile Safari\"",
+    "test:headed": "cross-env NODE_ENV=development HEADLESS=false playwright test",
+    "test:debug": "cross-env NODE_ENV=development PWDEBUG=1 playwright test",
+    "test:ui": "cross-env NODE_ENV=development playwright test --ui",
+    "test:parallel": "cross-env NODE_ENV=development playwright test --workers=8",
+    "allure:generate": "allure generate allure-results --clean -o allure-report",
+    "allure:open": "allure open allure-report",
+    "allure:serve": "allure serve allure-results",
+    "report:html": "playwright show-report",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier --write \"**/*.{ts,js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,js,json,md}\"",
+    "type-check": "tsc --noEmit",
+    "prepare": "husky",
+    "install:browsers": "playwright install --with-deps",
+    "clean": "rimraf allure-results allure-report playwright-report test-results screenshots videos traces logs playwright-auth"
+  },
+  "dependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@faker-js/faker": "^9.2.0",
+    "@playwright/test": "^1.48.0",
+    "allure-playwright": "^3.0.0",
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5",
+    "winston": "^3.15.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.8.1",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "allure-commandline": "^2.30.0",
+    "cross-env": "^7.0.3",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-playwright": "^1.8.3",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.6.3"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,js}": [
+      "prettier --write"
+    ]
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}
