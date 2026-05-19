@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { chromium } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import { Logger } from '../utils/logger.utils';
 import { appConfig } from '../config/environment.config';
 import { ROUTES } from '../constants/routes.constants';
@@ -11,6 +12,23 @@ const ADMIN_STATE_FILE = path.join(AUTH_STATE_DIR, 'admin.json');
 const USER_STATE_FILE = path.join(AUTH_STATE_DIR, 'user.json');
 
 const logger = new Logger('AuthHelper');
+
+/**
+ * Detects the dev environment gate page and submits the password if present.
+ * The gate sets a session cookie so subsequent navigations in the same context
+ * skip it automatically.
+ */
+export async function handleDevGateIfPresent(page: Page): Promise<void> {
+  const password = process.env.DEV_GATE_PASSWORD;
+  if (!password) return;
+
+  const gateInput = page.locator('[data-test-id="dev-login-password-input"]');
+  if (!(await gateInput.isVisible())) return;
+
+  await gateInput.fill(password);
+  await gateInput.press('Enter');
+  await gateInput.waitFor({ state: 'detached', timeout: TIMEOUTS.NAVIGATION });
+}
 
 export const AUTH_STATE_FILES = {
   admin: ADMIN_STATE_FILE,
@@ -47,6 +65,8 @@ async function saveAuthState(email: string, password: string, statePath: string,
       waitUntil: 'domcontentloaded',
       timeout: TIMEOUTS.NAVIGATION,
     });
+
+    await handleDevGateIfPresent(page);
 
     // Wait for the Angular form to render (no data-testids — use native input types)
     await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: TIMEOUTS.NAVIGATION });
