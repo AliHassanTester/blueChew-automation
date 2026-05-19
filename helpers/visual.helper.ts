@@ -1,22 +1,4 @@
-import { expect, type Page, type Locator } from '@playwright/test';
-import { Logger } from '../utils/logger.utils';
-
-const logger = new Logger('VisualHelper');
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-export interface ScreenshotOptions {
-  /** Mask locators to hide dynamic content (usernames, timestamps, etc.) */
-  mask?: Locator[];
-  /** Crop to this region instead of the full page/element */
-  clip?: { x: number; y: number; width: number; height: number };
-  /** Max number of differing pixels before the assertion fails. Default: 150 */
-  maxDiffPixels?: number;
-  /** Per-pixel brightness difference tolerance 0–1. Default: 0.2 */
-  threshold?: number;
-  /** Take a full-page screenshot (scrolled). Default: false (viewport only) */
-  fullPage?: boolean;
-}
+import { Page, Locator, expect } from '@playwright/test';
 
 export interface TokenViolation {
   selector: string;
@@ -25,158 +7,120 @@ export interface TokenViolation {
   actual: string;
 }
 
-// ── Viewport presets ──────────────────────────────────────────────────────────
-
-/**
- * Standard responsive viewports aligned with common design system breakpoints.
- * Use these in screenshotAtViewport() to verify layout at each breakpoint.
- */
-export const VIEWPORTS = {
-  mobile:  { width: 375,  height: 812  },
-  tablet:  { width: 768,  height: 1024 },
-  desktop: { width: 1280, height: 900  },
-  wide:    { width: 1440, height: 900  },
+const VIEWPORTS = {
+  mobile: { width: 375, height: 812 },
+  tablet: { width: 768, height: 1024 },
+  desktop: { width: 1920, height: 1080 },
 } as const;
 
-export type ViewportName = keyof typeof VIEWPORTS;
-
-// ── Animation control ─────────────────────────────────────────────────────────
-
 /**
- * Injects CSS that freezes all animations and transitions.
- * Must be called before any screenshot to prevent flaky pixel diffs
- * caused by in-flight CSS animations or Angular change-detection cycles.
+ * Injects a CSS block that collapses all animation and transition durations to
+ * 0.001ms, stopping Angular/React change-detection flicker from causing false
+ * pixel diffs in snapshot comparisons.
  */
 export async function disableAnimations(page: Page): Promise<void> {
   await page.addStyleTag({
     content: `
       *, *::before, *::after {
-        animation-duration:       0.001ms !important;
-        animation-delay:          0.001ms !important;
-        transition-duration:      0.001ms !important;
-        transition-delay:         0.001ms !important;
-        scroll-behavior:          auto    !important;
+        animation-duration: 0.001ms !important;
+        animation-delay: 0ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        transition-delay: 0ms !important;
       }
     `,
   });
 }
 
-// ── Screenshot helpers ────────────────────────────────────────────────────────
-
 /**
- * Takes a viewport-level screenshot and compares it to the stored baseline.
- *
- * First run: generate baselines with  npx playwright test --update-snapshots
- * Subsequent runs: compare against baseline; fail on visual regression.
- *
- * Prefer screenshotComponent() for component-level regression — it is more
- * stable and less sensitive to unrelated page changes.
+ * Captures a single-element snapshot.
+ * Tolerance: 100 max-differing pixels.
+ * Baseline is created on the first run with --update-snapshots.
  */
-export async function screenshotPage(
-  page: Page,
-  name: string,
-  options: ScreenshotOptions = {},
-): Promise<void> {
-  logger.info(`Page screenshot: "${name}"`);
-  await page.evaluate(() => window.scrollTo(0, 0));
-
-  await expect(page).toHaveScreenshot(name, {
-    animations:    'disabled',
-    fullPage:      options.fullPage ?? false,
-    maxDiffPixels: options.maxDiffPixels ?? 150,
-    threshold:     options.threshold     ?? 0.2,
-    ...(options.mask && { mask: options.mask }),
-    ...(options.clip && { clip: options.clip }),
-  });
+export async function screenshotComponent(locator: Locator, name: string): Promise<void> {
+  await disableAnimations(locator.page());
+  await expect(locator).toHaveScreenshot(`${name}.png`, { maxDiffPixels: 100 });
 }
 
 /**
- * Takes a screenshot scoped to a specific component or element.
- * This is the preferred approach — more stable than full-page screenshots
- * because changes outside the component don't affect the baseline.
+ * Captures a full-viewport snapshot at the current viewport size.
+ * Tolerance: 150 max-differing pixels.
  */
-export async function screenshotComponent(
-  locator: Locator,
-  name: string,
-  options: ScreenshotOptions = {},
-): Promise<void> {
-  logger.info(`Component screenshot: "${name}"`);
-  await locator.scrollIntoViewIfNeeded();
-
-  await expect(locator).toHaveScreenshot(name, {
-    animations:    'disabled',
-    maxDiffPixels: options.maxDiffPixels ?? 100,
-    threshold:     options.threshold     ?? 0.2,
-    ...(options.mask && { mask: options.mask }),
-  });
+export async function screenshotPage(page: Page, name: string): Promise<void> {
+  await disableAnimations(page);
+  await expect(page).toHaveScreenshot(`${name}.png`, { maxDiffPixels: 150 });
 }
 
 /**
- * Resizes the viewport, disables animations, then takes a page screenshot.
- * Use this for responsive/breakpoint layout regression tests.
+ * Resizes the viewport to the given breakpoint, captures a full-page snapshot,
+ * then restores the original viewport.
+ * Tolerance: 150 max-differing pixels (same as screenshotPage).
  */
 export async function screenshotAtViewport(
   page: Page,
-  viewport: ViewportName | { width: number; height: number },
+  viewport: 'mobile' | 'tablet' | 'desktop',
   name: string,
-  options: ScreenshotOptions = {},
 ): Promise<void> {
-  const size = typeof viewport === 'string' ? VIEWPORTS[viewport] : viewport;
-  logger.info(`Responsive screenshot at ${size.width}px: "${name}"`);
-  await page.setViewportSize(size);
+  const original = page.viewportSize();
+  await page.setViewportSize(VIEWPORTS[viewport]);
   await disableAnimations(page);
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await screenshotPage(page, name, options);
+  await expect(page).toHaveScreenshot(`${name}.png`, { maxDiffPixels: 150, fullPage: true });
+  if (original) {
+    await page.setViewportSize(original);
+  }
 }
 
-// ── Design token validation ───────────────────────────────────────────────────
-
 /**
- * Reads computed CSS properties for a DOM element and compares them against
- * the expected token values.
+ * Reads computed CSS properties for a given selector and compares each against
+ * the corresponding token value.  Returns an array of TokenViolation objects
+ * (empty array = all tokens pass).
  *
- * Returns an array of violations. An empty array means all tokens pass.
- *
- * Usage:
- *   const violations = await validateTokens(page, 'button[type="submit"]', {
- *     'color':         'rgb(255, 255, 255)',
- *     'border-radius': '100px',
- *   });
- *   expect(violations, formatViolations(violations)).toHaveLength(0);
+ * Values must match getComputedStyle output exactly (resolved RGB, px, etc.).
+ * Use formatViolations() to turn the result into a readable assertion message.
  */
 export async function validateTokens(
   page: Page,
-  selector: string,
-  tokens: Record<string, string>,
+  cssSelector: string,
+  tokenMap: Record<string, string>,
 ): Promise<TokenViolation[]> {
   const violations: TokenViolation[] = [];
 
-  for (const [property, expectedValue] of Object.entries(tokens)) {
-    const actual = await page.evaluate(
-      ([sel, prop]: [string, string]) => {
-        const el = document.querySelector(sel);
+  for (const [property, expectedValue] of Object.entries(tokenMap)) {
+    const actualValue: string | null = await page.evaluate(
+      ({ selector, prop }) => {
+        const el = document.querySelector(selector);
         if (!el) return null;
         return window.getComputedStyle(el).getPropertyValue(prop).trim();
       },
-      [selector, property] as [string, string],
+      { selector: cssSelector, prop: property },
     );
 
-    if (actual === null) {
-      logger.debug(`validateTokens: selector "${selector}" not found for property "${property}"`);
-      continue;
-    }
-
-    if (actual !== expectedValue) {
-      violations.push({ selector, property, expected: expectedValue, actual });
+    if (actualValue === null) {
+      violations.push({
+        selector: cssSelector,
+        property,
+        expected: expectedValue,
+        actual: 'element not found',
+      });
+    } else if (actualValue !== expectedValue) {
+      violations.push({
+        selector: cssSelector,
+        property,
+        expected: expectedValue,
+        actual: actualValue,
+      });
     }
   }
 
   return violations;
 }
 
-/** Formats token violations into a human-readable diff for assertion messages. */
+/**
+ * Formats an array of TokenViolation objects into a human-readable diff string
+ * for use as the assertion message in expect(violations, ...).toHaveLength(0).
+ */
 export function formatViolations(violations: TokenViolation[]): string {
-  if (violations.length === 0) return 'All design tokens matched.';
+  if (violations.length === 0) return 'No token violations';
   return (
     `Design token violations (${violations.length}):\n` +
     violations

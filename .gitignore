@@ -1,39 +1,32 @@
 # Dependencies
 node_modules/
 
-# Build output
-dist/
-
-# Test artifacts
-allure-results/
-allure-report/
-playwright-report/
-test-results/
-playwright-auth/
-
-# Runtime output directories
-logs/
-screenshots/
-videos/
-traces/
-
-# Environment files (never commit secrets)
+# Environment files (contain credentials — never commit)
 .env
-.env.dev
-.env.prod
-.env.local
-
-# Keep the example safe to commit
+.env.*
 !.env.example
 
-# IDE
-.idea/
-.vscode/
-*.code-workspace
+# TypeScript build output
+dist/
+
+# Playwright test artifacts
+playwright-report/
+test-results/
+allure-results/
+allure-report/
+
+# Visual snapshot baselines are intentionally tracked (needed for CI diffs)
+# tests/visual/__snapshots__/
+
+# DOM capture dev artifacts (one-off locator derivation, not part of test suite)
+dom-snapshots/
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Visual regression baselines (commit these — CI needs them)
-# tests/visual/__snapshots__/
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user

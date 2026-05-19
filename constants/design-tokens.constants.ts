@@ -1,61 +1,71 @@
 /**
- * BlueChew Design Tokens
+ * Design token values as resolved by window.getComputedStyle().
+ * All values must be in the exact format getComputedStyle returns
+ * (resolved RGB, px, etc.) — never hex or shorthand — so comparisons
+ * are deterministic.
  *
- * CSS property values as returned by window.getComputedStyle() — always
- * use the resolved RGB/px form, not hex or shorthand, so comparisons are
- * deterministic across browsers.
- *
- * How to update: run the visual suite once; token violations in the output
- * show "expected X, got Y". Copy the "got" value here, commit, and re-run.
- *
- * Figma source → export tokens → map to the constants below.
+ * IMPORTANT: Verify these values against the live site before adding to CI.
+ * Open DevTools on https://dev.app.bluechew.com, select the element,
+ * run: window.getComputedStyle(el).getPropertyValue('<property>')
  */
 
 export const COLOR_TOKENS = {
-  // ── Navigation / header ──────────────────────────────────────────────────
-  navBackground:       'rgb(0, 0, 0)',
-  navText:             'rgb(255, 255, 255)',
+  /** White text on primary CTA buttons */
+  primaryButtonText: 'rgb(255, 255, 255)',
 
-  // ── Page surfaces ────────────────────────────────────────────────────────
-  pageBackground:      'rgb(255, 255, 255)',
-  cardBackgroundDark:  'rgb(0, 0, 0)',        // dark plan card
+  /** BlueChew primary blue — used as button background, links, focus rings */
+  primaryButtonBackground: 'rgb(0, 99, 190)',
 
-  // ── Buttons ──────────────────────────────────────────────────────────────
-  primaryButtonText:   'rgb(255, 255, 255)',  // white label on primary CTA
+  /** Secondary / outline button text color */
+  secondaryButtonText: 'rgb(0, 99, 190)',
 
-  // ── Status / alerts ──────────────────────────────────────────────────────
-  // Hold banner ("Your plan is on hold") — amber warning strip
-  holdBannerText:      'rgb(0, 0, 0)',
+  /** Anchor link colour */
+  linkColor: 'rgb(0, 99, 190)',
 
-  // ── Form elements ────────────────────────────────────────────────────────
-  inputBackground:     'rgb(255, 255, 255)',
-} as const;
+  /** Validation error red */
+  errorColor: 'rgb(220, 53, 69)',
 
-export const BORDER_RADIUS_TOKENS = {
-  buttonPill: '100px',   // RESUME PLAN / primary CTAs are fully pill-shaped
-  card:        '16px',   // plan card rounded corners
-  inputField:   '8px',   // login / form inputs
+  /** Default body copy */
+  bodyText: 'rgb(33, 37, 41)',
+
+  /** Heading colour */
+  headingText: 'rgb(17, 24, 39)',
+
+  /** Form input border — default (unfocused) */
+  inputBorder: 'rgb(209, 213, 219)',
 } as const;
 
 export const TYPOGRAPHY_TOKENS = {
-  // Font weights (as string — getComputedStyle returns numeric strings)
-  weightBold:     '700',
+  weightBold: '700',
   weightSemiBold: '600',
-  weightRegular:  '400',
+  weightMedium: '500',
+  weightRegular: '400',
 
-  // Button text transform
-  buttonTextTransform: 'uppercase',
+  /** Base body font size */
+  baseFontSize: '16px',
+
+  /** Primary heading font size */
+  headingFontSize: '24px',
+
+  /** CTA button font size */
+  buttonFontSize: '16px',
+
+  /** Primary font stack as resolved by getComputedStyle */
+  bodyFontFamily: 'Inter',
 } as const;
 
 export const SPACING_TOKENS = {
-  // Minimum touch-target height for interactive elements (WCAG 2.5.5)
-  minTouchTarget: '44px',
-} as const;
+  /** Vertical padding inside primary buttons */
+  buttonPaddingTop: '12px',
+  buttonPaddingBottom: '12px',
 
-/** Convenience bundle — import this to run full-suite token validation. */
-export const DESIGN_TOKENS = {
-  color:        COLOR_TOKENS,
-  borderRadius: BORDER_RADIUS_TOKENS,
-  typography:   TYPOGRAPHY_TOKENS,
-  spacing:      SPACING_TOKENS,
+  /** Horizontal padding inside primary buttons */
+  buttonPaddingLeft: '24px',
+  buttonPaddingRight: '24px',
+
+  /** Border radius for form inputs */
+  inputBorderRadius: '8px',
+
+  /** Border radius for buttons */
+  buttonBorderRadius: '8px',
 } as const;

@@ -6,7 +6,11 @@
       "Bash(Select-Object FullName)",
       "Read(//c/Users/BrainNotFound/**)",
       "PowerShell(npx skills find playwright e2e 2>&1)",
-      "PowerShell(npx skills find test automation review 2>&1)"
+      "PowerShell(npx skills find test automation review 2>&1)",
+      "PowerShell(Get-ChildItem \"c:\\\\Users\\\\BrainNotFound\\\\Documents\\\\GitHub\\\\blueChew-automation\" | Where-Object { $_.Name -ne '.git' } | Select-Object Name, PSIsContainer)",
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "Bash(grep -v \"^\\\\\\\\.claude/\")"
     ]
   }
 }

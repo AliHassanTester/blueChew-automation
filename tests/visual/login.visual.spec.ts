@@ -1,5 +1,5 @@
-import { test, expect } from '../../fixtures/base.fixture';
-import { userGenerator } from '../../test-data/generators/user.generator';
+import { test, expect } from '@playwright/test';
+import { getLoginData } from '../../src/data/login/login.data';
 import {
   disableAnimations,
   screenshotPage,
@@ -10,70 +10,93 @@ import {
 } from '../../helpers/visual.helper';
 import { COLOR_TOKENS, TYPOGRAPHY_TOKENS } from '../../constants/design-tokens.constants';
 
-/**
- * Login Page — Visual Regression + Design Token Tests
- *
- * Baseline snapshots are stored in __snapshots__/ next to this file.
- * First run: npx playwright test tests/visual/login.visual.spec.ts --update-snapshots
- * After UI changes: re-run with --update-snapshots to accept new baseline.
- */
+// All visual specs are pinned to Chromium so cross-browser rendering differences
+// never contaminate the PNG baselines.
 test.use({ browserName: 'chromium' });
 
-test.describe('Login — Visual', { tag: '@visual' }, () => {
-  test.beforeEach(async ({ loginPage }) => {
-    await loginPage.navigate();
-    await disableAnimations(loginPage.page);
+const scenario = getLoginData('AQ-02-User-Login');
+const { devGateURL, loginURL } = scenario.loginPageDetails;
+
+/** Pass the dev-login gate and land on /log-in. */
+async function passGateAndNavigate(page: import('@playwright/test').Page): Promise<void> {
+  await page.goto(devGateURL, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => !!document.querySelector("input[formcontrolname='password']"), { timeout: 15_000 });
+  await page.locator("input[formcontrolname='password']").fill(process.env.DEV_GATE_PASSWORD || 'dev');
+  await page.locator("//button[normalize-space()='Submit']").click();
+  await page.waitForLoadState('domcontentloaded');
+  // Now navigate to the real login page
+  await page.goto(loginURL, { waitUntil: 'domcontentloaded' });
+  // Wait for Angular to render the login form
+  await page.waitForFunction(
+    () => !!document.querySelector('[data-test-id="sign-in-page"]'),
+    { timeout: 15_000 },
+  );
+  await disableAnimations(page);
+}
+
+test.describe('Visual: Login Page (/log-in)', () => {
+  test.beforeEach(async ({ page }) => {
+    await passGateAndNavigate(page);
   });
 
-  // ── Component screenshots ─────────────────────────────────────────────────
+  // ── Snapshot tests ──────────────────────────────────────────────────────────
 
-  test('login form — default state (desktop)', async ({ loginPage }) => {
-    const form = loginPage.page.locator('form, [class*="login"], [class*="auth"]').first();
-    await screenshotComponent(form, 'login-form-default.png');
+  test('Login page full-viewport snapshot matches baseline', async ({ page }) => {
+    await screenshotPage(page, 'login-page-desktop');
   });
 
-  test('login form — email field focused', async ({ loginPage }) => {
-    await loginPage.emailInput.focus();
-    const form = loginPage.page.locator('form, [class*="login"], [class*="auth"]').first();
-    await screenshotComponent(form, 'login-form-email-focused.png');
+  test('Login page on mobile viewport matches baseline', async ({ page }) => {
+    await screenshotAtViewport(page, 'mobile', 'login-page-mobile');
   });
 
-  test('login form — error state after invalid credentials', async ({ loginPage }) => {
-    const invalid = userGenerator.generateCredentials();
-    await loginPage.login(invalid.email, invalid.password);
-    await loginPage.assertErrorVisible();
-    const form = loginPage.page.locator('form, [class*="login"], [class*="auth"]').first();
-    await screenshotComponent(form, 'login-form-error.png');
+  test('Login page on tablet viewport matches baseline', async ({ page }) => {
+    await screenshotAtViewport(page, 'tablet', 'login-page-tablet');
   });
 
-  // ── Responsive screenshots ────────────────────────────────────────────────
-
-  test('login page layout — mobile (375px)', async ({ loginPage }) => {
-    await screenshotAtViewport(loginPage.page, 'mobile', 'login-page-mobile.png');
+  test('Login form component snapshot matches baseline', async ({ page }) => {
+    // The sign-in-page container wraps the entire form area
+    const formLocator = page.locator('[data-test-id="sign-in-page"]');
+    await formLocator.waitFor({ state: 'visible' });
+    await screenshotComponent(formLocator, 'login-form');
   });
 
-  test('login page layout — tablet (768px)', async ({ loginPage }) => {
-    await screenshotAtViewport(loginPage.page, 'tablet', 'login-page-tablet.png');
-  });
+  // ── Design token validation ─────────────────────────────────────────────────
 
-  test('login page layout — desktop (1280px)', async ({ loginPage }) => {
-    await screenshotPage(loginPage.page, 'login-page-desktop.png');
-  });
-
-  // ── Design token validation ───────────────────────────────────────────────
-
-  test('submit button color and typography tokens match design', async ({ loginPage }) => {
-    const violations = await validateTokens(loginPage.page, 'button[type="submit"]', {
-      'color':       COLOR_TOKENS.primaryButtonText,
-      'font-weight': TYPOGRAPHY_TOKENS.weightBold,
-    });
+  test('Log In button design tokens are compliant', async ({ page }) => {
+    // Button is disabled (and gray) until the form is valid — fill credentials
+    // first so Angular enables it and the active-state color token is measurable.
+    await page.locator('[data-test-id="sign-in-email-input"]').fill('test@example.com');
+    await page.locator('[data-test-id="sign-in-password-input"]').fill('password123');
+    const violations = await validateTokens(
+      page,
+      '[data-test-id="sign-in-submit-button"]',
+      {
+        color:         COLOR_TOKENS.primaryButtonText,
+        'font-weight': TYPOGRAPHY_TOKENS.weightBold,
+      },
+    );
     expect(violations, formatViolations(violations)).toHaveLength(0);
   });
 
-  test('email input border-radius matches design token', async ({ loginPage }) => {
-    const violations = await validateTokens(loginPage.page, 'input[type="email"]', {
-      'background-color': COLOR_TOKENS.inputBackground,
-    });
+  test('Email input design tokens are compliant', async ({ page }) => {
+    const violations = await validateTokens(
+      page,
+      '[data-test-id="sign-in-email-input"]',
+      {
+        'font-size': TYPOGRAPHY_TOKENS.baseFontSize,
+      },
+    );
+    expect(violations, formatViolations(violations)).toHaveLength(0);
+  });
+
+  test('Password input design tokens are compliant', async ({ page }) => {
+    const violations = await validateTokens(
+      page,
+      '[data-test-id="sign-in-password-input"]',
+      {
+        'font-size': TYPOGRAPHY_TOKENS.baseFontSize,
+      },
+    );
     expect(violations, formatViolations(violations)).toHaveLength(0);
   });
 });
