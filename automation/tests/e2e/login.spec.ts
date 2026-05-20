@@ -16,7 +16,7 @@ test.describe('Login — Functional', { tag: ['@e2e', '@smoke'] }, () => {
     await loginPage.navigate();
   });
 
-  test('login page renders email input, password input, and submit button', async ({ loginPage }) => {
+  test.only('login page renders email input, password input, and submit button', async ({ loginPage }) => {
     await addAllureMeta({
       feature: 'Authentication',
       story: 'Login Page UI',

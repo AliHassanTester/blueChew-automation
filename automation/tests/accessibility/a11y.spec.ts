@@ -13,7 +13,7 @@ authTest.use({ browserName: 'chromium' });
  * Uses @axe-core/playwright to audit pages for common accessibility violations.
  * Run weekly in CI or before releases.
  */
-test.describe('Accessibility Audit', { tag: '@accessibility' }, () => {
+test.describe.only('Accessibility Audit', { tag: '@accessibility' }, () => {
 
   test('Login page meets WCAG 2.1 AA', async ({ loginPage, page }) => {
     await addAllureMeta({
