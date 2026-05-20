@@ -5,6 +5,7 @@ import { TIMEOUTS } from '../constants/timeouts.constants';
 import { Logger } from '../utils/logger.utils';
 import { retryAction } from '../utils/retry.utils';
 import { captureFullPage } from '../utils/screenshot.utils';
+import { handleDevGateIfPresent } from '../helpers/auth.helper';
 
 /**
  * Abstract base class for all page objects.
@@ -34,6 +35,7 @@ export abstract class BasePage {
     const url = `${appConfig.baseUrl}${this.pageUrl}`;
     this.logger.step(`Navigating to ${url}`);
     await this.page.goto(url, { waitUntil: 'domcontentloaded' });
+    await handleDevGateIfPresent(this.page);
     await this.waitForPageLoad();
   }
 

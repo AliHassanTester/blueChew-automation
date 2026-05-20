@@ -29,7 +29,7 @@ test.describe('Login — Functional', { tag: ['@e2e', '@smoke'] }, () => {
     await expect(loginPage.loginButton).toBeVisible();
   });
 
-  test('user logs in with valid credentials and lands on MY PLAN page', async ({ loginPage, membershipPage }) => {
+  test.only('user logs in with valid credentials and lands on MY PLAN page', async ({ loginPage, membershipPage }) => {
     await addAllureMeta({
       feature: 'Authentication',
       story: 'Login → MY PLAN',
