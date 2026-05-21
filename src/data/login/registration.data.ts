@@ -1,30 +1,45 @@
 import { RegistrationDetails } from '@interfaces/registration.interface';
 import { TestCaseData } from '@interfaces/testcase.data.interface';
-import { generateRandomEmailAddress } from '@utilities/random.utils';
-import { TestDataUtils } from '@utilities/testData.generate.utils';
+import { getEnvVars } from '@utilities/env.utils';
+import { generateRandomAlphanumeric } from '@utilities/random.utils';
 
 export interface RegistrationTestCaseData {
   testCaseData: TestCaseData;
   registrationDetails: RegistrationDetails;
 }
 
+const env = getEnvVars({
+  password:               null,  // required — reuse login password
+  DEV_GATE_URL:           'https://dev.app.bluechew.com/dev-login',
+  LOGIN_URL:              'https://dev.app.bluechew.com/log-in',
+  REGISTRATION_URL:       'https://dev.app.bluechew.com/register',
+  POST_REGISTRATION_URL:  'https://dev.bluechew.com/quiz',
+});
+
+// aliQA prefix makes test accounts easy to identify and clean up in the DB
+function generateTestEmail(): string {
+  return `aliQA.${generateRandomAlphanumeric(6)}.${Date.now()}@example.com`;
+}
+
 const registrationTestData: { [key: string]: RegistrationTestCaseData } = {
   'AQ-01-User-Registration': {
     registrationDetails: {
-      mainURL: process.env.REGISTRATION_URL || 'https://dev.app.bluechew.com/signup',
-      email: generateRandomEmailAddress(),
-      password: process.env.REGISTRATION_PASSWORD || 'TestPassword123!',
-      firstName: TestDataUtils.generateRandomName(),
-      lastName: TestDataUtils.generateRandomLastName(),
-      dateOfBirth: '01/01/1990',
-      state: TestDataUtils.generateRandomState(),
+      devGateURL:           env.DEV_GATE_URL,
+      loginURL:             env.LOGIN_URL,
+      registrationURL:      env.REGISTRATION_URL,
+      state:                'Illinois',
+      email:                generateTestEmail(),
+      password:             env.password,
+      postRegistrationURL:  env.POST_REGISTRATION_URL,
+      // Q1: "All of the above" (index 2), Q2: "Yes" (index 0), Q3: "No, just standard" (index 1)
+      quizAnswers: [2, 0, 1],
     },
     testCaseData: {
       tags: '@regression @smoke @registration',
       testCase: 'AQ-01-User-Registration',
-      testDescription: 'New user can complete the registration flow successfully',
+      testDescription: 'New user can complete the 3-step registration wizard successfully',
       testSummary:
-        'Verify that a new user can register with valid credentials and reach the post-registration state.',
+        'Verify that a new user can register via /register (state → email → password) and reach the post-registration quiz page.',
     },
   },
 };

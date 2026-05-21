@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node scripts/capture-register-dom.js)",
+      "Bash(node scripts/capture-quiz-dom.js)",
+      "Bash(npx cross-env *)",
+      "Bash(node scripts/capture-post-quiz.js)",
+      "Bash(node scripts/capture-post-results.js)",
+      "Bash(node scripts/capture-try-gold-flow.js)",
+      "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\('dom-snapshots/try-gold-flow/02-medical.json','utf8'\\)\\); const inputs=d.elements.filter\\(e=>['input','select','textarea'].includes\\(e.tag\\)\\); inputs.forEach\\(i=>console.log\\(JSON.stringify\\({tag:i.tag,fcn:i.fcn,type:i.type,id:i.id,cls:i.cls?.slice\\(0,60\\),text:i.text?.slice\\(0,60\\)}\\)\\)\\);\")",
+      "Bash(node scripts/capture-medical-checkout.js)",
+      "Bash(node scripts/capture-checkout-forward.js)"
+    ]
+  }
+}

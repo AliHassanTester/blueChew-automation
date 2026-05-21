@@ -6,154 +6,162 @@ import { RegistrationDetails } from '@interfaces/registration.interface';
 
 export class RegistrationPage {
   public readonly page: Page;
-  private readonly playwrightActionsFactory: PlaywrightActionFactory;
-  private readonly playwrightVerificationsFactory: PlaywrightVerificationFactory;
+  private readonly actions: PlaywrightActionFactory;
+  private readonly verify: PlaywrightVerificationFactory;
   private readonly locators: { [key: string]: LocatorInfo };
 
   constructor(page: Page, testInfo: TestInfo) {
     this.page = page;
-    this.playwrightActionsFactory = new PlaywrightActionFactory(page, testInfo);
-    this.playwrightVerificationsFactory = new PlaywrightVerificationFactory(page, testInfo);
+    this.actions = new PlaywrightActionFactory(page, testInfo);
+    this.verify = new PlaywrightVerificationFactory(page, testInfo);
 
     this.locators = {
-      registrationHeading: {
-        description: 'Registration Page Heading',
-        locator: this.page
-          .locator(
-            "//h1[contains(normalize-space(),'Create')] | //h1[contains(normalize-space(),'Sign Up')] | //h1[contains(normalize-space(),'Register')] | //h1[contains(normalize-space(),'Get Started')]",
-          )
-          .first(),
+      // ── Dev gate (/dev-login) ──────────────────────────────────────────────
+      devGatePasswordInput: {
+        description: 'Dev Gate Password Input',
+        locator: this.page.locator("input[formcontrolname='password']"),
       },
-      emailInput: {
-        description: 'Email Input',
-        locator: this.page.locator("//input[@type='email']").first(),
+      devGateSubmitButton: {
+        description: 'Dev Gate Submit Button',
+        locator: this.page.locator("//button[normalize-space()='Submit']"),
       },
-      passwordInput: {
-        description: 'Password Input',
-        locator: this.page
-          .locator("//input[@type='password' and (@name='password' or @id='password' or @placeholder='Password')]")
-          .first(),
+
+      // ── Login page header nav ──────────────────────────────────────────────
+      // Visible header link (class="nav-link"), NOT the hamburger "Sign Up/Login"
+      signUpNavLink: {
+        description: 'Sign Up Header Nav Link',
+        locator: this.page.locator("a.nav-link[href='/register']"),
       },
-      confirmPasswordInput: {
-        description: 'Confirm Password Input',
-        locator: this.page
-          .locator(
-            "//input[@type='password' and (@name='confirmPassword' or @name='password_confirmation' or @placeholder='Confirm Password')]",
-          )
-          .first(),
-      },
-      firstNameInput: {
-        description: 'First Name Input',
-        locator: this.page
-          .locator("//input[@name='firstName' or @name='first_name' or @placeholder='First Name']")
-          .first(),
-      },
-      lastNameInput: {
-        description: 'Last Name Input',
-        locator: this.page
-          .locator("//input[@name='lastName' or @name='last_name' or @placeholder='Last Name']")
-          .first(),
-      },
-      dateOfBirthInput: {
-        description: 'Date of Birth Input',
-        locator: this.page
-          .locator(
-            "//input[@name='dateOfBirth' or @name='dob' or @name='date_of_birth' or @placeholder='MM/DD/YYYY']",
-          )
-          .first(),
-      },
-      submitButton: {
-        description: 'Submit / Create Account Button',
-        locator: this.page.locator("//button[@type='submit']").first(),
-      },
-      successIndicator: {
-        description: 'Post-registration Success Indicator',
-        locator: this.page
-          .locator(
-            "//h1[contains(normalize-space(),'Welcome')] | //h2[contains(normalize-space(),'Welcome')] | //div[contains(@class,'success')] | //p[contains(normalize-space(),'check your email')]",
-          )
-          .first(),
+
+      // ── Step 1: state + terms (/register) ─────────────────────────────────
+      stateDropdown: {
+        description: 'State Selection Dropdown',
+        locator: this.page.locator("select[formcontrolname='state']"),
       },
       termsCheckbox: {
-        description: 'Terms and Conditions Checkbox',
-        locator: this.page
-          .locator("//input[@type='checkbox' and (@name='terms' or @id='terms' or @aria-label='Terms')]")
-          .first(),
+        description: 'Terms & Conditions Checkbox',
+        locator: this.page.locator('#agree_terms'),
+      },
+
+      // ── Step 2: email (/register) ──────────────────────────────────────────
+      // This is the same element re-used in step 3 (Angular keeps it in DOM)
+      emailInput: {
+        description: 'Email Input',
+        locator: this.page.locator("input[formcontrolname='email']"),
+      },
+
+      // ── Step 3: password (/register) ──────────────────────────────────────
+      // formcontrolname='pass' — confirmed from live DOM (same convention as login)
+      passwordInput: {
+        description: 'Password Input',
+        locator: this.page.locator("input[formcontrolname='pass']"),
       },
     };
   }
 
-  async navigateToRegistrationPage(url: string): Promise<void> {
-    await test.step('Navigate to registration page', async () => {
-      await this.playwrightActionsFactory.navigateToURL(url);
-      await this.playwrightActionsFactory.waitForDomLoad();
-      await this.playwrightVerificationsFactory.waitForLoaderToDisappear();
-    });
+  // ── Private helpers ──────────────────────────────────────────────────────────
+
+  private async passDevGate(devGateURL: string): Promise<void> {
+    await this.actions.navigateToURL(devGateURL);
+    await this.actions.waitForDomLoad();
+    await this.verify.waitForLoaderToDisappear();
+    await this.actions.sendKeys(this.locators.devGatePasswordInput, process.env.DEV_GATE_PASSWORD || 'dev');
+    await this.actions.click(this.locators.devGateSubmitButton);
+    await this.actions.waitForDomLoad();
+    await this.verify.waitForLoaderToDisappear();
   }
 
-  async verifyRegistrationPageLoaded(): Promise<void> {
-    await test.step('Verify registration page is loaded', async () => {
-      await this.playwrightVerificationsFactory.expectElementExist(this.locators.registrationHeading);
-      await this.playwrightVerificationsFactory.expectElementExist(this.locators.emailInput);
-      await this.playwrightVerificationsFactory.expectElementExist(this.locators.submitButton);
-    });
-  }
+  /**
+   * Angular's wizard keeps all 3 step CONTINUE buttons in the DOM simultaneously.
+   * The active step's button is the only one that is both visible AND not disabled.
+   * Iterates through all btn-primary elements to find it.
+   */
+  private async clickActiveStepContinue(label: string): Promise<void> {
+    const allBtns = this.page.locator('button.btn-primary');
+    let clicked = false;
 
-  async fillEmailAndPassword(details: RegistrationDetails): Promise<void> {
-    await test.step('Fill email and password', async () => {
-      await this.playwrightActionsFactory.sendKeys(this.locators.emailInput, details.email);
-      await this.playwrightActionsFactory.sendKeys(this.locators.passwordInput, details.password);
-
-      try {
-        await this.locators.confirmPasswordInput.locator.waitFor({ state: 'visible', timeout: 3_000 });
-        await this.playwrightActionsFactory.sendKeys(this.locators.confirmPasswordInput, details.password);
-      } catch {
-        // Confirm password field not present in this registration step
+    for (let attempt = 0; attempt < 30 && !clicked; attempt++) {
+      const count = await allBtns.count();
+      for (let i = 0; i < count && !clicked; i++) {
+        const btn = allBtns.nth(i);
+        const visible = await btn.isVisible().catch(() => false);
+        const disabled = await btn.evaluate(el => el.hasAttribute('disabled')).catch(() => true);
+        if (visible && !disabled) {
+          await btn.click();
+          clicked = true;
+        }
       }
+      if (!clicked) await this.page.waitForTimeout(200);
+    }
+
+    if (!clicked) throw new Error(`No visible+enabled btn-primary after ${label}`);
+    await this.actions.waitForDomLoad();
+    await this.verify.waitForLoaderToDisappear();
+  }
+
+  // ── Public step methods ──────────────────────────────────────────────────────
+
+  async navigateToRegistrationPage(details: RegistrationDetails): Promise<void> {
+    await test.step('Pass dev gate and navigate to /register via Sign Up nav link', async () => {
+      await this.passDevGate(details.devGateURL);
+      await this.actions.navigateToURL(details.loginURL);
+      await this.actions.waitForDomLoad();
+      await this.verify.waitForLoaderToDisappear();
+      await this.page.waitForSelector('[data-test-id="sign-in-page"]', { timeout: 15_000 });
+      await this.actions.click(this.locators.signUpNavLink);
+      await this.actions.waitForDomLoad();
+      await this.verify.waitForLoaderToDisappear();
+      // Confirm step 1 is loaded — state dropdown must be visible
+      await this.locators.stateDropdown.locator.waitFor({ state: 'visible', timeout: 15_000 });
     });
   }
 
-  async fillPersonalDetails(details: RegistrationDetails): Promise<void> {
-    await test.step('Fill personal details', async () => {
-      try {
-        await this.locators.firstNameInput.locator.waitFor({ state: 'visible', timeout: 3_000 });
-        await this.playwrightActionsFactory.sendKeys(this.locators.firstNameInput, details.firstName);
-        await this.playwrightActionsFactory.sendKeys(this.locators.lastNameInput, details.lastName);
-      } catch {
-        // Name fields not present in this registration step
-      }
-
-      try {
-        await this.locators.dateOfBirthInput.locator.waitFor({ state: 'visible', timeout: 3_000 });
-        await this.playwrightActionsFactory.sendKeys(this.locators.dateOfBirthInput, details.dateOfBirth);
-      } catch {
-        // DOB field not present in this registration step
-      }
+  async completeStateAndTerms(state: string): Promise<void> {
+    await test.step('Step 1 — select state and accept terms', async () => {
+      await this.locators.stateDropdown.locator.waitFor({ state: 'visible', timeout: 10_000 });
+      await this.page.selectOption("select[formcontrolname='state']", { label: state });
+      await this.actions.selectRadioButtonOrCheckBox(this.locators.termsCheckbox);
+      await this.page.waitForTimeout(300); // allow Angular validation to settle
+      await this.clickActiveStepContinue('step1-state-terms');
     });
   }
 
-  async acceptTermsIfPresent(): Promise<void> {
-    await test.step('Accept terms and conditions if prompted', async () => {
-      try {
-        await this.locators.termsCheckbox.locator.waitFor({ state: 'visible', timeout: 3_000 });
-        await this.playwrightActionsFactory.selectRadioButtonOrCheckBox(this.locators.termsCheckbox);
-      } catch {
-        // Terms checkbox not present
-      }
+  async completeEmailStep(email: string): Promise<void> {
+    await test.step('Step 2 — enter email address', async () => {
+      await this.locators.emailInput.locator.waitFor({ state: 'visible', timeout: 10_000 });
+      await this.actions.sendKeys(this.locators.emailInput, email);
+      await this.locators.emailInput.locator.press('Tab'); // trigger Angular blur validation
+      await this.page.waitForTimeout(300);
+      await this.clickActiveStepContinue('step2-email');
     });
   }
 
-  async submitRegistration(): Promise<void> {
-    await test.step('Submit registration form', async () => {
-      await this.playwrightActionsFactory.click(this.locators.submitButton);
+  async completePasswordStep(password: string): Promise<void> {
+    await test.step('Step 3 — set password', async () => {
+      await this.locators.passwordInput.locator.waitFor({ state: 'visible', timeout: 10_000 });
+      await this.actions.sendKeys(this.locators.passwordInput, password);
+      await this.locators.passwordInput.locator.press('Tab');
+      await this.page.waitForTimeout(300);
+      await this.clickActiveStepContinue('step3-password');
     });
   }
 
-  async verifyRegistrationSuccess(): Promise<void> {
-    await test.step('Verify registration completed successfully', async () => {
-      await this.playwrightVerificationsFactory.waitForLoaderToDisappear();
-      await this.playwrightVerificationsFactory.waitForProcessingLoaderToDisappear();
-      await this.playwrightVerificationsFactory.expectElementExist(this.locators.successIndicator);
+  async verifyRegistrationSuccess(postRegistrationURL: string): Promise<void> {
+    await test.step('Verify registration succeeded and quiz page loaded', async () => {
+      await this.verify.waitForLoaderToDisappear();
+      await this.verify.waitForProcessingLoaderToDisappear();
+      await this.actions.waitForURL(
+        new RegExp(postRegistrationURL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+        30_000,
+      );
     });
+  }
+
+  // ── Composite ────────────────────────────────────────────────────────────────
+
+  async completeRegistrationWizard(details: RegistrationDetails): Promise<void> {
+    await this.completeStateAndTerms(details.state);
+    await this.completeEmailStep(details.email);
+    await this.completePasswordStep(details.password);
   }
 }

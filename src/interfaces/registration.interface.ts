@@ -1,9 +1,11 @@
 export interface RegistrationDetails {
-  mainURL: string;
+  devGateURL: string;
+  loginURL: string;
+  registrationURL: string;
+  state: string;
   email: string;
   password: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  state: string;
+  postRegistrationURL: string;
+  /** 0-based answer index for each quiz question, in order */
+  quizAnswers: number[];
 }

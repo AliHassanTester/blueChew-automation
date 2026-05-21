@@ -11,30 +11,23 @@ test.describe('Feature: User Registration', () => {
     Description: '${scenario.testCaseData.testDescription}'
     Tags: '${scenario.testCaseData.tags}'
   `,
-    async ({ registrationPage }) => {
+    async ({ registrationPage, quizPage }) => {
       logTestCaseData(test.info(), scenario.testCaseData);
 
-      await test.step('Navigate to registration page', async () => {
-        await registrationPage.navigateToRegistrationPage(scenario.registrationDetails.mainURL);
-        await registrationPage.verifyRegistrationPageLoaded();
+      await test.step('Navigate to registration page via Sign Up link', async () => {
+        await registrationPage.navigateToRegistrationPage(scenario.registrationDetails);
       });
 
-      await test.step('Fill in registration credentials', async () => {
-        await registrationPage.fillEmailAndPassword(scenario.registrationDetails);
+      await test.step('Complete registration wizard (state → email → password)', async () => {
+        await registrationPage.completeRegistrationWizard(scenario.registrationDetails);
       });
 
-      await test.step('Fill in personal details', async () => {
-        await registrationPage.fillPersonalDetails(scenario.registrationDetails);
+      await test.step('Verify successful registration and quiz page loaded', async () => {
+        await registrationPage.verifyRegistrationSuccess(scenario.registrationDetails.postRegistrationURL);
       });
 
-      await test.step('Accept terms and submit', async () => {
-        await registrationPage.acceptTermsIfPresent();
-        await registrationPage.submitRegistration();
-      });
-
-      await test.step('Verify registration success', async () => {
-        await registrationPage.verifyRegistrationSuccess();
-      });
+      await quizPage.completeQuiz(scenario.registrationDetails.quizAnswers);
+      await quizPage.verifyQuizComplete();
     },
   );
 });
