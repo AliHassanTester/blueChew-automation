@@ -18,7 +18,7 @@ const env = getEnvVars({
 
 // aliQA prefix makes test accounts easy to identify and clean up in the DB
 function generateTestEmail(): string {
-  return `aliQA.${generateRandomAlphanumeric(6)}.${Date.now()}@example.com`;
+  return `aliQA.${generateRandomAlphanumeric(3)}.${Date.now()}@gmail.com`;
 }
 
 const registrationTestData: { [key: string]: RegistrationTestCaseData } = {
@@ -27,19 +27,31 @@ const registrationTestData: { [key: string]: RegistrationTestCaseData } = {
       devGateURL:           env.DEV_GATE_URL,
       loginURL:             env.LOGIN_URL,
       registrationURL:      env.REGISTRATION_URL,
-      state:                'Illinois',
+      state:                'New York',
       email:                generateTestEmail(),
       password:             env.password,
       postRegistrationURL:  env.POST_REGISTRATION_URL,
       // Q1: "All of the above" (index 2), Q2: "Yes" (index 0), Q3: "No, just standard" (index 1)
       quizAnswers: [2, 0, 1],
+      medical: {
+        firstName: 'Ali',
+        lastName:  'QA',
+        birthday:  '01/01/1990',
+      },
+      shipping: {
+        streetAddress: '123 Main St',
+        city:          'New York',
+        state:         'New York',
+        zip:           '10001',
+        phone:         '2125550100',
+      },
     },
     testCaseData: {
       tags: '@regression @smoke @registration',
       testCase: 'AQ-01-User-Registration',
-      testDescription: 'New user can complete the 3-step registration wizard successfully',
+      testDescription: 'New user can complete the full onboarding flow: registration → quiz → results → medical profile → checkout',
       testSummary:
-        'Verify that a new user can register via /register (state → email → password) and reach the post-registration quiz page.',
+        'Verify that a new user can register, complete the quiz, view recommendations, fill the medical profile, and reach the checkout shipping step.',
     },
   },
 };
