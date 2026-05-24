@@ -12,7 +12,12 @@
     "test:login": "cross-env ENV_TYPE=dev npx playwright test src/specs/login/login.spec.ts tests/visual/login.visual.spec.ts",
     "test:login:update": "cross-env ENV_TYPE=dev npx playwright test tests/visual/login.visual.spec.ts --update-snapshots",
     "test:registration": "cross-env ENV_TYPE=dev npx playwright test src/specs/login/registration.spec.ts tests/visual/registration.visual.spec.ts",
+    "test:registration:functional": "cross-env ENV_TYPE=dev npx playwright test src/specs/login/registration.spec.ts",
     "test:registration:update": "cross-env ENV_TYPE=dev npx playwright test tests/visual/registration.visual.spec.ts --update-snapshots",
+    "test:quiz:visual": "cross-env ENV_TYPE=dev npx playwright test tests/visual/quiz.visual.spec.ts",
+    "test:quiz:visual:update": "cross-env ENV_TYPE=dev npx playwright test tests/visual/quiz.visual.spec.ts --update-snapshots",
+    "test:results:visual": "cross-env ENV_TYPE=dev npx playwright test tests/visual/results.visual.spec.ts",
+    "test:results:visual:update": "cross-env ENV_TYPE=dev npx playwright test tests/visual/results.visual.spec.ts --update-snapshots",
     "allure:generate": "allure generate allure-results -o allure-report --clean",
     "allure:open": "allure open allure-report"
   },

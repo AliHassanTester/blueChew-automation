@@ -26,13 +26,6 @@ export class RegistrationPage {
         locator: this.page.locator("//button[normalize-space()='Submit']"),
       },
 
-      // ── Login page header nav ──────────────────────────────────────────────
-      // Visible header link (class="nav-link"), NOT the hamburger "Sign Up/Login"
-      signUpNavLink: {
-        description: 'Sign Up Header Nav Link',
-        locator: this.page.locator("a.nav-link[href='/register']"),
-      },
-
       // ── Step 1: state + terms (/register) ─────────────────────────────────
       stateDropdown: {
         description: 'State Selection Dropdown',
@@ -102,13 +95,9 @@ export class RegistrationPage {
   // ── Public step methods ──────────────────────────────────────────────────────
 
   async navigateToRegistrationPage(details: RegistrationDetails): Promise<void> {
-    await test.step('Pass dev gate and navigate to /register via Sign Up nav link', async () => {
+    await test.step('Pass dev gate and navigate directly to /register', async () => {
       await this.passDevGate(details.devGateURL);
-      await this.actions.navigateToURL(details.loginURL);
-      await this.actions.waitForDomLoad();
-      await this.verify.waitForLoaderToDisappear();
-      await this.page.waitForSelector('[data-test-id="sign-in-page"]', { timeout: 15_000 });
-      await this.actions.click(this.locators.signUpNavLink);
+      await this.actions.navigateToURL(details.registrationURL);
       await this.actions.waitForDomLoad();
       await this.verify.waitForLoaderToDisappear();
       // Confirm step 1 is loaded — state dropdown must be visible

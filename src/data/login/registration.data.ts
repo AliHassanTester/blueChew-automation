@@ -14,6 +14,12 @@ const env = getEnvVars({
   LOGIN_URL:              'https://dev.app.bluechew.com/log-in',
   REGISTRATION_URL:       'https://dev.app.bluechew.com/register',
   POST_REGISTRATION_URL:  'https://dev.bluechew.com/quiz',
+  STRIPE_CARD_NUMBER:     '4242424242424242',
+  STRIPE_CARD_EXP:        '12/28',
+  STRIPE_CARD_CVV:        '123',
+  ADMIN_URL:              'https://dev.admin.bluechew.com',
+  ADMIN_EMAIL:            'ali@meds.com',
+  ADMIN_PASSWORD:         null,  // required — set in .env.dev
 });
 
 // aliQA prefix makes test accounts easy to identify and clean up in the DB
@@ -27,6 +33,9 @@ const registrationTestData: { [key: string]: RegistrationTestCaseData } = {
       devGateURL:           env.DEV_GATE_URL,
       loginURL:             env.LOGIN_URL,
       registrationURL:      env.REGISTRATION_URL,
+      adminURL:             env.ADMIN_URL,
+      adminEmail:           env.ADMIN_EMAIL,
+      adminPassword:        env.ADMIN_PASSWORD,
       state:                'New York',
       email:                generateTestEmail(),
       password:             env.password,
@@ -44,6 +53,11 @@ const registrationTestData: { [key: string]: RegistrationTestCaseData } = {
         state:         'New York',
         zip:           '10001',
         phone:         '2125550100',
+      },
+      payment: {
+        cardNumber: env.STRIPE_CARD_NUMBER,
+        expiry:     env.STRIPE_CARD_EXP,
+        cvv:        env.STRIPE_CARD_CVV,
       },
     },
     testCaseData: {

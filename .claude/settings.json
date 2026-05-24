@@ -11,7 +11,14 @@
       "Bash(node scripts/capture-medical-checkout.js)",
       "Bash(node scripts/capture-checkout-forward.js)",
       "Bash(node scripts/capture-strength-forward.js)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(node scripts/capture-payment-admin.js)",
+      "Bash(node -e ' *)",
+      "Bash(npm run *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\BrainNotFound\\\\Documents\\\\GitHub\\\\blueChew-automation\" -Recurse)",
+      "Bash(Select-Object -Property Name, FullName)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(Remove-Item -Recurse -Force scripts/)"
     ]
   }
 }

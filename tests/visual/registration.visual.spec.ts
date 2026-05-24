@@ -59,7 +59,7 @@ test.describe('Visual: Registration Page (/register)', () => {
 
   test('CONTINUE button design tokens are compliant (step 1 enabled after state + terms)', async ({ page }) => {
     // Enable the button by filling state + checking terms
-    await page.selectOption("select[formcontrolname='state']", { label: 'Illinois' });
+    await page.selectOption("select[formcontrolname='state']", { label: 'New York' });
     await page.locator('#agree_terms').check();
     const violations = await validateTokens(
       page,

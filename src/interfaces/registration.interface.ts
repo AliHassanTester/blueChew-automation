@@ -15,10 +15,19 @@ export interface ShippingDetails {
   phone: string;
 }
 
+export interface PaymentDetails {
+  cardNumber: string;
+  expiry: string;
+  cvv: string;
+}
+
 export interface RegistrationDetails {
   devGateURL: string;
   loginURL: string;
   registrationURL: string;
+  adminURL: string;
+  adminEmail: string;
+  adminPassword: string;
   state: string;
   email: string;
   password: string;
@@ -27,4 +36,5 @@ export interface RegistrationDetails {
   quizAnswers: number[];
   medical: MedicalDetails;
   shipping: ShippingDetails;
+  payment: PaymentDetails;
 }
