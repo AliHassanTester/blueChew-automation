@@ -155,7 +155,6 @@ export class LoginPage {
       await this.playwrightVerificationsFactory.waitForProcessingLoaderToDisappear();
       await this.playwrightActionsFactory.waitForURL(
         new RegExp(expectedURL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
-        30_000,
       );
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.dashboardPageTitle);
     });

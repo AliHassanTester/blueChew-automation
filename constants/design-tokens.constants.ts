@@ -28,11 +28,18 @@ export const COLOR_TOKENS = {
   /** Default body copy */
   bodyText: 'rgb(33, 37, 41)',
 
-  /** Heading colour */
+  /** Heading colour (light-theme pages) */
   headingText: 'rgb(17, 24, 39)',
+
+  /** Heading colour on dark-theme pages (results, checkout) */
+  darkHeadingText: 'rgb(255, 255, 255)',
 
   /** Form input border — default (unfocused) */
   inputBorder: 'rgb(209, 213, 219)',
+
+  /** Results page CTA — inverted style (white background, near-black text) */
+  invertedCTAText: 'rgb(8, 8, 8)',
+  invertedCTABackground: 'rgb(255, 255, 255)',
 } as const;
 
 export const TYPOGRAPHY_TOKENS = {
@@ -44,14 +51,23 @@ export const TYPOGRAPHY_TOKENS = {
   /** Base body font size */
   baseFontSize: '16px',
 
-  /** Primary heading font size */
+  /** Primary heading font size (light-theme pages) */
   headingFontSize: '24px',
 
-  /** CTA button font size */
+  /** Display heading font size (dark-theme / results page) */
+  displayHeadingFontSize: '36px',
+
+  /** CTA button font size (app pages) */
   buttonFontSize: '16px',
 
-  /** Primary font stack as resolved by getComputedStyle */
+  /** Results page CTA button font size */
+  resultsCTAFontSize: '24px',
+
+  /** Font family — app domain (dev.app.bluechew.com) */
   bodyFontFamily: 'Inter',
+
+  /** Font family — quiz/results domain (dev.bluechew.com) */
+  quizFontFamily: 'Roboto',
 } as const;
 
 export const SPACING_TOKENS = {

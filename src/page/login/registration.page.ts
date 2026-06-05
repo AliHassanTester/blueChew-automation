@@ -37,14 +37,12 @@ export class RegistrationPage {
       },
 
       // ── Step 2: email (/register) ──────────────────────────────────────────
-      // This is the same element re-used in step 3 (Angular keeps it in DOM)
       emailInput: {
         description: 'Email Input',
         locator: this.page.locator("input[formcontrolname='email']"),
       },
 
       // ── Step 3: password (/register) ──────────────────────────────────────
-      // formcontrolname='pass' — confirmed from live DOM (same convention as login)
       passwordInput: {
         description: 'Password Input',
         locator: this.page.locator("input[formcontrolname='pass']"),
@@ -56,101 +54,84 @@ export class RegistrationPage {
 
   private async passDevGate(devGateURL: string): Promise<void> {
     await this.actions.navigateToURL(devGateURL);
-    await this.actions.waitForDomLoad();
-    await this.verify.waitForLoaderToDisappear();
+    await this.page.waitForLoadState('load');
     await this.actions.sendKeys(this.locators.devGatePasswordInput, process.env.DEV_GATE_PASSWORD || 'dev');
     await this.actions.click(this.locators.devGateSubmitButton);
-    await this.actions.waitForDomLoad();
-    await this.verify.waitForLoaderToDisappear();
+    await this.page.waitForLoadState('load');
   }
 
   /**
-   * Angular's wizard keeps all 3 step CONTINUE buttons in the DOM simultaneously.
-   * The active step's button is the only one that is both visible AND not disabled.
-   * Iterates through all btn-primary elements to find it.
+   * Angular's wizard keeps all 3 step CONTINUE buttons in the DOM simultaneously,
+   * but only the active step's button is visible. clickFirstActionable auto-waits
+   * for that button to be visible AND enabled (Angular enables it once the step's
+   * validation passes). After click, wait for navigation to complete.
    */
-  private async clickActiveStepContinue(label: string): Promise<void> {
-    const allBtns = this.page.locator('button.btn-primary');
-    let clicked = false;
-
-    for (let attempt = 0; attempt < 30 && !clicked; attempt++) {
-      const count = await allBtns.count();
-      for (let i = 0; i < count && !clicked; i++) {
-        const btn = allBtns.nth(i);
-        const visible = await btn.isVisible().catch(() => false);
-        const disabled = await btn.evaluate(el => el.hasAttribute('disabled')).catch(() => true);
-        if (visible && !disabled) {
-          await btn.click();
-          clicked = true;
-        }
-      }
-      if (!clicked) await this.page.waitForTimeout(200);
-    }
-
-    if (!clicked) throw new Error(`No visible+enabled btn-primary after ${label}`);
-    await this.actions.waitForDomLoad();
-    await this.verify.waitForLoaderToDisappear();
+  private async clickActiveStepContinue(): Promise<void> {
+    await this.actions.clickFirstActionable('button.btn-primary');
+    await this.page.waitForLoadState('load');
   }
 
   // ── Public step methods ──────────────────────────────────────────────────────
 
   async navigateToRegistrationPage(details: RegistrationDetails): Promise<void> {
-    await test.step('Pass dev gate and navigate directly to /register', async () => {
+    await test.step('Pass dev gate → login page → click Sign Up CTA → /register', async () => {
       await this.passDevGate(details.devGateURL);
-      await this.actions.navigateToURL(details.registrationURL);
-      await this.actions.waitForDomLoad();
-      await this.verify.waitForLoaderToDisappear();
-      // Confirm step 1 is loaded — state dropdown must be visible
-      await this.locators.stateDropdown.locator.waitFor({ state: 'visible', timeout: 15_000 });
+
+      // Land on the login page and click the Sign Up CTA to test that link
+      await this.actions.navigateToURL(details.loginURL);
+      await this.page.waitForLoadState('load');
+
+      const signUpCTA = this.page.locator("//a[@href='/register' and normalize-space()='Sign Up']");
+      await signUpCTA.click();
+
+      // Wait for navigation and state dropdown to become visible
+      await this.page.waitForLoadState('load');
+      await this.locators.stateDropdown.locator.waitFor({ state: 'visible' });
     });
   }
 
   async completeStateAndTerms(state: string): Promise<void> {
     await test.step('Step 1 — select state and accept terms', async () => {
-      await this.locators.stateDropdown.locator.waitFor({ state: 'visible', timeout: 10_000 });
+      await this.locators.stateDropdown.locator.waitFor({ state: 'visible' });
       await this.page.selectOption("select[formcontrolname='state']", { label: state });
       await this.actions.selectRadioButtonOrCheckBox(this.locators.termsCheckbox);
-      await this.page.waitForTimeout(300); // allow Angular validation to settle
-      await this.clickActiveStepContinue('step1-state-terms');
+      await this.clickActiveStepContinue();
     });
   }
 
   async completeEmailStep(email: string): Promise<void> {
     await test.step('Step 2 — enter email address', async () => {
-      await this.locators.emailInput.locator.waitFor({ state: 'visible', timeout: 10_000 });
+      await this.locators.emailInput.locator.waitFor({ state: 'visible' });
       await this.actions.sendKeys(this.locators.emailInput, email);
-      await this.locators.emailInput.locator.press('Tab'); // trigger Angular blur validation
-      await this.page.waitForTimeout(300);
-      await this.clickActiveStepContinue('step2-email');
+      await this.locators.emailInput.locator.press('Tab');
+      await this.clickActiveStepContinue();
     });
   }
 
   async completePasswordStep(password: string): Promise<void> {
     await test.step('Step 3 — set password', async () => {
-      await this.locators.passwordInput.locator.waitFor({ state: 'visible', timeout: 10_000 });
+      await this.locators.passwordInput.locator.waitFor({ state: 'visible' });
       await this.actions.sendKeys(this.locators.passwordInput, password);
       await this.locators.passwordInput.locator.press('Tab');
-      await this.page.waitForTimeout(300);
-      await this.clickActiveStepContinue('step3-password');
+      await this.clickActiveStepContinue();
     });
   }
 
-  async verifyRegistrationSuccess(postRegistrationURL: string): Promise<void> {
-    await test.step('Verify registration succeeded and quiz page loaded', async () => {
-      await this.verify.waitForLoaderToDisappear();
-      await this.verify.waitForProcessingLoaderToDisappear();
-      await this.actions.waitForURL(
-        new RegExp(postRegistrationURL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
-        30_000,
-      );
+  async verifyRegistrationSuccess(quizURL: string): Promise<void> {
+    await test.step('Verify registration succeeded — redirected to quiz', async () => {
+      // Escape special chars for regex — matches the quiz URL regardless of query params
+      const escapedBase = quizURL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      await this.actions.waitForURL(new RegExp(escapedBase));
     });
   }
 
   // ── Composite ────────────────────────────────────────────────────────────────
 
   async completeRegistrationWizard(details: RegistrationDetails): Promise<void> {
-    await this.completeStateAndTerms(details.state);
-    await this.completeEmailStep(details.email);
-    await this.completePasswordStep(details.password);
+    await test.step('Complete registration wizard (state → email → password)', async () => {
+      await this.completeStateAndTerms(details.state);
+      await this.completeEmailStep(details.email);
+      await this.completePasswordStep(details.password);
+    });
   }
 }

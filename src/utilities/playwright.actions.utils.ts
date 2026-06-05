@@ -58,20 +58,30 @@ export class PlaywrightActionFactory {
     await this.page.goto(url);
   }
 
+  /**
+   * Clicks the first visible, enabled element matching the selector.
+   * Playwright auto-waits for actionability (visible + stable + enabled) using the
+   * centralized actionTimeout, so callers don't need manual poll loops or settling
+   * delays — this replaces the "iterate buttons, find visible+enabled, click" pattern.
+   */
+  async clickFirstActionable(selector: string): Promise<void> {
+    await this.page.locator(selector).filter({ visible: true }).first().click();
+  }
+
   async waitForSelector(locatorInfo: LocatorInfo): Promise<void> {
-    await locatorInfo.locator.waitFor({ state: 'attached', timeout: 65_000 });
+    await locatorInfo.locator.waitFor({ state: 'attached' });
   }
 
-  async waitForVisibility(locatorInfo: LocatorInfo, timeout: number = 65_000): Promise<void> {
-    await locatorInfo.locator.waitFor({ state: 'visible', timeout });
+  async waitForVisibility(locatorInfo: LocatorInfo): Promise<void> {
+    await locatorInfo.locator.waitFor({ state: 'visible' });
   }
 
-  async waitForURL(regex: RegExp, timeout: number = 30_000): Promise<void> {
-    await this.page.waitForURL(regex, { timeout });
+  async waitForURL(regex: RegExp): Promise<void> {
+    await this.page.waitForURL(regex);
   }
 
-  async waitForDomLoad(timeout: number = 30_000): Promise<void> {
-    await this.page.waitForLoadState('domcontentloaded', { timeout });
+  async waitForDomLoad(): Promise<void> {
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   async waitForSec(seconds: number): Promise<void> {

@@ -50,14 +50,15 @@ cp .env.example .env.dev
 npm run test:dev                    # All specs against dev environment
 npm run test:prod                   # All specs against production
 npm run test:ci                     # All specs (CI mode — headless, 4 workers, 1 retry)
-npm run test:registration:functional # Registration → checkout funnel only
+npm run test:e2e                    # Sign-up → approved order E2E journey (functional)
 ```
 
 ### Individual suites
 
 ```bash
-npm run test:login        # Login spec + login visual spec
-npm run test:registration # Full registration → checkout funnel + registration visual spec
+npm run test:login              # Login spec + login visual spec
+npm run test:e2e                # Sign-up to approved order — full E2E journey
+npm run test:registration:visual # Registration page visual spec only
 ```
 
 ### Visual regression tests
@@ -94,10 +95,10 @@ src/
     confirmation/ # ConfirmationPage (ID upload → provider queue)
     admin/        # AdminPage (admin portal user search)
   specs/          # Test specs
-    login/        # login.spec.ts, registration.spec.ts
+    login/        # login.spec.ts, signup-to-approved-order.spec.ts
   utilities/      # Shared Playwright helpers (actions, verifications, env, random)
 tests/
-  fixtures/       # Static test assets (e.g. sample-id.jpg for ID upload)
+  fixtures/       # Static test assets (e.g. sampleID.jpg for ID upload)
   visual/         # Visual regression specs and __snapshots__
 constants/        # Design token definitions (colors, typography, spacing)
 helpers/          # Visual test utilities (validateTokens, screenshotPage, etc.)
@@ -110,7 +111,7 @@ helpers/          # Visual test utilities (validateTokens, screenshotPage, etc.)
 | Spec | ID | Description |
 |---|---|---|
 | `login.spec.ts` | AQ-00 | Login with existing account |
-| `registration.spec.ts` | AQ-01 | Full new-user onboarding: register → quiz → medical → checkout → confirmation → admin |
+| `signup-to-approved-order.spec.ts` | AQ-01 | Full new-customer journey: sign up → quiz → medical → checkout → payment → confirmation → provider approval → first order |
 | `login.visual.spec.ts` | — | Login page snapshots + CSS token validation |
 | `registration.visual.spec.ts` | — | Registration page snapshots + CSS token validation |
 | `quiz.visual.spec.ts` | — | Quiz page snapshots + CSS token validation |
@@ -126,12 +127,32 @@ After a test run, open the HTML report:
 npx playwright show-report
 ```
 
-For Allure:
+### Allure report
+
+The `allure-playwright` reporter writes results to `allure-results/` on every run.
+Allure 3 (Node-based, **no Java required**) renders them.
 
 ```bash
-npm run allure:generate
-npm run allure:open
+npm run allure:serve      # generate + open in one step (quickest)
+# or, separately:
+npm run allure:generate   # build allure-report/ from allure-results/
+npm run allure:open       # serve the generated allure-report/
+npm run allure:clean      # delete allure-results/ and allure-report/
 ```
+
+Each test is tagged with rich metadata so the report is organised and filterable:
+
+- **Behaviors view** — grouped by epic → feature → story
+  (e.g. *BlueChew E2E → Authentication → User Login*)
+- **Severity** — derived from tags (`@smoke` → critical, else normal)
+- **Tags** — parsed from the test's tag string (`@regression @smoke …`)
+- **Environment widget** — environment, base URL, Node version, OS, CI flag
+- **Categories tab** — failures auto-classified (timeouts, network, locator,
+  assertion, skipped)
+
+Metadata is applied centrally in [`logTestCaseData`](src/utilities/test.helper.utils.ts);
+per-suite `feature`/`story` are passed from each spec. Environment and category
+definitions live in the Allure reporter block of [`playwright.config.ts`](playwright.config.ts).
 
 ---
 

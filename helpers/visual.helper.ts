@@ -8,9 +8,8 @@ export interface TokenViolation {
 }
 
 const VIEWPORTS = {
-  mobile: { width: 375, height: 812 },
-  tablet: { width: 768, height: 1024 },
-  desktop: { width: 1920, height: 1080 },
+  'iphone-x':     { width: 375,  height: 812 },
+  'desktop-1440': { width: 1440, height: 900 },
 } as const;
 
 /**
@@ -58,7 +57,7 @@ export async function screenshotPage(page: Page, name: string): Promise<void> {
  */
 export async function screenshotAtViewport(
   page: Page,
-  viewport: 'mobile' | 'tablet' | 'desktop',
+  viewport: 'iphone-x' | 'desktop-1440',
   name: string,
 ): Promise<void> {
   const original = page.viewportSize();

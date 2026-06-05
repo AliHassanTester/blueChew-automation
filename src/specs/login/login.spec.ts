@@ -12,7 +12,10 @@ test.describe('Feature: User Login', () => {
     Tags: '${scenario.testCaseData.tags}'
   `,
     async ({ loginPage }) => {
-      logTestCaseData(test.info(), scenario.testCaseData);
+      await logTestCaseData(test.info(), scenario.testCaseData, {
+        feature: 'Authentication',
+        story: 'User Login',
+      });
 
       await test.step('Navigate to BlueChew login page', async () => {
         await loginPage.navigateToPage(scenario.loginPageDetails);

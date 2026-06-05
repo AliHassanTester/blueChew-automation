@@ -18,33 +18,45 @@ export class QuizPage {
   }
 
   private async waitForAnswerButtons(): Promise<void> {
-    await this.answerButton(0).waitFor({ state: 'visible', timeout: 20_000 });
+    await this.answerButton(0).waitFor({ state: 'visible' });
   }
 
-  private async dismissIntroIfPresent(): Promise<void> {
-    // The quiz may show a transition/splash page before the first question.
-    // If answer buttons don't appear quickly, look for a CTA to advance past it.
-    const answersVisible = await this.answerButton(0)
-      .waitFor({ state: 'visible', timeout: 4_000 })
-      .then(() => true)
-      .catch(() => false);
+  // ── Navigation (used by visual tests for direct navigation to quiz) ──────────
 
-    if (!answersVisible) {
-      const ctaTexts = ['Get Started', 'Begin', 'Continue', 'Start', 'Next'];
-      for (const text of ctaTexts) {
-        const btn = this.page.locator(`button:has-text("${text}")`).first();
-        if (await btn.isVisible().catch(() => false)) {
-          await btn.click();
-          break;
-        }
+  async navigateToQuiz(quizURL: string): Promise<void> {
+    await test.step('Navigate to quiz page and pass dev gate if present', async () => {
+      await this.actions.navigateToURL(quizURL);
+      await this.actions.waitForDomLoad();
+
+      const gateInput = this.page.locator("input[formcontrolname='password']");
+      if (await gateInput.isVisible().catch(() => false)) {
+        await gateInput.fill(process.env.DEV_GATE_PASSWORD || 'dev');
+        await this.page.locator("//button[normalize-space()='Submit']").click();
+        await this.actions.waitForDomLoad();
+        await this.actions.navigateToURL(quizURL);
+        await this.actions.waitForDomLoad();
       }
+
+      // Transition screen auto-advances — wait for first question
       await this.waitForAnswerButtons();
-    }
+    });
   }
+
+  // ── Quiz answering ────────────────────────────────────────────────────────────
 
   async completeQuiz(answers: number[]): Promise<void> {
     await test.step('Complete quiz', async () => {
-      await this.dismissIntroIfPresent();
+      // After registration redirects here, the quiz-domain dev gate may appear
+      // (separate from the app-domain gate passed at test start)
+      const gateInput = this.page.locator("input[formcontrolname='password']");
+      if (await gateInput.isVisible().catch(() => false)) {
+        await gateInput.fill(process.env.DEV_GATE_PASSWORD || 'dev');
+        await this.page.locator("//button[normalize-space()='Submit']").click();
+        await this.actions.waitForDomLoad();
+      }
+
+      // Transition/splash screen auto-advances — wait for first question to appear
+      await this.waitForAnswerButtons();
 
       for (let i = 0; i < answers.length; i++) {
         const progress = await this.page
@@ -64,7 +76,6 @@ export class QuizPage {
                 return el !== null && el.textContent?.trim() !== prev;
               },
               progress?.trim() ?? '',
-              { timeout: 10_000 },
             );
           }
         });
@@ -73,9 +84,12 @@ export class QuizPage {
   }
 
   async verifyQuizComplete(): Promise<void> {
-    await test.step('Verify quiz answered and plan selection loaded', async () => {
-      // After the final answer, answer buttons disappear and the plan page renders.
-      await this.answerButton(0).waitFor({ state: 'hidden', timeout: 15_000 });
+    await test.step('Verify quiz complete — results page loaded', async () => {
+      // After the last answer the quiz shows a loading screen then navigates
+      // to /results. Wait for the results root element to confirm arrival.
+      await this.page
+        .locator('[data-test-id="results-page-root"]')
+        .waitFor({ state: 'visible' });
     });
   }
 }

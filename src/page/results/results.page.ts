@@ -17,7 +17,7 @@ export class ResultsPage {
     await test.step('Verify results/recommendations page loaded', async () => {
       await this.page
         .locator('[data-test-id="results-page-root"]')
-        .waitFor({ state: 'visible', timeout: 20_000 });
+        .waitFor({ state: 'visible' });
     });
   }
 
@@ -26,10 +26,23 @@ export class ResultsPage {
       await this.page.locator('button.cta-button').first().click();
       await this.actions.waitForDomLoad();
       await this.verify.waitForLoaderToDisappear();
-      // Wait for the medical profile form to be present
+
+      // For a logged-in user (registered earlier in the test), TRY GOLD redirects
+      // directly to /medical on the app domain. The app-domain dev gate cookie set
+      // during the registration step is still active, so no re-prompt is expected.
+      // Handle it defensively in case session state differs.
+      const gateInput = this.page.locator("input[formcontrolname='password']");
+      if (await gateInput.isVisible().catch(() => false)) {
+        await gateInput.fill(process.env.DEV_GATE_PASSWORD || 'dev');
+        await this.page.locator('[data-test-id="dev-login-submit-button"]').click();
+        await this.actions.waitForDomLoad();
+        await this.verify.waitForLoaderToDisappear();
+      }
+
+      // Wait for the medical profile form (first visible DS input on /medical)
       await this.page
-        .locator("input[formcontrolname='first_name']")
-        .waitFor({ state: 'visible', timeout: 20_000 });
+        .locator('input[aria-label="Legal First Name"]')
+        .waitFor({ state: 'visible' });
     });
   }
 }

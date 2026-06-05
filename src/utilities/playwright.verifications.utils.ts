@@ -122,23 +122,20 @@ export class PlaywrightVerificationFactory {
   }
 
   async waitForSelector(locatorInfo: LocatorInfo): Promise<void> {
-    await locatorInfo.locator.waitFor({ state: 'attached', timeout: 65_000 });
+    await locatorInfo.locator.waitFor({ state: 'attached' });
   }
 
   async waitForVisibility(locatorInfo: LocatorInfo): Promise<void> {
-    await locatorInfo.locator.waitFor({ state: 'visible', timeout: 65_000 });
+    await locatorInfo.locator.waitFor({ state: 'visible' });
   }
 
   async waitForElementToDisappear(locatorInfo: LocatorInfo): Promise<void> {
-    await locatorInfo.locator.waitFor({ state: 'detached', timeout: 65_000 });
+    await locatorInfo.locator.waitFor({ state: 'detached' });
   }
 
   async waitForLoaderToDisappear(): Promise<void> {
     try {
-      await this.page.waitForSelector("text='Just a moment'", {
-        state: 'detached',
-        timeout: 30_000,
-      });
+      await this.page.waitForSelector("text='Just a moment'", { state: 'detached' });
     } catch {
       // Loader may not appear on every navigation
     }
@@ -148,7 +145,7 @@ export class PlaywrightVerificationFactory {
     try {
       await this.page.waitForSelector(
         '.processing-loader, [data-testid="processing-loader"], .spinner, [aria-label="Loading"]',
-        { state: 'hidden', timeout: 30_000 },
+        { state: 'hidden' },
       );
     } catch {
       // Processing loader may not appear

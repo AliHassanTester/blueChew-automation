@@ -17,34 +17,22 @@ export class CheckoutPage {
   // ── Wizard steps (intro → strength → plan) ───────────────────────────────
 
   private async dismissProductIntroSlide(): Promise<void> {
-    await this.page.locator('div.slide-btn').first().waitFor({ state: 'visible', timeout: 15_000 });
-    await this.page.locator('div.slide-btn').first().click();
-    // Wait for strength heading to confirm next step rendered
+    // The "Meet Gold" product intro may already have been dismissed during the
+    // medical→checkout transition, so only click the slide button if it's showing.
+    const slideBtn = this.page.locator('div.slide-btn').first();
+    if (await slideBtn.isVisible().catch(() => false)) {
+      await slideBtn.click();
+    }
+    // Confirm the strength step is rendered (reached either way)
     await this.page.locator('h2, h1').filter({ hasText: /select strength/i }).first()
-      .waitFor({ state: 'visible', timeout: 15_000 });
+      .waitFor({ state: 'visible' });
   }
 
-  private async clickVisibleContinue(stepHeadingPattern: RegExp, timeout = 15_000): Promise<void> {
-    // Wait for the correct step heading, then click the first visible+enabled btn-primary
+  /** Waits for the step heading, then clicks the active (visible + enabled) CONTINUE. */
+  private async clickVisibleContinue(stepHeadingPattern: RegExp): Promise<void> {
     await this.page.locator('h2, h1').filter({ hasText: stepHeadingPattern }).first()
-      .waitFor({ state: 'visible', timeout });
-    for (let attempt = 0; attempt < 30; attempt++) {
-      const btns = this.page.locator('button.btn-primary');
-      const count = await btns.count();
-      for (let i = 0; i < count; i++) {
-        const btn = btns.nth(i);
-        if (
-          await btn.isVisible().catch(() => false) &&
-          !(await btn.evaluate(el => el.hasAttribute('disabled')).catch(() => true))
-        ) {
-          await btn.click();
-          await this.page.waitForTimeout(600);
-          return;
-        }
-      }
-      await this.page.waitForTimeout(200);
-    }
-    throw new Error(`No visible+enabled btn-primary found for step: ${stepHeadingPattern}`);
+      .waitFor({ state: 'visible' });
+    await this.actions.clickFirstActionable('button.btn-primary');
   }
 
   private async selectStrength(): Promise<void> {
@@ -52,49 +40,36 @@ export class CheckoutPage {
   }
 
   private async selectPlan(): Promise<void> {
-    // Plan heading varies; wait for any plan-indicator text, then click continue
-    await this.page.locator('text=/uses per month/i').first()
-      .waitFor({ state: 'visible', timeout: 10_000 });
-    for (let attempt = 0; attempt < 30; attempt++) {
-      const btns = this.page.locator('button.btn-primary, button.btn-continue');
-      const count = await btns.count();
-      for (let i = 0; i < count; i++) {
-        const btn = btns.nth(i);
-        if (
-          await btn.isVisible().catch(() => false) &&
-          !(await btn.evaluate(el => el.hasAttribute('disabled')).catch(() => true))
-        ) {
-          await btn.click();
-          await this.page.waitForTimeout(600);
-          return;
-        }
-      }
-      await this.page.waitForTimeout(200);
-    }
-    throw new Error('No visible+enabled continue button found for plan step');
+    // Plan heading varies; wait for a plan-indicator, then click the active CONTINUE
+    await this.page.locator('text=/uses per month/i').first().waitFor({ state: 'visible' });
+    await this.actions.clickFirstActionable('button.btn-primary, button.btn-continue');
   }
 
   // ── Pre-payment page → shipping form ────────────────────────────────────
 
   private async proceedToPayment(): Promise<void> {
     const proceedBtn = this.page.locator('button.cta-bar-payment-btn');
-    const proceedVisible = await proceedBtn.isVisible({ timeout: 5_000 }).catch(() => false);
-    if (!proceedVisible) return;
+    const shippingField = this.page.locator("input[formcontrolname='line_1']").first();
 
-    await proceedBtn.click();
-    await this.page.waitForFunction(
-      () => !document.querySelector('.checkout-payment')?.classList.contains('hidden'),
-      { timeout: 15_000 },
-    );
-    await this.page.waitForTimeout(500);
+    // Variant 1 shows a "PROCEED TO PAYMENT" button that reveals the shipping form;
+    // variant 2 shows the shipping form directly. Wait for whichever appears first,
+    // then act — no fixed delay needed.
+    await Promise.race([
+      proceedBtn.waitFor({ state: 'visible' }).catch(() => undefined),
+      shippingField.waitFor({ state: 'visible' }).catch(() => undefined),
+    ]);
+
+    if (await proceedBtn.isVisible().catch(() => false)) {
+      await proceedBtn.click();
+      await shippingField.waitFor({ state: 'visible' });
+    }
   }
 
   private async fillShippingForm(details: ShippingDetails): Promise<void> {
-    // Wait for shipping form — works whether scoped inside .checkout-payment or standalone
-    await this.page.locator("input[formcontrolname='line_1']").first()
-      .waitFor({ state: 'visible', timeout: 15_000 });
+    const line1 = this.page.locator("input[formcontrolname='line_1']").first();
+    await line1.waitFor({ state: 'visible' });
 
-    await this.page.locator("input[formcontrolname='line_1']").first().fill(details.streetAddress);
+    await line1.fill(details.streetAddress);
     if (details.aptSuite) {
       await this.page.locator("input[formcontrolname='line_2']").first().fill(details.aptSuite);
     }
@@ -103,38 +78,23 @@ export class CheckoutPage {
     await this.page.locator("input[formcontrolname='zip']").first().fill(details.zip);
     await this.page.locator("input[formcontrolname='phone']").first().fill(details.phone);
     await this.page.locator("input[formcontrolname='phone']").first().press('Tab');
-    await this.page.waitForTimeout(600);
 
+    // Submit — the addr-submit-btn variant if present, else the active btn-primary
     const addrSubmit = this.page.locator('button.addr-submit-btn');
     if (await addrSubmit.isVisible().catch(() => false)) {
       await addrSubmit.click();
     } else {
-      const btns = this.page.locator('button.btn-primary');
-      const count = await btns.count();
-      for (let j = 0; j < count; j++) {
-        const btn = btns.nth(j);
-        if (
-          await btn.isVisible().catch(() => false) &&
-          !(await btn.evaluate(el => el.hasAttribute('disabled')).catch(() => true))
-        ) {
-          await btn.click();
-          await this.page.waitForTimeout(600);
-          break;
-        }
-      }
+      await this.actions.clickFirstActionable('button.btn-primary');
     }
-    await this.page.waitForTimeout(1_000);
 
-    // Address verification popup — appears in two variants:
-    //   popup-sheet layout (pre-payment flow): button.popup-sheet-action-confirm
-    //   modal dialog layout (standalone flow):  button with text "Confirm"
+    // Optional "Confirm your delivery address" modal — appears when the address can't
+    // be auto-verified. Bounded wait because it may not appear for a valid address.
     const confirmBtn = this.page.locator(
-      'button.popup-sheet-action-confirm, button:has-text("Confirm")',
+      'button.popup-sheet-action-confirm, button:has-text("Confirm"), button:has-text("Use this address")',
     ).first();
-    const confirmVisible = await confirmBtn.isVisible().catch(() => false);
-    if (confirmVisible) {
+    await confirmBtn.waitFor({ state: 'visible', timeout: 8_000 }).catch(() => undefined);
+    if (await confirmBtn.isVisible().catch(() => false)) {
       await confirmBtn.click();
-      await this.page.waitForTimeout(1_000);
     }
   }
 
@@ -142,11 +102,10 @@ export class CheckoutPage {
 
   async verifyOrderSummary(): Promise<void> {
     await test.step('Verify order summary — Gold $229', async () => {
-      // $229.00 may exist in hidden pre-payment elements; wait for it to appear
-      // in the visible body text (document.body.innerText returns only visible text)
+      // $229.00 may exist in hidden pre-payment elements; wait for it to appear in
+      // the visible body text (document.body.innerText returns only visible text)
       await this.page.waitForFunction(
         () => (document.body as HTMLElement).innerText.includes('229'),
-        { timeout: 20_000 },
       );
     });
   }
@@ -156,15 +115,10 @@ export class CheckoutPage {
       const btn = this.page.locator(
         'button:has-text("CONTINUE TO PAYMENT"), button:has-text("Continue to Payment"), button.cta-bar-payment-btn',
       ).first();
-      const visible = await btn.isVisible({ timeout: 8_000 }).catch(() => false);
-      if (!visible) return; // payment form already showing
+      if (!(await btn.isVisible().catch(() => false))) return; // payment form already showing
       await btn.click();
       // Wait until a Stripe iframe appears, signalling the payment form loaded
-      await this.page.waitForFunction(
-        () => !!document.querySelector('iframe[src*="stripe"]'),
-        { timeout: 20_000 },
-      );
-      await this.page.waitForTimeout(500);
+      await this.page.waitForFunction(() => !!document.querySelector('iframe[src*="stripe"]'));
     });
   }
 
@@ -172,28 +126,27 @@ export class CheckoutPage {
 
   async fillPaymentDetails(payment: PaymentDetails): Promise<void> {
     await test.step('Fill Stripe card details', async () => {
-      await this.page.waitForFunction(
-        () => !!document.querySelector('iframe[src*="stripe"]'),
-        { timeout: 20_000 },
-      );
-      // Allow all Stripe sub-frames to fully initialise before scanning
-      await this.page.waitForTimeout(2_500);
+      await this.page.waitForFunction(() => !!document.querySelector('iframe[src*="stripe"]'));
 
-      // Scan every frame for card inputs — works across Stripe Payment Element
-      // and Classic Elements which use different iframe URL/title schemes.
+      // Scan every frame for an input matching one of `names` — works across Stripe
+      // Payment Element and Classic Elements, which use different iframe schemes.
       const findInput = async (names: string[]) => {
         for (const frame of this.page.frames()) {
           for (const name of names) {
             const loc = frame.locator(`input[name="${name}"]`);
-            if (await loc.isVisible({ timeout: 500 }).catch(() => false)) {
-              return loc;
-            }
+            if (await loc.isVisible().catch(() => false)) return loc;
           }
         }
         return null;
       };
 
-      const cardInput = await findInput(['number', 'cardnumber', 'card-number']);
+      // Stripe's card-input iframe attaches progressively (the loader UI shows first),
+      // so poll until the card-number field is present rather than guessing a delay.
+      let cardInput: Awaited<ReturnType<typeof findInput>> = null;
+      for (let i = 0; i < 30 && !cardInput; i++) {
+        cardInput = await findInput(['number', 'cardnumber', 'card-number']);
+        if (!cardInput) await this.page.waitForTimeout(500);
+      }
       if (!cardInput) {
         const frameUrls = this.page.frames().map(f => f.url().slice(0, 120)).join('\n');
         throw new Error(`Stripe card input not found in any frame.\nFrames:\n${frameUrls}`);
@@ -201,13 +154,11 @@ export class CheckoutPage {
 
       await cardInput.click();
       await cardInput.pressSequentially(payment.cardNumber, { delay: 30 });
-      await this.page.waitForTimeout(300);
 
       const expiryInput = await findInput(['expiry', 'exp-date', 'exp', 'expiration']);
       if (expiryInput) {
         await expiryInput.click();
         await expiryInput.pressSequentially(payment.expiry, { delay: 30 });
-        await this.page.waitForTimeout(300);
       }
 
       const cvcInput = await findInput(['cvc', 'cvv', 'cvc2', 'security-code']);
@@ -216,28 +167,23 @@ export class CheckoutPage {
         await cvcInput.pressSequentially(payment.cvv, { delay: 30 });
       }
 
-      await this.page.waitForTimeout(500);
-
+      // Optional "billing address same as shipping" checkbox — absent in some variants
       const billingLabel = this.page.locator('label.billing-row-check');
-      const isChecked = await billingLabel.locator('input[type="checkbox"]').isChecked().catch(() => false);
-      if (!isChecked) {
-        await billingLabel.click();
-        await this.page.waitForTimeout(300);
+      if (await billingLabel.isVisible().catch(() => false)) {
+        const isChecked = await billingLabel.locator('input[type="checkbox"]').isChecked().catch(() => false);
+        if (!isChecked) await billingLabel.click();
       }
     });
   }
 
   async completePurchase(): Promise<void> {
     await test.step('Click BUY NOW', async () => {
-      // Wait for BUY NOW to become enabled (card details valid)
-      const buyNow = this.page.locator('button.btn-place-order');
-      await buyNow.waitFor({ state: 'visible', timeout: 10_000 });
-      for (let i = 0; i < 20; i++) {
-        const disabled = await buyNow.evaluate(el => el.hasAttribute('disabled')).catch(() => true);
-        if (!disabled) break;
-        await this.page.waitForTimeout(300);
-      }
-      await buyNow.click();
+      // clickFirstActionable auto-waits for the button to be visible AND enabled
+      // (it stays disabled until the card details are valid). The label/class varies
+      // by variant — "Buy Now" text or the legacy btn-place-order class.
+      await this.actions.clickFirstActionable(
+        'button.btn-place-order, button:has-text("Buy Now")',
+      );
     });
   }
 
@@ -272,7 +218,7 @@ export class CheckoutPage {
       await this.actions.waitForDomLoad();
       await this.verify.waitForLoaderToDisappear();
       await this.verify.waitForProcessingLoaderToDisappear();
-      await this.actions.waitForURL(/\/checkout\/confirmation/, 60_000);
+      await this.actions.waitForURL(/\/checkout\/confirmation/);
     });
   }
 }

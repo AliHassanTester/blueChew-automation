@@ -1,4 +1,4 @@
-import { test as base, BrowserContext } from '@playwright/test';
+import { test as base } from '@playwright/test';
 import { LoginPage } from '@page/login/login.page';
 import { RegistrationPage } from '@page/login/registration.page';
 import { QuizPage } from '@page/quiz/quiz.page';
@@ -17,7 +17,6 @@ type TestFixtures = {
   checkoutPage: CheckoutPage;
   confirmationPage: ConfirmationPage;
   adminPage: AdminPage;
-  adminContext: BrowserContext;
 };
 
 export const test = base.extend<TestFixtures>({
@@ -51,16 +50,11 @@ export const test = base.extend<TestFixtures>({
   confirmationPage: async ({ page }, use) => {
     await use(new ConfirmationPage(page, base.info()));
   },
-  // Admin runs in a separate browser context (second tab/window)
-  adminContext: async ({ browser }, use) => {
-    const context = await browser.newContext();
-    await use(context);
-    await context.close();
-  },
-  adminPage: async ({ adminContext }, use) => {
-    const page = await adminContext.newPage();
-    await use(new AdminPage(page, base.info()));
-    await page.close();
+  // Admin tab is created lazily — no tab opens until navigateAndLogin() is called
+  adminPage: async ({ context }, use) => {
+    const adminPage = new AdminPage(context);
+    await use(adminPage);
+    await adminPage.close();
   },
 });
 

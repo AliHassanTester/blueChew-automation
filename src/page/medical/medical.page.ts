@@ -1,4 +1,4 @@
-import { Page, TestInfo, test } from '@playwright/test';
+import { Page, TestInfo, test, expect } from '@playwright/test';
 import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { MedicalDetails } from '@interfaces/registration.interface';
@@ -14,100 +14,208 @@ export class MedicalPage {
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
   }
 
-  private async fillPersonalInfo(details: MedicalDetails): Promise<void> {
-    await this.page.fill("input[formcontrolname='first_name']", details.firstName);
-    await this.page.fill("input[formcontrolname='last_name']", details.lastName);
-    await this.page.fill("input[formcontrolname='birthday']", details.birthday);
-    await this.page.locator("input[formcontrolname='birthday']").press('Tab');
-    await this.page.waitForTimeout(300);
+  // ── Private helpers ──────────────────────────────────────────────────────────
+
+  /** The single visible CONTINUE button on a DS step. */
+  private continueButton() {
+    return this.page.locator('button[class*="ds-button--primary"]').filter({ visible: true }).first();
   }
 
-  private async fillHealthQuestions(): Promise<void> {
-    // Q2: Sex → Male
-    await this.page.locator('#male-seeking-treatment-yes').check();
-    // Q3: Are you the patient? → Yes
-    await this.page.locator('#are-you-the-patient-yes').check();
-    // Q4: Reason → "I want to see if chewables work better for me"
-    await this.page.locator('#reason-for-choosing-checkbox-4').check();
-    // Q5: Can walk 1 mile? → Yes
-    await this.page.locator('#walk-one-mile-yes').check();
-    // Q6: Climb 2 flights of stairs → About 10 seconds
-    await this.page.locator('#climb-two-stairs-1').check();
-    // Q6b: Fitness agreement (appears dynamically) → Yes
-    const fitnessVisible = await this.page
-      .locator('#fitness-agree-yes')
-      .waitFor({ state: 'visible', timeout: 3_000 })
-      .then(() => true)
-      .catch(() => false);
-    if (fitnessVisible) {
-      await this.page.locator('#fitness-agree-yes').check();
+  /**
+   * True only if CONTINUE is present AND enabled. isVisible() is checked first
+   * (it returns instantly) so we never block on isEnabled() — which would otherwise
+   * auto-wait up to the action timeout when the button isn't rendered yet.
+   */
+  private async isContinueEnabled(): Promise<boolean> {
+    const cont = this.continueButton();
+    if (!(await cont.isVisible().catch(() => false))) return false;
+    return cont.isEnabled().catch(() => false);
+  }
+
+  /**
+   * Clicks CONTINUE. Playwright auto-waits for the button to be visible AND enabled
+   * (DS steps keep it disabled until the step is satisfied). A transient "danger"
+   * snackbar toast can overlay the button and intercept the click, so we first wait
+   * for any such toast to auto-dismiss.
+   */
+  private async clickContinue(): Promise<void> {
+    await this.page.locator('#snackbar').waitFor({ state: 'detached' }).catch(() => undefined);
+    await this.continueButton().click();
+  }
+
+  /** Option tiles a step can render — DS option buttons (sex/patient) and ARIA radios (walk/climb). */
+  private optionTiles(text?: string) {
+    const base = this.page.locator('button.ds-option-selector__option, [role="radio"]');
+    return text ? base.filter({ hasText: new RegExp(`^${text}$`, 'i') }) : base;
+  }
+
+  /** Picks the answer for a single-select question from its page text. */
+  private answerFor(bodyText: string): 'Yes' | 'No' {
+    // Capability / clearance / agreement questions → "Yes" (healthy user);
+    // restriction / condition questions → "No".
+    return /can you|are you able|without chest pain|do you agree|good physical fitness/.test(bodyText)
+      ? 'Yes'
+      : 'No';
+  }
+
+  /**
+   * Auto-advancing single-question step (no CONTINUE) — clicking an option advances
+   * to the next step, so we just click the best option and let the outer loop pick up
+   * the next question. No toBeChecked() here: the option detaches as the page advances.
+   */
+  private async answerAutoAdvanceStep(bodyText: string): Promise<void> {
+    const preferred = this.optionTiles(this.answerFor(bodyText));
+    if (await preferred.count() > 0) {
+      await preferred.first().click();
+    } else {
+      // Non Yes/No question (e.g. "How long to climb 2 flights?") — first option is
+      // the healthiest ("About 10 seconds").
+      await this.optionTiles().first().click();
     }
-    // Q7: Told NOT to have sex? → No
-    await this.page.locator('#healthy-enough-no').check();
-    // Q8: Low blood pressure? → No
-    await this.page.locator('#low-blood-pressure-no').check();
-    // Q9: High blood pressure? → No
-    await this.page.locator('#high-blood-pressure-no').check();
-    // Q10: Vitamins/supplements → "I DO NOT take any of these"
-    await this.page.locator('#taking-other-med-checkbox-4').check();
-    // Q11: Contraindicated medications → "I DO NOT take any of these"
-    await this.page.locator('#take-contra-meds-checkbox-8').check();
-    // Q12: Allergies? → No
-    await this.page.locator('#have-allergies-no').check();
-    // Q13: Medical conditions → "I have NONE of these"
-    await this.page.locator('#abnormal-conditions-5').check();
-    // Q14: Other conditions/surgeries? → No
-    await this.page.locator('#other-med-conditions-no').check();
-    // Q15: Not taking other medications
-    await this.page.locator('#notTakingAnyOtherMeds').check();
-    // Q16: Anything else for provider? → No
-    await this.page.locator('#anything-else-no').check();
-    await this.page.waitForTimeout(400);
   }
 
-  private async submitForm(): Promise<void> {
-    // May need two attempts if a validation modal appears for any missed dynamic field
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      await this.page.locator('button.btn-submit-alone').first().click();
-      await this.page.waitForTimeout(1_500);
+  /**
+   * Multi-select checkbox step (has CONTINUE). Prefers the "I have NONE of these"
+   * option so no follow-up required fields are triggered; falls back to the first
+   * option for steps without a "none" choice (e.g. the Reason step).
+   */
+  private async selectSafeCheckboxOption(): Promise<void> {
+    // The CONTINUE button sits below the option list, so its presence means the full
+    // list (incl. the safe option, which renders last) has rendered.
+    await this.continueButton().waitFor({ state: 'visible' });
 
-      const dismissVisible = await this.page
-        .locator('button:has-text("Dismiss")')
-        .first()
-        .isVisible()
-        .catch(() => false);
+    // The "none" option is worded differently per step: "I have NONE of these",
+    // "I DO NOT take any of these", etc. Match any of them — selecting it avoids the
+    // follow-up required fields that ticking a real option would trigger.
+    const noneCheckbox = this.page.getByRole('checkbox', { name: /none|do not|don'?t/i });
+    if (await noneCheckbox.count() > 0) {
+      // Hidden inputs are positioned off-screen — DOM .click() bypasses coordinate
+      // checks and still triggers Angular's change detection.
+      await noneCheckbox.first().evaluate((el: HTMLElement) => el.click());
+    } else {
+      await this.page.locator('label:not(.ds-input__label)').filter({ visible: true }).first().click();
+    }
+    await this.clickContinue();
+  }
 
-      if (dismissVisible) {
-        await this.page.locator('button:has-text("Dismiss")').first().click();
-        await this.page.waitForTimeout(500);
-        // Re-check fitness agreement if it re-appeared
-        const fa = await this.page.locator('#fitness-agree-yes').isVisible().catch(() => false);
-        if (fa) {
-          await this.page.locator('#fitness-agree-yes').check();
-          await this.page.waitForTimeout(300);
-        }
+  /**
+   * Multi-question radiogroup step (has CONTINUE). Answers every unanswered group
+   * from the page text, confirming each with toBeChecked() (safe here — these pages
+   * don't auto-advance), then clicks CONTINUE if it has enabled. If more questions
+   * disclose progressively, CONTINUE stays disabled and the outer loop re-enters.
+   */
+  private async answerRadiogroupStep(bodyText: string): Promise<void> {
+    const name = this.answerFor(bodyText);
+    const groups = this.page.getByRole('radiogroup');
+    const total = await groups.count();
+
+    for (let i = 0; i < total; i++) {
+      const group = groups.nth(i);
+      if (await group.getByRole('radio', { checked: true }).count() > 0) continue;
+
+      const target = group.getByRole('radio', { name, exact: true });
+      const radio  = (await target.count() > 0) ? target.first() : group.getByRole('radio').first();
+      await radio.click();
+      await expect(radio).toBeChecked();
+    }
+
+    // The CONTINUE click can race with an auto-advance/re-render that detaches the
+    // button — that's fine, the answers registered and the step moved on. The outer
+    // loop re-evaluates the next step either way, so a detach here is non-fatal.
+    if (await this.isContinueEnabled()) await this.clickContinue().catch(() => undefined);
+  }
+
+  /**
+   * Clicks whatever "proceed" control a transition / info page shows. Most steps use
+   * the DS CONTINUE button, but transition pages (e.g. "Meet Gold") use a generic
+   * element styled as a CONTINUE link. Dismisses any blocking snackbar first.
+   */
+  private async clickProceed(): Promise<void> {
+    await this.page.locator('#snackbar').waitFor({ state: 'detached' }).catch(() => undefined);
+    const ds = this.continueButton();
+    if (await ds.isVisible().catch(() => false)) {
+      await ds.click();
+    } else {
+      await this.page.locator(':text-is("CONTINUE")').filter({ visible: true }).first().click();
+    }
+  }
+
+  /**
+   * Drives the remaining health questions and transitions. Each step is one of:
+   *   • auto-advancing single question (options, no CONTINUE) → click best option
+   *   • checkbox step (has CONTINUE)                          → safe option + CONTINUE
+   *   • multi-question radiogroup (has CONTINUE)              → answer all + CONTINUE
+   *   • transition / info page (only a CONTINUE)              → click CONTINUE
+   * Loops until the flow leaves /medical.
+   */
+  private async completeRemainingMedicalSteps(): Promise<void> {
+    const stepControl = this.page
+      .locator('button.ds-option-selector__option, [role="radio"], [role="checkbox"], :text-is("CONTINUE")')
+      .first();
+
+    for (let step = 0; step < 40; step++) {
+      if (!this.page.url().includes('/medical')) break;
+      await stepControl.waitFor({ state: 'visible' }).catch(() => undefined);
+      if (!this.page.url().includes('/medical')) break;
+
+      const bodyText      = (await this.page.locator('body').innerText().catch(() => '')).toLowerCase();
+      const hasDsContinue = await this.continueButton().isVisible().catch(() => false);
+      const hasCheckbox   = (await this.page.getByRole('checkbox').count()) > 0;
+      const hasRadiogroup = (await this.page.getByRole('radiogroup').count()) > 0;
+      const hasOptions    = (await this.optionTiles().count()) > 0;
+
+      if (hasCheckbox && hasDsContinue) {
+        await this.selectSafeCheckboxOption();
+      } else if (hasRadiogroup && hasDsContinue) {
+        await this.answerRadiogroupStep(bodyText);
+      } else if (hasOptions && !hasDsContinue) {
+        await this.answerAutoAdvanceStep(bodyText);
       } else {
-        break;
+        // Transition / info page (e.g. "Meet Gold") — just proceed.
+        await this.clickProceed();
       }
     }
   }
 
+  // ── Public API ───────────────────────────────────────────────────────────────
+
   async completeMedicalProfile(details: MedicalDetails): Promise<void> {
-    await test.step('Complete medical profile form', async () => {
-      await this.page
-        .locator("input[formcontrolname='first_name']")
-        .waitFor({ state: 'visible', timeout: 15_000 });
+    await test.step('Complete medical profile', async () => {
 
-      await test.step('Fill personal information', async () => {
-        await this.fillPersonalInfo(details);
+      // ── Step 1: Legal name ─────────────────────────────────────────────────
+      await test.step('Enter legal name', async () => {
+        await this.page.locator('input[aria-label="Legal First Name"]').fill(details.firstName);
+        await this.page.locator('input[aria-label="Legal Last Name"]').fill(details.lastName);
+        await this.clickContinue();
       });
 
-      await test.step('Answer health questions', async () => {
-        await this.fillHealthQuestions();
+      // ── Step 2: Date of birth ──────────────────────────────────────────────
+      await test.step('Enter date of birth', async () => {
+        const birthday = this.page.locator('input[formcontrolname="birthday"]');
+        await birthday.click();
+        // Type digits only — the field auto-formats to MM/DD/YYYY
+        await birthday.pressSequentially(details.birthday.replace(/\//g, ''), { delay: 50 });
+        await this.clickContinue();
       });
 
-      await test.step('Submit medical form', async () => {
-        await this.submitForm();
+      // ── Step 3: Sex → Male (auto-advances) ────────────────────────────────
+      await test.step('Select biological sex', async () => {
+        await this.optionTiles('Male').first().click();
+      });
+
+      // ── Step 4: Patient → Yes (auto-advances) ─────────────────────────────
+      await test.step('Confirm patient status', async () => {
+        await this.optionTiles('Yes').first().click();
+      });
+
+      // ── Step 5: Reason for choosing BlueChew — checkboxes ─────────────────
+      await test.step('Select reason for choosing BlueChew', async () => {
+        await this.selectSafeCheckboxOption();
+      });
+
+      // ── Steps 6+: remaining health questions ──────────────────────────────
+      await test.step('Complete remaining health questions', async () => {
+        await this.completeRemainingMedicalSteps();
       });
 
       await this.actions.waitForDomLoad();
@@ -118,7 +226,7 @@ export class MedicalPage {
 
   async verifyNavigatedToCheckout(): Promise<void> {
     await test.step('Verify navigation to checkout', async () => {
-      await this.actions.waitForURL(/\/checkout/, 20_000);
+      await this.actions.waitForURL(/\/checkout/);
     });
   }
 }

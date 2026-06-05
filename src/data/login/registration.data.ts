@@ -9,46 +9,78 @@ export interface RegistrationTestCaseData {
 }
 
 const env = getEnvVars({
-  password:               null,  // required — reuse login password
-  DEV_GATE_URL:           'https://dev.app.bluechew.com/dev-login',
-  LOGIN_URL:              'https://dev.app.bluechew.com/log-in',
-  REGISTRATION_URL:       'https://dev.app.bluechew.com/register',
-  POST_REGISTRATION_URL:  'https://dev.bluechew.com/quiz',
-  STRIPE_CARD_NUMBER:     '4242424242424242',
-  STRIPE_CARD_EXP:        '12/28',
-  STRIPE_CARD_CVV:        '123',
-  ADMIN_URL:              'https://dev.admin.bluechew.com',
-  ADMIN_EMAIL:            'ali@meds.com',
-  ADMIN_PASSWORD:         null,  // required — set in .env.dev
+  password:           null,   // required — registration + login password
+  DEV_GATE_URL:       'https://dev.app.bluechew.com/dev-login',
+  LOGIN_URL:          'https://dev.app.bluechew.com/log-in',
+  REGISTRATION_URL:   'https://dev.app.bluechew.com/register',
+  QUIZ_URL:           'https://dev.bluechew.com/quiz',
+  STRIPE_CARD_NUMBER: '4242424242424242',
+  STRIPE_CARD_EXP:    '12/28',
+  STRIPE_CARD_CVV:    '123',
+  ADMIN_URL:          'https://dev.admin.bluechew.com',
+  ADMIN_EMAIL:        'ali@meds.com',
+  ADMIN_PASSWORD:     null,   // required — set in .env.dev
 });
 
-// aliQA prefix makes test accounts easy to identify and clean up in the DB
-function generateTestEmail(): string {
-  return `aliQA.${generateRandomAlphanumeric(3)}.${Date.now()}@gmail.com`;
+// ── Test-account generation ──────────────────────────────────────────────────
+const FIRST_NAMES  = ['John', 'Jane', 'James', 'Mary', 'Robert', 'Patricia', 'Michael', 'Jennifer', 'William', 'Linda'];
+const LAST_NAMES   = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez'];
+const STREETS      = ['Main', 'Oak', 'Maple', 'Pine', 'Elm', 'Cedar', 'Birch', 'Walnut', 'Cherry', 'Ash'];
+const STREET_TYPES = ['St', 'Ave', 'Blvd', 'Ln', 'Rd', 'Dr', 'Ct', 'Way'];
+
+const pick = <T>(items: T[]): T => items[Math.floor(Math.random() * items.length)];
+
+/** Random date of birth (MM/DD/YYYY) for an 18–80 year-old. */
+function randomDOB(): string {
+  const now = new Date();
+  const oldest = new Date(now.getFullYear() - 80, now.getMonth(), now.getDate()).getTime();
+  const youngest = new Date(now.getFullYear() - 18, now.getMonth(), now.getDate()).getTime();
+  const d = new Date(oldest + Math.random() * (youngest - oldest));
+  return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
+/**
+ * Builds a fresh test account. A single runId (random + timestamp) is shared across the
+ * email, name and address so every field of one account carries the same suffix, making
+ * automation accounts easy to find and correlate in the DB / admin portal.
+ */
+function buildTestAccount() {
+  const runId = `${generateRandomAlphanumeric(4)}.${Date.now()}`;
+  return {
+    email:         `test.${runId}@automation-test.com`,
+    firstName:     `${pick(FIRST_NAMES)}.${runId}`,
+    lastName:      `${pick(LAST_NAMES)}.${runId}`,
+    birthday:      randomDOB(),
+    streetAddress: `${Math.floor(Math.random() * 9999) + 1} ${pick(STREETS)} ${pick(STREET_TYPES)} ${runId}`,
+  };
+}
+
+const account = buildTestAccount();
+
 const registrationTestData: { [key: string]: RegistrationTestCaseData } = {
-  'AQ-01-User-Registration': {
+  'AQ-01-Sign-up-To-Approved-Order-E2E': {
     registrationDetails: {
-      devGateURL:           env.DEV_GATE_URL,
-      loginURL:             env.LOGIN_URL,
-      registrationURL:      env.REGISTRATION_URL,
-      adminURL:             env.ADMIN_URL,
-      adminEmail:           env.ADMIN_EMAIL,
-      adminPassword:        env.ADMIN_PASSWORD,
-      state:                'New York',
-      email:                generateTestEmail(),
-      password:             env.password,
-      postRegistrationURL:  env.POST_REGISTRATION_URL,
-      // Q1: "All of the above" (index 2), Q2: "Yes" (index 0), Q3: "No, just standard" (index 1)
+      devGateURL:      env.DEV_GATE_URL,
+      loginURL:        env.LOGIN_URL,
+      registrationURL: env.REGISTRATION_URL,
+      quizURL:         env.QUIZ_URL,
+      adminURL:        env.ADMIN_URL,
+      adminEmail:      env.ADMIN_EMAIL,
+      adminPassword:   env.ADMIN_PASSWORD,
+      state:           'New York',
+      email:           account.email,
+      password:        env.password,
+      // Q1: "All of the above" (index 2)
+      // Q2: "Yes" (index 0)
+      // Q3: "No, just the standard strength" (index 1)
       quizAnswers: [2, 0, 1],
       medical: {
-        firstName: 'Ali',
-        lastName:  'QA',
-        birthday:  '01/01/1990',
+        firstName: account.firstName,
+        lastName:  account.lastName,
+        birthday:  account.birthday,
       },
       shipping: {
-        streetAddress: '123 Main St',
+        streetAddress: account.streetAddress,
         city:          'New York',
         state:         'New York',
         zip:           '10001',
@@ -61,11 +93,12 @@ const registrationTestData: { [key: string]: RegistrationTestCaseData } = {
       },
     },
     testCaseData: {
-      tags: '@regression @smoke @registration',
-      testCase: 'AQ-01-User-Registration',
-      testDescription: 'New user can complete the full onboarding flow: registration → quiz → results → medical profile → checkout',
+      tags: '@regression @smoke @e2e',
+      testCase: 'AQ-01-Sign-up-To-Approved-Order-E2E',
+      testDescription:
+        'New customer completes the full journey: sign up → quiz → results → medical → checkout → payment → provider review/approval → first order',
       testSummary:
-        'Verify that a new user can register, complete the quiz, view recommendations, fill the medical profile, and reach the checkout shipping step.',
+        'Verify a new customer can sign up, complete the quiz and medical profile, purchase via checkout, be approved in provider review, and have a first order created from the admin portal.',
     },
   },
 };

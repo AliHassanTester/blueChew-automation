@@ -2,9 +2,9 @@ import { logTestCaseData } from '@utilities/test.helper.utils';
 import { getRegistrationData } from '@data/login/registration.data';
 import { test } from '@fixtures/page.fixtures';
 
-const scenario = getRegistrationData('AQ-01-User-Registration');
+const scenario = getRegistrationData('AQ-01-Sign-up-To-Approved-Order-E2E');
 
-test.describe('Feature: User Registration', () => {
+test.describe('Feature: Sign-up to Approved Order (E2E)', () => {
   test(
     `
     Test case: '${scenario.testCaseData.testCase}'
@@ -12,14 +12,17 @@ test.describe('Feature: User Registration', () => {
     Tags: '${scenario.testCaseData.tags}'
   `,
     async ({ registrationPage, quizPage, resultsPage, medicalPage, checkoutPage, confirmationPage, adminPage }) => {
-      logTestCaseData(test.info(), scenario.testCaseData);
+      await logTestCaseData(test.info(), scenario.testCaseData, {
+        feature: 'Onboarding',
+        story: 'Sign-up to Approved Order',
+      });
       const d = scenario.registrationDetails;
 
       test.info().annotations.push({ type: 'Test Email', description: d.email });
-      console.log(`[Registration] test email: ${d.email}`);
+      console.log(`[E2E] test email: ${d.email}`);
 
       // ── Registration ─────────────────────────────────────────────────────────
-      await test.step('Navigate directly to registration page (/register)', async () => {
+      await test.step('Navigate to login page and click Sign Up CTA → /register', async () => {
         await registrationPage.navigateToRegistrationPage(d);
       });
 
@@ -28,7 +31,7 @@ test.describe('Feature: User Registration', () => {
       });
 
       await test.step('Verify successful registration and quiz page loaded', async () => {
-        await registrationPage.verifyRegistrationSuccess(d.postRegistrationURL);
+        await registrationPage.verifyRegistrationSuccess(d.quizURL);
       });
 
       // ── Quiz ─────────────────────────────────────────────────────────────────
@@ -66,6 +69,21 @@ test.describe('Feature: User Registration', () => {
       await adminPage.navigateAndLogin(d.adminURL, d.adminEmail, d.adminPassword);
       await adminPage.navigateToUsers();
       await adminPage.searchUser(d.email);
+      await adminPage.openUserDetail(d.email);
+
+      // ── Provider review (care portal) — verify ID + approve ───────────────────
+      await adminPage.reviewAndApprove(d.adminEmail, d.adminPassword);
+      await adminPage.verifyApprovedStatus();
+
+      // ── Add a manual order and verify it was created ──────────────────────────
+      await adminPage.addOrder('$0 - Next Business Day', 'Automation test order');
+      await adminPage.verifyOrderAdded();
+
+      // ── Verify the product subscription has started for the new customer ───────
+      await adminPage.verifySubscriptionStarted();
+
+      // ── Patient side — refresh the queue/televisit page and verify activation ──
+      await confirmationPage.verifyTelevisit();
     },
   );
 });
