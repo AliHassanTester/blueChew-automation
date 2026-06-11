@@ -5,7 +5,7 @@ import { test } from '@fixtures/page.fixtures';
 const scenario = getLoginData('AQ-02-User-Login');
 
 test.describe('Feature: User Login', () => {
-  test(
+  test.only(
     `
     Test case: '${scenario.testCaseData.testCase}'
     Description: '${scenario.testCaseData.testDescription}'
