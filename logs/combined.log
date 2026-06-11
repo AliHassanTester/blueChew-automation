@@ -1,0 +1,116 @@
+{"label":"GlobalSetup","level":"info","message":"═══════════════════════════════════════════════","timestamp":"2026-05-18 11:28:16"}
+{"label":"GlobalSetup","level":"info","message":"  Enterprise Playwright Framework — Global Setup","timestamp":"2026-05-18 11:28:16"}
+{"label":"GlobalSetup","level":"info","message":"═══════════════════════════════════════════════","timestamp":"2026-05-18 11:28:16"}
+{"label":"GlobalSetup","level":"info","message":"Environment : development","timestamp":"2026-05-18 11:28:16"}
+{"label":"GlobalSetup","level":"info","message":"App URL     : http://localhost:3000","timestamp":"2026-05-18 11:28:16"}
+{"label":"GlobalSetup","level":"info","message":"───────────────────────────────────────────────","timestamp":"2026-05-18 11:28:16"}
+{"label":"FileHelper","level":"debug","message":"Created directory: screenshots","timestamp":"2026-05-18 11:28:16"}
+{"label":"FileHelper","level":"debug","message":"Created directory: videos","timestamp":"2026-05-18 11:28:16"}
+{"label":"FileHelper","level":"debug","message":"Created directory: traces","timestamp":"2026-05-18 11:28:16"}
+{"label":"FileHelper","level":"debug","message":"Created directory: playwright-auth","timestamp":"2026-05-18 11:28:16"}
+{"label":"AuthHelper","level":"info","message":"Saving admin auth state via browser login...","timestamp":"2026-05-18 11:28:16"}
+{"error":"browserType.launch: Executable doesn't exist at C:\\Users\\HP\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1223\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝","label":"GlobalSetup","level":"warn","message":"Auth state setup failed — tests that require authentication will fail.","timestamp":"2026-05-18 11:28:16"}
+{"label":"GlobalSetup","level":"info","message":"Global setup complete","timestamp":"2026-05-18 11:28:16"}
+{"label":"TestRun","level":"info","message":"════════════════════════════════════════════════","timestamp":"2026-05-18 11:28:20"}
+{"label":"TestRun","level":"info","message":"  Test Run Starting","timestamp":"2026-05-18 11:28:20"}
+{"label":"TestRun","level":"info","message":"  Tests  : 2","timestamp":"2026-05-18 11:28:20"}
+{"label":"TestRun","level":"info","message":"  Workers: 1","timestamp":"2026-05-18 11:28:20"}
+{"label":"TestRun","level":"info","message":"════════════════════════════════════════════════","timestamp":"2026-05-18 11:28:20"}
+{"label":"TestRun","level":"debug","message":"▶  › chromium › e2e\\login.spec.ts › Login — Functional › login page renders email input, password input, and submit button","timestamp":"2026-05-18 11:28:22"}
+{"label":"TestRun","level":"error","message":"✗ FAIL (0s)  › chromium › e2e\\login.spec.ts › Login — Functional › login page renders email input, password input, and submit button","timestamp":"2026-05-18 11:28:23"}
+{"label":"TestRun","level":"error","message":"  Error: Error: browserType.connect: Executable doesn't exist at C:\\Users\\HP\\AppData\\Local\\ms-playwright\\chromium-1223\\chrome-win64\\chrome.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝","timestamp":"2026-05-18 11:28:23"}
+{"label":"TestRun","level":"debug","message":"▶  › chromium › e2e\\login.spec.ts › Login — Functional › user logs in with valid credentials and lands on MY PLAN page","timestamp":"2026-05-18 11:28:25"}
+{"label":"TestRun","level":"error","message":"✗ FAIL (0s)  › chromium › e2e\\login.spec.ts › Login — Functional › user logs in with valid credentials and lands on MY PLAN page","timestamp":"2026-05-18 11:28:25"}
+{"label":"TestRun","level":"error","message":"  Error: Error: browserType.connect: Executable doesn't exist at C:\\Users\\HP\\AppData\\Local\\ms-playwright\\chromium-1223\\chrome-win64\\chrome.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝","timestamp":"2026-05-18 11:28:25"}
+{"label":"TestRun","level":"info","message":"════════════════════════════════════════════════","timestamp":"2026-05-18 11:28:25"}
+{"label":"TestRun","level":"info","message":"  Test Run Complete — FAILED","timestamp":"2026-05-18 11:28:25"}
+{"label":"TestRun","level":"info","message":"  Duration : 4s","timestamp":"2026-05-18 11:28:25"}
+{"label":"TestRun","level":"info","message":"  Total    : 2","timestamp":"2026-05-18 11:28:25"}
+{"label":"TestRun","level":"info","message":"  Passed   : 0","timestamp":"2026-05-18 11:28:25"}
+{"label":"TestRun","level":"info","message":"  Failed   : 2","timestamp":"2026-05-18 11:28:25"}
+{"label":"TestRun","level":"info","message":"  Timed Out: 0","timestamp":"2026-05-18 11:28:25"}
+{"label":"TestRun","level":"info","message":"  Skipped  : 0","timestamp":"2026-05-18 11:28:25"}
+{"label":"TestRun","level":"info","message":"════════════════════════════════════════════════","timestamp":"2026-05-18 11:28:25"}
+{"label":"TestRun","level":"info","message":"════════════════════════════════════════════════","timestamp":"2026-05-18 16:42:14"}
+{"label":"TestRun","level":"info","message":"  Test Run Starting","timestamp":"2026-05-18 16:42:14"}
+{"label":"TestRun","level":"info","message":"  Tests  : 6","timestamp":"2026-05-18 16:42:14"}
+{"label":"TestRun","level":"info","message":"  Workers: 1","timestamp":"2026-05-18 16:42:14"}
+{"label":"TestRun","level":"info","message":"════════════════════════════════════════════════","timestamp":"2026-05-18 16:42:14"}
+{"label":"TestRun","level":"debug","message":"▶  › chromium › e2e\\login.spec.ts › Login — Regression › wrong credentials shows error and stays on /log-in","timestamp":"2026-05-18 16:42:17"}
+{"label":"LoginPage","level":"info","message":"── STEP: Navigating to http://localhost:3000/log-in","timestamp":"2026-05-18 16:42:18"}
+{"label":"TestRun","level":"error","message":"✗ FAIL (3s)  › chromium › e2e\\login.spec.ts › Login — Regression › wrong credentials shows error and stays on /log-in","timestamp":"2026-05-18 16:42:21"}
+{"label":"TestRun","level":"error","message":"  Error: Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/log-in\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/log-in\", waiting until \"domcontentloaded\"\u001b[22m\n","timestamp":"2026-05-18 16:42:21"}
+{"label":"TestRun","level":"debug","message":"▶  › chromium › e2e\\login.spec.ts › Login — Regression › empty email field blocks submission","timestamp":"2026-05-18 16:42:24"}
+{"label":"LoginPage","level":"info","message":"── STEP: Navigating to http://localhost:3000/log-in","timestamp":"2026-05-18 16:42:24"}
+{"label":"TestRun","level":"error","message":"✗ FAIL (0s)  › chromium › e2e\\login.spec.ts › Login — Regression › empty email field blocks submission","timestamp":"2026-05-18 16:42:25"}
+{"label":"TestRun","level":"error","message":"  Error: Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/log-in\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/log-in\", waiting until \"domcontentloaded\"\u001b[22m\n","timestamp":"2026-05-18 16:42:25"}
+{"label":"TestRun","level":"debug","message":"▶  › chromium › e2e\\login.spec.ts › Login — Regression › empty password field blocks submission","timestamp":"2026-05-18 16:42:27"}
+{"label":"LoginPage","level":"info","message":"── STEP: Navigating to http://localhost:3000/log-in","timestamp":"2026-05-18 16:42:28"}
+{"label":"TestRun","level":"error","message":"✗ FAIL (3s)  › chromium › e2e\\login.spec.ts › Login — Regression › empty password field blocks submission","timestamp":"2026-05-18 16:42:31"}
+{"label":"TestRun","level":"error","message":"  Error: Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/log-in\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/log-in\", waiting until \"domcontentloaded\"\u001b[22m\n","timestamp":"2026-05-18 16:42:31"}
+{"label":"TestRun","level":"debug","message":"▶  › chromium › e2e\\login.spec.ts › Login — Regression › malformed email blocks submission","timestamp":"2026-05-18 16:42:33"}
+{"label":"LoginPage","level":"info","message":"── STEP: Navigating to http://localhost:3000/log-in","timestamp":"2026-05-18 16:42:35"}
+{"label":"TestRun","level":"error","message":"✗ FAIL (4s)  › chromium › e2e\\login.spec.ts › Login — Regression › malformed email blocks submission","timestamp":"2026-05-18 16:42:38"}
+{"label":"TestRun","level":"error","message":"  Error: Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/log-in\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/log-in\", waiting until \"domcontentloaded\"\u001b[22m\n","timestamp":"2026-05-18 16:42:38"}
+{"label":"TestRun","level":"debug","message":"▶  › chromium › e2e\\login.spec.ts › Login — Regression › Forgot Email? link navigates to /auth/forgot-email","timestamp":"2026-05-18 16:42:40"}
+{"label":"LoginPage","level":"info","message":"── STEP: Navigating to http://localhost:3000/log-in","timestamp":"2026-05-18 16:42:42"}
+{"label":"TestRun","level":"error","message":"✗ FAIL (4s)  › chromium › e2e\\login.spec.ts › Login — Regression › Forgot Email? link navigates to /auth/forgot-email","timestamp":"2026-05-18 16:42:45"}
+{"label":"TestRun","level":"error","message":"  Error: Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/log-in\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/log-in\", waiting until \"domcontentloaded\"\u001b[22m\n","timestamp":"2026-05-18 16:42:45"}
+{"label":"TestRun","level":"debug","message":"▶  › chromium › e2e\\login.spec.ts › Login — Regression › Sign Up tab navigates to /register","timestamp":"2026-05-18 16:42:47"}
+{"label":"LoginPage","level":"info","message":"── STEP: Navigating to http://localhost:3000/log-in","timestamp":"2026-05-18 16:42:48"}
+{"label":"TestRun","level":"error","message":"✗ FAIL (4s)  › chromium › e2e\\login.spec.ts › Login — Regression › Sign Up tab navigates to /register","timestamp":"2026-05-18 16:42:51"}
+{"label":"TestRun","level":"error","message":"  Error: Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/log-in\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/log-in\", waiting until \"domcontentloaded\"\u001b[22m\n","timestamp":"2026-05-18 16:42:51"}
+{"label":"TestRun","level":"info","message":"════════════════════════════════════════════════","timestamp":"2026-05-18 16:42:52"}
+{"label":"TestRun","level":"info","message":"  Test Run Complete — FAILED","timestamp":"2026-05-18 16:42:52"}
+{"label":"TestRun","level":"info","message":"  Duration : 37s","timestamp":"2026-05-18 16:42:52"}
+{"label":"TestRun","level":"info","message":"  Total    : 6","timestamp":"2026-05-18 16:42:52"}
+{"label":"TestRun","level":"info","message":"  Passed   : 0","timestamp":"2026-05-18 16:42:52"}
+{"label":"TestRun","level":"info","message":"  Failed   : 6","timestamp":"2026-05-18 16:42:52"}
+{"label":"TestRun","level":"info","message":"  Timed Out: 0","timestamp":"2026-05-18 16:42:52"}
+{"label":"TestRun","level":"info","message":"  Skipped  : 0","timestamp":"2026-05-18 16:42:52"}
+{"label":"TestRun","level":"info","message":"════════════════════════════════════════════════","timestamp":"2026-05-18 16:42:52"}
+{"label":"TestRun","level":"info","message":"════════════════════════════════════════════════","timestamp":"2026-05-18 17:36:29"}
+{"label":"TestRun","level":"info","message":"  Test Run Starting","timestamp":"2026-05-18 17:36:29"}
+{"label":"TestRun","level":"info","message":"  Tests  : 1","timestamp":"2026-05-18 17:36:29"}
+{"label":"TestRun","level":"info","message":"  Workers: 1","timestamp":"2026-05-18 17:36:29"}
+{"label":"TestRun","level":"info","message":"════════════════════════════════════════════════","timestamp":"2026-05-18 17:36:29"}
+{"label":"TestRun","level":"debug","message":"▶  › chromium › accessibility\\a11y.spec.ts › Accessibility Audit › Login page meets WCAG 2.1 AA","timestamp":"2026-05-18 17:36:31"}
+{"label":"LoginPage","level":"info","message":"── STEP: Navigating to http://localhost:3000/log-in","timestamp":"2026-05-18 17:36:32"}
+{"label":"TestRun","level":"error","message":"✗ FAIL (3s)  › chromium › accessibility\\a11y.spec.ts › Accessibility Audit › Login page meets WCAG 2.1 AA","timestamp":"2026-05-18 17:36:35"}
+{"label":"TestRun","level":"error","message":"  Error: Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/log-in\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/log-in\", waiting until \"domcontentloaded\"\u001b[22m\n","timestamp":"2026-05-18 17:36:35"}
+{"label":"TestRun","level":"info","message":"════════════════════════════════════════════════","timestamp":"2026-05-18 17:36:36"}
+{"label":"TestRun","level":"info","message":"  Test Run Complete — FAILED","timestamp":"2026-05-18 17:36:36"}
+{"label":"TestRun","level":"info","message":"  Duration : 6s","timestamp":"2026-05-18 17:36:36"}
+{"label":"TestRun","level":"info","message":"  Total    : 1","timestamp":"2026-05-18 17:36:36"}
+{"label":"TestRun","level":"info","message":"  Passed   : 0","timestamp":"2026-05-18 17:36:36"}
+{"label":"TestRun","level":"info","message":"  Failed   : 1","timestamp":"2026-05-18 17:36:36"}
+{"label":"TestRun","level":"info","message":"  Timed Out: 0","timestamp":"2026-05-18 17:36:36"}
+{"label":"TestRun","level":"info","message":"  Skipped  : 0","timestamp":"2026-05-18 17:36:36"}
+{"label":"TestRun","level":"info","message":"════════════════════════════════════════════════","timestamp":"2026-05-18 17:36:36"}
+{"label":"GlobalSetup","level":"info","message":"═══════════════════════════════════════════════","timestamp":"2026-05-19 14:24:12"}
+{"label":"GlobalSetup","level":"info","message":"  Enterprise Playwright Framework — Global Setup","timestamp":"2026-05-19 14:24:12"}
+{"label":"GlobalSetup","level":"info","message":"═══════════════════════════════════════════════","timestamp":"2026-05-19 14:24:12"}
+{"label":"GlobalSetup","level":"info","message":"Environment : development","timestamp":"2026-05-19 14:24:12"}
+{"label":"GlobalSetup","level":"info","message":"App URL     : http://localhost:3000","timestamp":"2026-05-19 14:24:12"}
+{"label":"GlobalSetup","level":"info","message":"───────────────────────────────────────────────","timestamp":"2026-05-19 14:24:12"}
+{"label":"AuthHelper","level":"info","message":"Saving admin auth state via browser login...","timestamp":"2026-05-19 14:24:12"}
+{"error":"page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/log-in\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/log-in\", waiting until \"domcontentloaded\"\u001b[22m\n","label":"GlobalSetup","level":"warn","message":"Auth state setup failed — tests that require authentication will fail.","timestamp":"2026-05-19 14:24:14"}
+{"label":"GlobalSetup","level":"info","message":"Global setup complete","timestamp":"2026-05-19 14:24:14"}
+{"label":"TestRun","level":"info","message":"════════════════════════════════════════════════","timestamp":"2026-05-19 14:24:15"}
+{"label":"TestRun","level":"info","message":"  Test Run Starting","timestamp":"2026-05-19 14:24:15"}
+{"label":"TestRun","level":"info","message":"  Tests  : 1","timestamp":"2026-05-19 14:24:15"}
+{"label":"TestRun","level":"info","message":"  Workers: 1","timestamp":"2026-05-19 14:24:15"}
+{"label":"TestRun","level":"info","message":"════════════════════════════════════════════════","timestamp":"2026-05-19 14:24:15"}
+{"label":"TestRun","level":"debug","message":"▶  › chromium › e2e\\login.spec.ts › Login — Functional › login page renders email input, password input, and submit button","timestamp":"2026-05-19 14:24:16"}
+{"label":"LoginPage","level":"info","message":"── STEP: Navigating to http://localhost:3000/log-in","timestamp":"2026-05-19 14:24:17"}
+{"label":"TestRun","level":"error","message":"✗ FAIL (3s)  › chromium › e2e\\login.spec.ts › Login — Functional › login page renders email input, password input, and submit button","timestamp":"2026-05-19 14:24:21"}
+{"label":"TestRun","level":"error","message":"  Error: Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/log-in\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/log-in\", waiting until \"domcontentloaded\"\u001b[22m\n","timestamp":"2026-05-19 14:24:21"}
+{"label":"TestRun","level":"info","message":"════════════════════════════════════════════════","timestamp":"2026-05-19 14:24:21"}
+{"label":"TestRun","level":"info","message":"  Test Run Complete — FAILED","timestamp":"2026-05-19 14:24:21"}
+{"label":"TestRun","level":"info","message":"  Duration : 5s","timestamp":"2026-05-19 14:24:21"}
+{"label":"TestRun","level":"info","message":"  Total    : 1","timestamp":"2026-05-19 14:24:21"}
+{"label":"TestRun","level":"info","message":"  Passed   : 0","timestamp":"2026-05-19 14:24:21"}
+{"label":"TestRun","level":"info","message":"  Failed   : 1","timestamp":"2026-05-19 14:24:21"}
+{"label":"TestRun","level":"info","message":"  Timed Out: 0","timestamp":"2026-05-19 14:24:21"}
+{"label":"TestRun","level":"info","message":"  Skipped  : 0","timestamp":"2026-05-19 14:24:21"}
+{"label":"TestRun","level":"info","message":"════════════════════════════════════════════════","timestamp":"2026-05-19 14:24:21"}
