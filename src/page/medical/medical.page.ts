@@ -1,25 +1,52 @@
-import { Page, TestInfo, test, expect } from '@playwright/test';
+import { Page, TestInfo, test, expect, Locator } from '@playwright/test';
 import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
+import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { MedicalDetails } from '@interfaces/registration.interface';
 
+/**
+ * Medical-profile wizard (/medical). Stable fields expose aria-labels / formcontrolname,
+ * the multi-select question groups expose `data-test-id` containers, and every CONTINUE/SUBMIT
+ * is a `ds-button--primary`. The per-step question controls (option tiles, radiogroups,
+ * checkboxes) are matched dynamically by role/text because the step sequence is data-driven.
+ */
 export class MedicalPage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
   private readonly verify: PlaywrightVerificationFactory;
+  private readonly locators: { [key: string]: LocatorInfo };
 
   constructor(page: Page, testInfo: TestInfo) {
     this.page = page;
     this.actions = new PlaywrightActionFactory(page, testInfo);
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
+
+    this.locators = {
+      // ── Step 1: legal name ─────────────────────────────────────────────────
+      firstNameInput: {
+        description: 'Legal First Name Input',
+        locator: this.page.locator('input[aria-label="Legal First Name"]'),
+      },
+      lastNameInput: {
+        description: 'Legal Last Name Input',
+        locator: this.page.locator('input[aria-label="Legal Last Name"]'),
+      },
+
+      // ── Step 2: date of birth ──────────────────────────────────────────────
+      birthdayInput: {
+        description: 'Date of Birth Input',
+        locator: this.page.locator('input[formcontrolname="birthday"]'),
+      },
+
+      // ── Active-step primary action — the single visible CONTINUE / SUBMIT ───
+      continueButton: {
+        description: 'Active Step CONTINUE / SUBMIT Button',
+        locator: this.page.locator('button[class*="ds-button--primary"]').filter({ visible: true }).first(),
+      },
+    };
   }
 
   // ── Private helpers ──────────────────────────────────────────────────────────
-
-  /** The single visible CONTINUE button on a DS step. */
-  private continueButton() {
-    return this.page.locator('button[class*="ds-button--primary"]').filter({ visible: true }).first();
-  }
 
   /**
    * True only if CONTINUE is present AND enabled. isVisible() is checked first
@@ -27,7 +54,7 @@ export class MedicalPage {
    * auto-wait up to the action timeout when the button isn't rendered yet.
    */
   private async isContinueEnabled(): Promise<boolean> {
-    const cont = this.continueButton();
+    const cont = this.locators.continueButton.locator;
     if (!(await cont.isVisible().catch(() => false))) return false;
     return cont.isEnabled().catch(() => false);
   }
@@ -40,11 +67,11 @@ export class MedicalPage {
    */
   private async clickContinue(): Promise<void> {
     await this.page.locator('#snackbar').waitFor({ state: 'detached' }).catch(() => undefined);
-    await this.continueButton().click();
+    await this.actions.click(this.locators.continueButton);
   }
 
   /** Option tiles a step can render — DS option buttons (sex/patient) and ARIA radios (walk/climb). */
-  private optionTiles(text?: string) {
+  private optionTiles(text?: string): Locator {
     const base = this.page.locator('button.ds-option-selector__option, [role="radio"]');
     return text ? base.filter({ hasText: new RegExp(`^${text}$`, 'i') }) : base;
   }
@@ -82,7 +109,7 @@ export class MedicalPage {
   private async selectSafeCheckboxOption(): Promise<void> {
     // The CONTINUE button sits below the option list, so its presence means the full
     // list (incl. the safe option, which renders last) has rendered.
-    await this.continueButton().waitFor({ state: 'visible' });
+    await this.verify.waitForVisibility(this.locators.continueButton);
 
     // The "none" option is worded differently per step: "I have NONE of these",
     // "I DO NOT take any of these", etc. Match any of them — selecting it avoids the
@@ -132,9 +159,8 @@ export class MedicalPage {
    */
   private async clickProceed(): Promise<void> {
     await this.page.locator('#snackbar').waitFor({ state: 'detached' }).catch(() => undefined);
-    const ds = this.continueButton();
-    if (await ds.isVisible().catch(() => false)) {
-      await ds.click();
+    if (await this.verify.isElementVisible(this.locators.continueButton).catch(() => false)) {
+      await this.actions.click(this.locators.continueButton);
     } else {
       await this.page.locator(':text-is("CONTINUE")').filter({ visible: true }).first().click();
     }
@@ -159,7 +185,7 @@ export class MedicalPage {
       if (!this.page.url().includes('/medical')) break;
 
       const bodyText      = (await this.page.locator('body').innerText().catch(() => '')).toLowerCase();
-      const hasDsContinue = await this.continueButton().isVisible().catch(() => false);
+      const hasDsContinue = await this.verify.isElementVisible(this.locators.continueButton).catch(() => false);
       const hasCheckbox   = (await this.page.getByRole('checkbox').count()) > 0;
       const hasRadiogroup = (await this.page.getByRole('radiogroup').count()) > 0;
       const hasOptions    = (await this.optionTiles().count()) > 0;
@@ -184,17 +210,16 @@ export class MedicalPage {
 
       // ── Step 1: Legal name ─────────────────────────────────────────────────
       await test.step('Enter legal name', async () => {
-        await this.page.locator('input[aria-label="Legal First Name"]').fill(details.firstName);
-        await this.page.locator('input[aria-label="Legal Last Name"]').fill(details.lastName);
+        await this.actions.sendKeys(this.locators.firstNameInput, details.firstName);
+        await this.actions.sendKeys(this.locators.lastNameInput, details.lastName);
         await this.clickContinue();
       });
 
       // ── Step 2: Date of birth ──────────────────────────────────────────────
       await test.step('Enter date of birth', async () => {
-        const birthday = this.page.locator('input[formcontrolname="birthday"]');
-        await birthday.click();
+        await this.actions.click(this.locators.birthdayInput);
         // Type digits only — the field auto-formats to MM/DD/YYYY
-        await birthday.pressSequentially(details.birthday.replace(/\//g, ''), { delay: 50 });
+        await this.locators.birthdayInput.locator.pressSequentially(details.birthday.replace(/\//g, ''), { delay: 50 });
         await this.clickContinue();
       });
 

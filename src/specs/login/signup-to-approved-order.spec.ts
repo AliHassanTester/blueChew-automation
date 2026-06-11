@@ -82,6 +82,12 @@ test.describe('Feature: Sign-up to Approved Order (E2E)', () => {
       // ── Verify the product subscription has started for the new customer ───────
       await adminPage.verifySubscriptionStarted();
 
+      // ── Close the admin tab now that all portal work is done, then return to ──
+      // the patient tab and refresh to verify activation.
+      await test.step('Close admin tab after portal work', async () => {
+        await adminPage.close();
+      });
+
       // ── Patient side — refresh the queue/televisit page and verify activation ──
       await confirmationPage.verifyTelevisit();
     },

@@ -10,7 +10,8 @@
       "PowerShell(Get-ChildItem \"c:\\\\Users\\\\BrainNotFound\\\\Documents\\\\GitHub\\\\blueChew-automation\" | Where-Object { $_.Name -ne '.git' } | Select-Object Name, PSIsContainer)",
       "PowerShell(node --version)",
       "PowerShell(npm --version)",
-      "Bash(grep -v \"^\\\\\\\\.claude/\")"
+      "Bash(grep -v \"^\\\\\\\\.claude/\")",
+      "PowerShell(npm install)"
     ]
   }
 }

@@ -14,8 +14,13 @@ export class AdminPage {
     return this._page;
   }
 
+  // Idempotent — safe to call from the spec after portal work and again at fixture
+  // teardown. Nulling _page ensures the second call is a no-op.
   async close(): Promise<void> {
-    if (this._page) await this._page.close();
+    if (this._page) {
+      await this._page.close();
+      this._page = null;
+    }
   }
 
   async navigateAndLogin(adminURL: string, email: string, password: string): Promise<void> {
