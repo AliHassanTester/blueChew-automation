@@ -81,8 +81,10 @@ export class RegistrationPage {
       await this.actions.navigateToURL(details.loginURL);
       await this.page.waitForLoadState('load');
 
-      const signUpCTA = this.page.locator("//a[@href='/register' and normalize-space()='Sign Up']");
-      await signUpCTA.click();
+      const signUpCTA = this.page.locator(
+        "a[href='/register']:has-text('Sign Up'), a[href='/register'], button:has-text('Sign Up')"
+      ).first();
+      await this.actions.clickFirstActionable("a[href='/register']:has-text('Sign Up'), a[href='/register'], button:has-text('Sign Up')");
 
       // Wait for navigation and state dropdown to become visible
       await this.page.waitForLoadState('load');

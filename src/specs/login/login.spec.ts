@@ -6,8 +6,7 @@ const scenario = getLoginData('AQ-02-User-Login');
 
 test.describe('Feature: User Login', () => {
   test(
-    `
-    Test case: '${scenario.testCaseData.testCase}'
+    `Test case: '${scenario.testCaseData.testCase}'
     Description: '${scenario.testCaseData.testDescription}'
     Tags: '${scenario.testCaseData.tags}'
   `,

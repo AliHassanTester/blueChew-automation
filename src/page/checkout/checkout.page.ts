@@ -26,7 +26,7 @@ export class CheckoutPage {
       // ── Product intro slide ("Meet Gold") ──────────────────────────────────
       productIntroSlideButton: {
         description: 'Product Intro Slide CONTINUE Button',
-        locator: this.page.locator('div.slide-btn').first(),
+        locator: this.page.locator('button:has-text("CONTINUE"), button[class*="slide-btn"], div.slide-btn button').first(),
       },
       strengthHeading: {
         description: 'Select Strength Step Heading',
