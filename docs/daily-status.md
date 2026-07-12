@@ -9,4 +9,4 @@
 - Full E2E green end-to-end with all new steps (`1 passed, 3.6m`).
 
 ## Next
-- Re-run visual suite + regenerate Allure baseline.
+- Wire the E2E suite into the monorepo pipeline (see [`docs/e2e-ci-implementation.md`](e2e-ci-implementation.md)).

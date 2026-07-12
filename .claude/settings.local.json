@@ -11,7 +11,11 @@
       "PowerShell(node --version)",
       "PowerShell(npm --version)",
       "Bash(grep -v \"^\\\\\\\\.claude/\")",
-      "PowerShell(npm install)"
+      "PowerShell(npm install)",
+      "Bash(gh auth *)",
+      "Bash(gh repo *)",
+      "Bash(rm -rf tests/visual helpers constants)",
+      "Bash(ls -1 tests)"
     ]
   }
 }

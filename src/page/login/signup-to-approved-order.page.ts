@@ -2,7 +2,8 @@ import { Page, TestInfo, test } from '@playwright/test';
 import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
-import { RegistrationDetails } from '@interfaces/registration.interface';
+import { RegistrationDetails } from '@interfaces/signup-to-approved-order.interface';
+import { passDevGateIfPresent } from '@utilities/dev-gate.utils';
 
 export class RegistrationPage {
   public readonly page: Page;
@@ -16,86 +17,90 @@ export class RegistrationPage {
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
 
     this.locators = {
-      // ── Dev gate (/dev-login) ──────────────────────────────────────────────
-      devGatePasswordInput: {
-        description: 'Dev Gate Password Input',
-        locator: this.page.locator("input[formcontrolname='password']"),
-      },
-      devGateSubmitButton: {
-        description: 'Dev Gate Submit Button',
-        locator: this.page.locator("//button[normalize-space()='Submit']"),
+      // ── Login page → Create Account CTA (navigates to /register) ──────────
+      // Two a[href='/register'] exist (one hidden log-in-link duplicate), so anchor on
+      // the visible CTA text.
+      signUpLink: {
+        description: 'Create an Account CTA (login page → /register)',
+        locator: this.page.locator("//a[normalize-space()='Create an account']"),
       },
 
       // ── Step 1: state + terms (/register) ─────────────────────────────────
-      stateDropdown: {
-        description: 'State Selection Dropdown',
-        locator: this.page.locator("select[formcontrolname='state']"),
+      // State is a custom ds-select-simple: a button trigger that opens a listbox of
+      // <button> options (not a native <select>).
+      stateDropdownTrigger: {
+        description: 'State Dropdown Trigger',
+        locator: this.page.locator("//button[contains(@class,'ds-select-simple__trigger')]"),
       },
       termsCheckbox: {
         description: 'Terms & Conditions Checkbox',
-        locator: this.page.locator('#agree_terms'),
+        locator: this.page.locator("//input[@formcontrolname='agree_terms']"),
       },
 
-      // ── Step 2: email (/register) ──────────────────────────────────────────
+      // ── Steps 2 & 3: email + password — ds-input web components ────────────
+      // The data-test-id/formcontrolname sit on the <ds-input> host, so target the
+      // inner <input> to get an editable element.
       emailInput: {
         description: 'Email Input',
-        locator: this.page.locator("input[formcontrolname='email']"),
+        locator: this.page.locator("//ds-input[@formcontrolname='email']//input"),
       },
-
-      // ── Step 3: password (/register) ──────────────────────────────────────
       passwordInput: {
         description: 'Password Input',
-        locator: this.page.locator("input[formcontrolname='pass']"),
+        locator: this.page.locator("//ds-input[@formcontrolname='pass']//input"),
       },
     };
   }
 
   // ── Private helpers ──────────────────────────────────────────────────────────
 
+  /**
+   * Passes the dev-environment gate when it is presented (it no longer appears in every
+   * session), and no-ops when absent. Kept here so registration is self-contained — it
+   * reaches the login page and its Create-Account CTA without depending on LoginPage.
+   */
   private async passDevGate(devGateURL: string): Promise<void> {
     await this.actions.navigateToURL(devGateURL);
-    await this.page.waitForLoadState('load');
-    await this.actions.sendKeys(this.locators.devGatePasswordInput, process.env.DEV_GATE_PASSWORD || 'dev');
-    await this.actions.click(this.locators.devGateSubmitButton);
-    await this.page.waitForLoadState('load');
+    await this.actions.waitForDomLoad();
+    await this.verify.waitForLoaderToDisappear();
+    await passDevGateIfPresent(this.page);
+    await this.verify.waitForLoaderToDisappear();
   }
 
   /**
-   * Angular's wizard keeps all 3 step CONTINUE buttons in the DOM simultaneously,
-   * but only the active step's button is visible. clickFirstActionable auto-waits
-   * for that button to be visible AND enabled (Angular enables it once the step's
-   * validation passes). After click, wait for navigation to complete.
+   * Each wizard step renders its own CONTINUE button (ds-button--primary); only the
+   * active step's is visible + enabled. clickFirstActionable picks it, then we wait
+   * for navigation to complete.
    */
   private async clickActiveStepContinue(): Promise<void> {
-    await this.actions.clickFirstActionable('button.btn-primary');
+    await this.actions.clickFirstActionable("//button[normalize-space()='CONTINUE']");
     await this.page.waitForLoadState('load');
   }
 
   // ── Public step methods ──────────────────────────────────────────────────────
 
   async navigateToRegistrationPage(details: RegistrationDetails): Promise<void> {
-    await test.step('Pass dev gate → login page → click Sign Up CTA → /register', async () => {
+    await test.step('Pass dev gate → login page → Create Account CTA → /register', async () => {
       await this.passDevGate(details.devGateURL);
 
-      // Land on the login page and click the Sign Up CTA to test that link
+      // Land on the login page and click the Create Account CTA to reach /register.
       await this.actions.navigateToURL(details.loginURL);
       await this.page.waitForLoadState('load');
+      await this.actions.click(this.locators.signUpLink);
 
-      const signUpCTA = this.page.locator(
-        "a[href='/register']:has-text('Sign Up'), a[href='/register'], button:has-text('Sign Up')"
-      ).first();
-      await this.actions.clickFirstActionable("a[href='/register']:has-text('Sign Up'), a[href='/register'], button:has-text('Sign Up')");
-
-      // Wait for navigation and state dropdown to become visible
       await this.page.waitForLoadState('load');
-      await this.locators.stateDropdown.locator.waitFor({ state: 'visible' });
+      await this.actions.waitForVisibility(this.locators.stateDropdownTrigger);
     });
   }
 
   async completeStateAndTerms(state: string): Promise<void> {
     await test.step('Step 1 — select state and accept terms', async () => {
-      await this.locators.stateDropdown.locator.waitFor({ state: 'visible' });
-      await this.page.selectOption("select[formcontrolname='state']", { label: state });
+      await this.actions.waitForVisibility(this.locators.stateDropdownTrigger);
+      await this.actions.click(this.locators.stateDropdownTrigger);
+      // Options are <button>s labelled by state name, present only while the listbox is open.
+      await this.actions.click({
+        description: `State Option — ${state}`,
+        locator: this.page.locator(`//button[normalize-space()='${state}']`),
+      });
       await this.actions.selectRadioButtonOrCheckBox(this.locators.termsCheckbox);
       await this.clickActiveStepContinue();
     });
@@ -103,18 +108,18 @@ export class RegistrationPage {
 
   async completeEmailStep(email: string): Promise<void> {
     await test.step('Step 2 — enter email address', async () => {
-      await this.locators.emailInput.locator.waitFor({ state: 'visible' });
+      await this.actions.waitForVisibility(this.locators.emailInput);
       await this.actions.sendKeys(this.locators.emailInput, email);
-      await this.locators.emailInput.locator.press('Tab');
+      await this.actions.pressKey(this.locators.emailInput, 'Tab');
       await this.clickActiveStepContinue();
     });
   }
 
   async completePasswordStep(password: string): Promise<void> {
     await test.step('Step 3 — set password', async () => {
-      await this.locators.passwordInput.locator.waitFor({ state: 'visible' });
+      await this.actions.waitForVisibility(this.locators.passwordInput);
       await this.actions.sendKeys(this.locators.passwordInput, password);
-      await this.locators.passwordInput.locator.press('Tab');
+      await this.actions.pressKey(this.locators.passwordInput, 'Tab');
       await this.clickActiveStepContinue();
     });
   }

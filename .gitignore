@@ -1,6 +1,6 @@
 # Dependencies
 node_modules/
-
+.claude/settings.local.json
 # Environment files (contain credentials — never commit)
 .env
 .env.*
@@ -14,9 +14,6 @@ playwright-report/
 test-results/
 allure-results/
 allure-report/
-
-# Visual snapshot baselines are intentionally tracked (needed for CI diffs)
-# tests/visual/__snapshots__/
 
 # DOM capture dev artifacts (one-off locator derivation, not part of test suite)
 dom-snapshots/

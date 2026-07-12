@@ -24,8 +24,8 @@ test.describe('Feature: User Login', () => {
         await loginPage.loginWithCredentials(scenario.loginDetails);
       });
 
-      await test.step('Verify successful login and dashboard access', async () => {
-        await loginPage.verifySuccessfulLogin(scenario.loginPageDetails.postLoginURL);
+      await test.step('Verify successful login — account page rendered', async () => {
+        await loginPage.verifySuccessfulLogin();
       });
     },
   );

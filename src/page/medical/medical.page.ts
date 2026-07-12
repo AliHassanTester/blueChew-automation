@@ -1,8 +1,8 @@
-import { Page, TestInfo, test, expect, Locator } from '@playwright/test';
+import { Page, TestInfo, test, Locator } from '@playwright/test';
 import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
-import { MedicalDetails } from '@interfaces/registration.interface';
+import { MedicalDetails } from '@interfaces/signup-to-approved-order.interface';
 
 /**
  * Medical-profile wizard (/medical). Stable fields expose aria-labels / formcontrolname,
@@ -126,13 +126,17 @@ export class MedicalPage {
   }
 
   /**
-   * Multi-question radiogroup step (has CONTINUE). Answers every unanswered group
-   * from the page text, confirming each with toBeChecked() (safe here — these pages
-   * don't auto-advance), then clicks CONTINUE if it has enabled. If more questions
-   * disclose progressively, CONTINUE stays disabled and the outer loop re-enters.
+   * Answers every unanswered radiogroup on the page. Covers both single yes/no questions
+   * (which auto-advance on selection with no CONTINUE) and the progressive multi-question
+   * pages (e.g. walk-mile + climb-stairs + fitness-statement) that reveal more groups —
+   * and their CONTINUE — only once earlier groups are answered. Per group: pick "Yes" when
+   * the page calls for it and the group offers it, else the first radio (the healthiest
+   * option, e.g. "About 10 seconds"). No toBeChecked(): single-question pages detach the
+   * radio as they auto-advance. Clicks CONTINUE only once it has enabled; otherwise the
+   * page auto-advances (or reveals more groups) and the outer loop re-enters.
    */
-  private async answerRadiogroupStep(bodyText: string): Promise<void> {
-    const name = this.answerFor(bodyText);
+  private async answerAllRadiogroups(bodyText: string): Promise<void> {
+    const preferYes = this.answerFor(bodyText) === 'Yes';
     const groups = this.page.getByRole('radiogroup');
     const total = await groups.count();
 
@@ -140,15 +144,11 @@ export class MedicalPage {
       const group = groups.nth(i);
       if (await group.getByRole('radio', { checked: true }).count() > 0) continue;
 
-      const target = group.getByRole('radio', { name, exact: true });
-      const radio  = (await target.count() > 0) ? target.first() : group.getByRole('radio').first();
-      await radio.click();
-      await expect(radio).toBeChecked();
+      const yes = group.getByRole('radio', { name: 'Yes', exact: true });
+      const radio = (preferYes && (await yes.count()) > 0) ? yes.first() : group.getByRole('radio').first();
+      await radio.click().catch(() => undefined);
     }
 
-    // The CONTINUE click can race with an auto-advance/re-render that detaches the
-    // button — that's fine, the answers registered and the step moved on. The outer
-    // loop re-evaluates the next step either way, so a detach here is non-fatal.
     if (await this.isContinueEnabled()) await this.clickContinue().catch(() => undefined);
   }
 
@@ -168,10 +168,12 @@ export class MedicalPage {
 
   /**
    * Drives the remaining health questions and transitions. Each step is one of:
-   *   • auto-advancing single question (options, no CONTINUE) → click best option
-   *   • checkbox step (has CONTINUE)                          → safe option + CONTINUE
-   *   • multi-question radiogroup (has CONTINUE)              → answer all + CONTINUE
-   *   • transition / info page (only a CONTINUE)              → click CONTINUE
+   *   • multi-select checkbox page (vitamins/meds/conditions) → safe "none" option + CONTINUE
+   *   • radiogroup page (yes/no + progressive multi-question)  → answer all groups (+ CONTINUE)
+   *   • single ds-option page (sex/patient/other-meds)         → click best option (auto-advance)
+   *   • transition / info page (only a CONTINUE)               → click CONTINUE
+   * Radiogroup is matched regardless of whether CONTINUE is present yet, because the
+   * progressive pages reveal CONTINUE only after all their groups are answered.
    * Loops until the flow leaves /medical.
    */
   private async completeRemainingMedicalSteps(): Promise<void> {
@@ -179,22 +181,21 @@ export class MedicalPage {
       .locator('button.ds-option-selector__option, [role="radio"], [role="checkbox"], :text-is("CONTINUE")')
       .first();
 
-    for (let step = 0; step < 40; step++) {
+    for (let step = 0; step < 50; step++) {
       if (!this.page.url().includes('/medical')) break;
       await stepControl.waitFor({ state: 'visible' }).catch(() => undefined);
       if (!this.page.url().includes('/medical')) break;
 
       const bodyText      = (await this.page.locator('body').innerText().catch(() => '')).toLowerCase();
-      const hasDsContinue = await this.verify.isElementVisible(this.locators.continueButton).catch(() => false);
       const hasCheckbox   = (await this.page.getByRole('checkbox').count()) > 0;
       const hasRadiogroup = (await this.page.getByRole('radiogroup').count()) > 0;
       const hasOptions    = (await this.optionTiles().count()) > 0;
 
-      if (hasCheckbox && hasDsContinue) {
+      if (hasCheckbox) {
         await this.selectSafeCheckboxOption();
-      } else if (hasRadiogroup && hasDsContinue) {
-        await this.answerRadiogroupStep(bodyText);
-      } else if (hasOptions && !hasDsContinue) {
+      } else if (hasRadiogroup) {
+        await this.answerAllRadiogroups(bodyText);
+      } else if (hasOptions) {
         await this.answerAutoAdvanceStep(bodyText);
       } else {
         // Transition / info page (e.g. "Meet Gold") — just proceed.

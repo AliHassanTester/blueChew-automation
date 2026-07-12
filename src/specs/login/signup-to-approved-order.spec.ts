@@ -1,5 +1,5 @@
 import { logTestCaseData } from '@utilities/test.helper.utils';
-import { getRegistrationData } from '@data/login/registration.data';
+import { getRegistrationData } from '@data/login/signup-to-approved-order.data';
 import { test } from '@fixtures/page.fixtures';
 
 const scenario = getRegistrationData('AQ-01-Sign-up-To-Approved-Order-E2E');
@@ -22,7 +22,7 @@ test.describe('Feature: Sign-up to Approved Order (E2E)', () => {
       console.log(`[E2E] test email: ${d.email}`);
 
       // ── Registration ─────────────────────────────────────────────────────────
-      await test.step('Navigate to login page and click Sign Up CTA → /register', async () => {
+      await test.step('Navigate to login page and click Create Account CTA → /register', async () => {
         await registrationPage.navigateToRegistrationPage(d);
       });
 

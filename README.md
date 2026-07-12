@@ -26,10 +26,8 @@ cp .env.example .env.dev
 
 | Variable | Description |
 |---|---|
-| `DEV_GATE_URL` | Dev gate bypass URL |
 | `DEV_GATE_PASSWORD` | Dev gate password |
 | `LOGIN_URL` | Login page URL |
-| `REGISTRATION_URL` | Registration page URL |
 | `POST_REGISTRATION_URL` | URL after registration (quiz) |
 | `user_name` | Login test account email |
 | `password` | Registration/login account password |
@@ -50,32 +48,14 @@ cp .env.example .env.dev
 npm run test:dev                    # All specs against dev environment
 npm run test:prod                   # All specs against production
 npm run test:ci                     # All specs (CI mode — headless, 4 workers, 1 retry)
-npm run test:e2e                    # Sign-up → approved order E2E journey (functional)
+npm run test:smoke                  # Fast smoke subset (@smoke)
+npm run test:regression             # Regression subset (@regression)
+npm run test:e2e                    # Sign-up → approved order E2E journey
+npm run test:login                  # Login spec only
 ```
 
-### Individual suites
-
-```bash
-npm run test:login              # Login spec + login visual spec
-npm run test:e2e                # Sign-up to approved order — full E2E journey
-npm run test:registration:visual # Registration page visual spec only
-```
-
-### Visual regression tests
-
-```bash
-npm run test:visual                   # Run all visual tests against saved snapshots
-npm run test:visual:update            # Regenerate ALL visual snapshots
-
-npm run test:login:update             # Regenerate login snapshots only
-npm run test:registration:update      # Regenerate registration snapshots only
-npm run test:quiz:visual              # Run quiz page visual tests
-npm run test:quiz:visual:update       # Regenerate quiz snapshots
-npm run test:results:visual           # Run results page visual tests
-npm run test:results:visual:update    # Regenerate results snapshots
-```
-
-> Run `*:update` whenever intentional UI changes are made, then commit the updated snapshots.
+Suites are selected by tag (`@smoke`, `@regression`, `@e2e`) via Playwright's `--grep`, which is
+also how CI picks what to run — see [`docs/e2e-ci-implementation.md`](docs/e2e-ci-implementation.md).
 
 ---
 
@@ -99,9 +79,6 @@ src/
   utilities/      # Shared Playwright helpers (actions, verifications, env, random)
 tests/
   fixtures/       # Static test assets (e.g. sampleID.jpg for ID upload)
-  visual/         # Visual regression specs and __snapshots__
-constants/        # Design token definitions (colors, typography, spacing)
-helpers/          # Visual test utilities (validateTokens, screenshotPage, etc.)
 ```
 
 ---
@@ -112,10 +89,6 @@ helpers/          # Visual test utilities (validateTokens, screenshotPage, etc.)
 |---|---|---|
 | `login.spec.ts` | AQ-00 | Login with existing account |
 | `signup-to-approved-order.spec.ts` | AQ-01 | Full new-customer journey: sign up → quiz → medical → checkout → payment → confirmation → provider approval → first order |
-| `login.visual.spec.ts` | — | Login page snapshots + CSS token validation |
-| `registration.visual.spec.ts` | — | Registration page snapshots + CSS token validation |
-| `quiz.visual.spec.ts` | — | Quiz page snapshots + CSS token validation |
-| `results.visual.spec.ts` | — | Results page snapshots + CSS token validation |
 
 ---
 
@@ -158,7 +131,6 @@ definitions live in the Allure reporter block of [`playwright.config.ts`](playwr
 
 ## Notes
 
-- Visual snapshots are stored under `tests/visual/__snapshots__/` and committed to source control.
 - The framework targets `dev.app.bluechew.com` (Angular app) and `dev.bluechew.com` (Next.js quiz/results). Both subdomains are exercised in the registration flow.
 - Test emails are auto-generated per run (`aliQA.<rand>.<timestamp>@gmail.com`) and logged to the Playwright annotation panel and console.
 - The checkout page has two layout variants (with and without a pre-payment order summary step). `CheckoutPage` detects which variant is active at runtime.

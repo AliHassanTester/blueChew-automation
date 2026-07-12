@@ -2,6 +2,7 @@ import { Page, TestInfo, test } from '@playwright/test';
 import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
+import { passDevGateIfPresent } from '@utilities/dev-gate.utils';
 
 /**
  * Funnel-gold / recommendations page (https://dev.bluechew.com/results).
@@ -29,16 +30,6 @@ export class ResultsPage {
         locator: this.page.locator('button.cta-button').first(),
       },
 
-      // ── Dev gate (may re-prompt on the app domain after TRY GOLD) ───────────
-      devGatePasswordInput: {
-        description: 'Dev Gate Password Input',
-        locator: this.page.locator("input[formcontrolname='password']"),
-      },
-      devGateSubmitButton: {
-        description: 'Dev Gate Submit Button',
-        locator: this.page.locator('[data-test-id="dev-login-submit-button"]'),
-      },
-
       // ── Post-navigation marker — first /medical field (confirms TRY GOLD landed) ──
       medicalFirstNameInput: {
         description: 'Medical Profile First Name Input (navigation marker)',
@@ -59,16 +50,10 @@ export class ResultsPage {
       await this.actions.waitForDomLoad();
       await this.verify.waitForLoaderToDisappear();
 
-      // For a logged-in user (registered earlier in the test), TRY GOLD redirects
-      // directly to /medical on the app domain. The app-domain dev gate cookie set
-      // during the registration step is still active, so no re-prompt is expected.
-      // Handle it defensively in case session state differs.
-      if (await this.verify.isElementVisible(this.locators.devGatePasswordInput).catch(() => false)) {
-        await this.actions.sendKeys(this.locators.devGatePasswordInput, process.env.DEV_GATE_PASSWORD || 'dev');
-        await this.actions.click(this.locators.devGateSubmitButton);
-        await this.actions.waitForDomLoad();
-        await this.verify.waitForLoaderToDisappear();
-      }
+      // TRY GOLD redirects a logged-in user straight to /medical; the dev gate only
+      // re-prompts if session state differs. passDevGateIfPresent handles it defensively.
+      await passDevGateIfPresent(this.page);
+      await this.verify.waitForLoaderToDisappear();
 
       // Wait for the medical profile form (first visible DS input on /medical)
       await this.verify.waitForVisibility(this.locators.medicalFirstNameInput);

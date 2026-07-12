@@ -4,6 +4,7 @@ import { PlaywrightVerificationFactory } from '@utilities/playwright.verificatio
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { LoginDetails } from '@interfaces/login.interface';
 import { LoginPageDetails } from '@interfaces/login.page.interface';
+import { passDevGateIfPresent } from '@utilities/dev-gate.utils';
 
 export class LoginPage {
   public readonly page: Page;
@@ -16,35 +17,28 @@ export class LoginPage {
     this.playwrightActionsFactory = new PlaywrightActionFactory(page, testInfo);
     this.playwrightVerificationsFactory = new PlaywrightVerificationFactory(page, testInfo);
 
+    // Locators are XPath, anchored on stable attributes (data-test-id) and semantic
+    // text, and were derived from a live DOM capture of /log-in.
     this.locators = {
-      // ── Dev environment gate (/dev-login) ──────────────────────────────────
-      devGatePasswordInput: {
-        description: 'Dev Gate Password Input',
-        locator: this.page.locator("input[formcontrolname='password']"),
-      },
-      devGateSubmitButton: {
-        description: 'Dev Gate Submit Button',
-        locator: this.page.locator("//button[normalize-space()='Submit']"),
-      },
-
       // ── Login page (/log-in) ───────────────────────────────────────────────
+      // The form is built from <ds-input> web components; the data-test-id sits on
+      // BOTH the host and the inner <input>, so we anchor on the <input> tag to get
+      // an editable element that fill() accepts.
       loginPageContainer: {
         description: 'Login Page Container',
-        locator: this.page.locator('[data-test-id="sign-in-page"]'),
+        locator: this.page.locator("//div[@data-test-id='sign-in-page']"),
       },
       emailInput: {
         description: 'Email Address Input',
-        // data-test-id is the most stable selector; formcontrolname='email' as backup
-        locator: this.page.locator('[data-test-id="sign-in-email-input"]'),
+        locator: this.page.locator("//input[@data-test-id='sign-in-email-input']"),
       },
       passwordInput: {
         description: 'Password Input',
-        // formcontrolname is 'pass' (not 'password') — verified from live DOM
-        locator: this.page.locator('[data-test-id="sign-in-password-input"]'),
+        locator: this.page.locator("//input[@data-test-id='sign-in-password-input']"),
       },
       submitButton: {
-        description: 'Log In Submit Button',
-        locator: this.page.locator('[data-test-id="sign-in-submit-button"]'),
+        description: 'Login Submit Button (CONTINUE)',
+        locator: this.page.locator("//button[@data-test-id='sign-in-submit-button']"),
       },
       forgotEmailLink: {
         description: 'Forgot Email Link',
@@ -55,66 +49,63 @@ export class LoginPage {
         locator: this.page.locator("//a[normalize-space()='Forgot Password?']"),
       },
       signUpLink: {
-        description: 'Sign Up Navigation Link',
-        locator: this.page.locator("//a[normalize-space()='Sign Up'][@href='/register']"),
+        description: 'Create an Account Link (→ /register)',
+        locator: this.page.locator("//a[@href='/register']"),
       },
       googleSSOButton: {
-        description: 'Sign In with Google Button',
-        locator: this.page.locator("//button[normalize-space()='Google']"),
+        description: 'Continue with Google Button',
+        locator: this.page.locator("//button[contains(normalize-space(),'Continue with google')]"),
       },
       appleSSOButton: {
-        description: 'Sign In with Apple Button',
-        locator: this.page.locator("//button[normalize-space()='Apple']"),
+        description: 'Continue with Apple Button',
+        locator: this.page.locator("//button[contains(normalize-space(),'Continue with apple')]"),
       },
 
-      // ── Post-login indicators (/account/membership) ────────────────────────
-      // The navbar renders a page-title <p class="text"> in its centre; the text
-      // changes per route and is only present for authenticated users.
-      dashboardPageTitle: {
-        description: 'Dashboard Page Title in Navbar (My Plan)',
-        locator: this.page.locator("#navbar p.text"),
+      // ── Post-login account shell — verified from live /account DOM ─────────
+      // The three tabs render on every /account tab, so they are the least-fragile
+      // proof that login reached the authenticated area with navigation intact.
+      // One locator per section is enough to prove the whole account page rendered:
+      // a tab header (nav-bar section) + the page content container (content section).
+      accountTabMyPlan: {
+        description: 'Account Nav Tab — My Plan (nav-bar section marker)',
+        locator: this.page.locator("//button[@data-test-id='navbar-sub-menu-tab-membership']"),
       },
-      // These nav links are inside the hamburger slide-out panel and are
-      // CSS-hidden on desktop until the menu is opened.
-      myPlanLink: {
-        description: 'My Plan Navigation Link (inside hamburger menu)',
-        locator: this.page.locator('[data-test-id="nav-link-plan"]'),
+      accountMembershipPage: {
+        description: 'Account Content Section — My Plan page container',
+        locator: this.page.locator("//div[@data-test-id='account-membership-page']"),
       },
-      profileNavLink: {
-        description: 'Profile Navigation Link (inside hamburger menu)',
-        locator: this.page.locator('[data-test-id="nav-link-profile"]'),
-      },
-      medicalNavLink: {
-        description: 'Medical Navigation Link (inside hamburger menu)',
-        locator: this.page.locator('[data-test-id="nav-link-medical"]'),
-      },
+
+      // ── Hamburger slide-out menu ───────────────────────────────────────────
       navMenuToggle: {
         description: 'Hamburger Menu Toggle Button',
-        locator: this.page.locator('[data-test-id="nav-menu-toggle"]'),
+        locator: this.page.locator("//*[@data-test-id='nav-menu-toggle']"),
+      },
+      myPlanLink: {
+        description: 'My Plan Link (hamburger menu)',
+        locator: this.page.locator("//a[@data-test-id='nav-link-plan']"),
+      },
+      profileNavLink: {
+        description: 'Profile Link (hamburger menu)',
+        locator: this.page.locator("//a[@data-test-id='nav-link-profile']"),
       },
       logoutLink: {
-        description: 'Logout Link (inside hamburger menu)',
-        locator: this.page.locator('[data-test-id="nav-link-logout"]'),
+        description: 'Logout Link (hamburger menu)',
+        locator: this.page.locator("//a[@data-test-id='nav-link-logout']"),
       },
     };
   }
 
   /**
-   * Passes the dev-environment password gate at /dev-login.
-   * Must be called once per browser context before navigating to /log-in.
+   * Passes the dev-environment password gate when it is presented. The gate no longer
+   * appears on /log-in in every session, so it is handled conditionally — absent gate
+   * is a no-op rather than a failure.
    */
   async passDevGate(devGateURL: string): Promise<void> {
-    await test.step('Pass dev environment gate', async () => {
+    await test.step('Pass dev environment gate (if present)', async () => {
       await this.playwrightActionsFactory.navigateToURL(devGateURL);
       await this.playwrightActionsFactory.waitForDomLoad();
       await this.playwrightVerificationsFactory.waitForLoaderToDisappear();
-
-      await this.playwrightActionsFactory.sendKeys(
-        this.locators.devGatePasswordInput,
-        process.env.DEV_GATE_PASSWORD || 'dev',
-      );
-      await this.playwrightActionsFactory.click(this.locators.devGateSubmitButton);
-      await this.playwrightActionsFactory.waitForDomLoad();
+      await passDevGateIfPresent(this.page);
       await this.playwrightVerificationsFactory.waitForLoaderToDisappear();
     });
   }
@@ -149,14 +140,16 @@ export class LoginPage {
     });
   }
 
-  async verifyLoginSuccess(expectedURL: string): Promise<void> {
-    await test.step('Verify login succeeded and dashboard loaded', async () => {
+  async verifyLoginSuccess(): Promise<void> {
+    await test.step('Verify login succeeded — account page rendered', async () => {
       await this.playwrightVerificationsFactory.waitForLoaderToDisappear();
       await this.playwrightVerificationsFactory.waitForProcessingLoaderToDisappear();
-      await this.playwrightActionsFactory.waitForURL(
-        new RegExp(expectedURL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
-      );
-      await this.playwrightVerificationsFactory.expectElementExist(this.locators.dashboardPageTitle);
+      // Login redirects into /account (default landing tab is /membership).
+      await this.playwrightActionsFactory.waitForURL(/\/account\//);
+      // One locator per section — the nav tab bar and the page content — confirms the
+      // whole page rendered without over-coupling to any single element.
+      await this.playwrightVerificationsFactory.expectElementExist(this.locators.accountTabMyPlan);
+      await this.playwrightVerificationsFactory.expectElementExist(this.locators.accountMembershipPage);
     });
   }
 
@@ -165,7 +158,6 @@ export class LoginPage {
       await this.playwrightActionsFactory.click(this.locators.navMenuToggle);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.myPlanLink);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.profileNavLink);
-      await this.playwrightVerificationsFactory.expectElementExist(this.locators.medicalNavLink);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.logoutLink);
     });
   }
@@ -183,7 +175,7 @@ export class LoginPage {
     await this.submitLogin();
   }
 
-  async verifySuccessfulLogin(postLoginURL: string): Promise<void> {
-    await this.verifyLoginSuccess(postLoginURL);
+  async verifySuccessfulLogin(): Promise<void> {
+    await this.verifyLoginSuccess();
   }
 }

@@ -1,4 +1,4 @@
-import { RegistrationDetails } from '@interfaces/registration.interface';
+import { RegistrationDetails } from '@interfaces/signup-to-approved-order.interface';
 import { TestCaseData } from '@interfaces/testcase.data.interface';
 import { getEnvVars } from '@utilities/env.utils';
 import { generateRandomAlphanumeric } from '@utilities/random.utils';
@@ -10,9 +10,7 @@ export interface RegistrationTestCaseData {
 
 const env = getEnvVars({
   password:           null,   // required — registration + login password
-  DEV_GATE_URL:       'https://dev.app.bluechew.com/dev-login',
   LOGIN_URL:          'https://dev.app.bluechew.com/log-in',
-  REGISTRATION_URL:   'https://dev.app.bluechew.com/register',
   QUIZ_URL:           'https://dev.bluechew.com/quiz',
   STRIPE_CARD_NUMBER: '4242424242424242',
   STRIPE_CARD_EXP:    '12/28',
@@ -60,9 +58,10 @@ const account = buildTestAccount();
 const registrationTestData: { [key: string]: RegistrationTestCaseData } = {
   'AQ-01-Sign-up-To-Approved-Order-E2E': {
     registrationDetails: {
-      devGateURL:      env.DEV_GATE_URL,
+      // The dev gate is presented on the login page itself, so the gate and login
+      // steps share the same LOGIN_URL.
+      devGateURL:      env.LOGIN_URL,
       loginURL:        env.LOGIN_URL,
-      registrationURL: env.REGISTRATION_URL,
       quizURL:         env.QUIZ_URL,
       adminURL:        env.ADMIN_URL,
       adminEmail:      env.ADMIN_EMAIL,

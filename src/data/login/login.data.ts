@@ -12,7 +12,6 @@ export interface LoginTestCaseData {
 const env = getEnvVars({
   user_name:      null,  // required — no fallback, test must not run with empty credentials
   password:       null,  // required
-  DEV_GATE_URL:   'https://dev.app.bluechew.com/dev-login',
   LOGIN_URL:      'https://dev.app.bluechew.com/log-in',
   POST_LOGIN_URL: 'https://dev.app.bluechew.com/account/membership',
 });
@@ -24,7 +23,9 @@ const loginTestData: { [key: string]: LoginTestCaseData } = {
       password: env.password,
     },
     loginPageDetails: {
-      devGateURL:   env.DEV_GATE_URL,
+      // The dev gate is presented on the login page itself, so the gate and login
+      // steps share the same LOGIN_URL.
+      devGateURL:   env.LOGIN_URL,
       loginURL:     env.LOGIN_URL,
       postLoginURL: env.POST_LOGIN_URL,
     },

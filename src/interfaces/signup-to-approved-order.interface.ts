@@ -26,8 +26,6 @@ export interface RegistrationDetails {
   devGateURL: string;
   /** Login page — https://dev.app.bluechew.com/log-in */
   loginURL: string;
-  /** Direct registration URL for visual tests — https://dev.app.bluechew.com/register */
-  registrationURL: string;
   /** Quiz URL — where the app redirects after successful registration */
   quizURL: string;
   adminURL: string;

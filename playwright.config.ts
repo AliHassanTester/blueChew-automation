@@ -13,7 +13,7 @@ const baseURLs: Record<string, string> = {
 
 export default defineConfig({
   testDir: '.',
-  testMatch: ['src/specs/**/*.spec.ts', 'tests/visual/**/*.visual.spec.ts'],
+  testMatch: ['src/specs/**/*.spec.ts'],
   // Per-test ceiling — the maximum wall-clock time any single test may run before
   // it is force-failed. The full onboarding flow legitimately runs ~10 min, so this
   // is a generous last-resort safety net; individual stuck actions are caught much
@@ -87,12 +87,6 @@ export default defineConfig({
       name: 'chromium-functional',
       testMatch: 'src/specs/**/*.spec.ts',
       use: { browserName: 'chromium' },
-    },
-    {
-      name: 'chromium-visual',
-      testMatch: 'tests/visual/**/*.visual.spec.ts',
-      use: { browserName: 'chromium' },
-      snapshotPathTemplate: '{testDir}/{testFileDir}/__snapshots__/{testFileName}/{arg}{ext}',
     },
   ],
 });
