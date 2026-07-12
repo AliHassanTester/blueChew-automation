@@ -52,10 +52,6 @@ export class ConfirmationPage {
         description: 'Active GOLD Plan Label',
         locator: this.page.getByText('GOLD').first(),
       },
-      assignedProviderLabel: {
-        description: 'Assigned Provider Label (Ali Hasan, MD)',
-        locator: this.page.getByText('Ali Hasan, MD'),
-      },
     };
   }
 
@@ -93,10 +89,10 @@ export class ConfirmationPage {
   /**
    * After the provider approves the patient in the admin/care portal, refreshing the
    * patient's page (the one left in the provider queue) resolves to the "MY PLAN"
-   * membership view. Verifies the active Gold subscription and the assigned provider.
+   * membership view. Verifies the order is now being processed and the Gold plan is active.
    */
   async verifyTelevisit(): Promise<void> {
-    await test.step('Refresh patient page and verify plan active + provider assigned', async () => {
+    await test.step('Refresh patient page and verify order processing + Gold plan active', async () => {
       await this.page.reload({ waitUntil: 'domcontentloaded' });
       await this.verify.waitForLoaderToDisappear();
 
@@ -110,10 +106,11 @@ export class ConfirmationPage {
         await this.verify.waitForLoaderToDisappear();
       }
 
-      // Active Gold subscription shown with the reviewing provider now assigned
+      // Post-approval state: the order is now being processed and the Gold plan is active.
+      // (The provider name is intentionally not asserted — it is not shown on this view
+      // and varies by which provider approved.)
       await expect(this.locators.orderProcessingBanner.locator).toBeVisible({ timeout: 30_000 });
       await expect(this.locators.goldPlanLabel.locator).toBeVisible();
-      await expect(this.locators.assignedProviderLabel.locator).toBeVisible();
     });
   }
 }

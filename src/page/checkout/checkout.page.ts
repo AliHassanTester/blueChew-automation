@@ -7,10 +7,11 @@ import { ShippingDetails, PaymentDetails } from '@interfaces/signup-to-approved-
 /**
  * Checkout wizard (/checkout): product intro → Select strength → Select quantity → order
  * summary (Checkout) → shipping address (PROCEED TO PAYMENT) → "Confirm your delivery
- * address" modal → Stripe payment (BUY NOW). Each wizard step advances with a
- * `ds-button--primary` CONTINUE; shipping fields expose stable `formcontrolname`s.
- * Payment is a Stripe Payment Element in cross-origin iframes — card entry scans the
- * frames for the secure inputs (by name/autocomplete), and BUY NOW enables once valid.
+ * address" modal → payment (BUY NOW). The intro/summary is a carousel (every slide kept in
+ * the DOM, hidden but for the active one), and shipping fields expose stable
+ * `formcontrolname`s. Card entry is a **Stripe or Adyen** card form (the provider varies per
+ * session), rendered in cross-origin iframes; fields are located by their accessible label
+ * (which handles both), and BUY NOW enables once the card is valid.
  */
 export class CheckoutPage {
   public readonly page: Page;
@@ -24,52 +25,48 @@ export class CheckoutPage {
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
 
     this.locators = {
-      // ── Wizard step headings ───────────────────────────────────────────────
-      strengthHeading: {
-        description: 'Select Strength Step Heading',
-        locator: this.page.locator("//h1[normalize-space()='Select strength'] | //h2[normalize-space()='Select strength']"),
-      },
-      quantityHeading: {
-        description: 'Select Quantity Step Heading',
-        locator: this.page.locator("//h1[normalize-space()='Select quantity'] | //h2[normalize-space()='Select quantity']"),
-      },
+      // ── Order summary ──────────────────────────────────────────────────────
+      // The checkout is a carousel that keeps every slide (and its CTA) in the DOM, hidden
+      // but for the active one, so each CTA is scoped to the visible copy.
       checkoutButton: {
         description: 'Order Summary → Checkout Button',
-        locator: this.page.locator("//button[normalize-space()='Checkout']"),
+        locator: this.page.locator("//button[normalize-space()='Checkout']").filter({ visible: true }).first(),
       },
 
       // ── Shipping address form ──────────────────────────────────────────────
+      // A second, hidden address form (billing template under `.hidden`) carries the same
+      // formcontrolnames, so every field is scoped to the visible one.
       shippingLine1: {
         description: 'Shipping Address Line 1 Input',
-        locator: this.page.locator("//input[@formcontrolname='line_1']"),
+        locator: this.page.locator("//input[@formcontrolname='line_1']").filter({ visible: true }).first(),
       },
       shippingLine2: {
         description: 'Shipping Address Line 2 (Apt/Suite) Input',
-        locator: this.page.locator("//input[@formcontrolname='line_2']"),
+        locator: this.page.locator("//input[@formcontrolname='line_2']").filter({ visible: true }).first(),
       },
       shippingCity: {
         description: 'Shipping City Input',
-        locator: this.page.locator("//input[@formcontrolname='city']"),
+        locator: this.page.locator("//input[@formcontrolname='city']").filter({ visible: true }).first(),
       },
       shippingState: {
         description: 'Shipping State Dropdown',
-        locator: this.page.locator("//select[@formcontrolname='state']"),
+        locator: this.page.locator("//select[@formcontrolname='state']").filter({ visible: true }).first(),
       },
       shippingZip: {
         description: 'Shipping ZIP Input',
-        locator: this.page.locator("//input[@formcontrolname='zip']"),
+        locator: this.page.locator("//input[@formcontrolname='zip']").filter({ visible: true }).first(),
       },
       shippingPhone: {
         description: 'Shipping Phone Input',
-        locator: this.page.locator("//input[@formcontrolname='phone']"),
+        locator: this.page.locator("//input[@formcontrolname='phone']").filter({ visible: true }).first(),
       },
       proceedToPaymentButton: {
         description: 'PROCEED TO PAYMENT Button',
-        locator: this.page.locator("//button[normalize-space()='PROCEED TO PAYMENT']"),
+        locator: this.page.locator("//button[normalize-space()='PROCEED TO PAYMENT']").filter({ visible: true }).first(),
       },
       addressConfirmButton: {
         description: 'Confirm Delivery Address Modal — CONFIRM Button',
-        locator: this.page.locator("//button[contains(@class,'popup-sheet-action-confirm')]"),
+        locator: this.page.locator("//button[contains(@class,'popup-sheet-action-confirm')]").filter({ visible: true }).first(),
       },
 
       // ── Payment (Stripe) ───────────────────────────────────────────────────
@@ -79,16 +76,30 @@ export class CheckoutPage {
       },
       buyNowButton: {
         description: 'BUY NOW / Place Order Button',
-        locator: this.page.locator("//button[normalize-space()='BUY NOW']"),
+        locator: this.page.locator("//button[normalize-space()='BUY NOW']").filter({ visible: true }).first(),
       },
     };
   }
 
   // ── Wizard steps ──────────────────────────────────────────────────────────
 
-  /** Clicks the active step's CONTINUE (only the current step's is visible + enabled). */
-  private async clickActiveContinue(): Promise<void> {
-    await this.actions.clickFirstActionable("//button[normalize-space()='CONTINUE']");
+  /**
+   * Advances the product carousel (product match / pre-selected strength+quantity) to the
+   * order summary by clicking the active CONTINUE until the summary's Checkout button
+   * appears. The carousel keeps every slide's heading in the DOM (hidden but for the active
+   * one), so it is driven off the Checkout button — not the step headings.
+   */
+  private async advanceToOrderSummary(): Promise<void> {
+    for (let i = 0; i < 4; i++) {
+      if (await this.verify.isElementVisible(this.locators.checkoutButton).catch(() => false)) break;
+      // The intro slide's CONTINUE is a styled div (not a <button>) while later slides use
+      // a real button, so match the control by its visible text regardless of tag.
+      const continueControl = this.page.getByText('CONTINUE', { exact: true }).filter({ visible: true }).first();
+      if (!(await continueControl.isVisible().catch(() => false))) break;
+      await continueControl.click();
+      await this.verify.waitForLoaderToDisappear();
+    }
+    await this.verify.waitForVisibility(this.locators.checkoutButton);
   }
 
   private async fillShippingForm(details: ShippingDetails): Promise<void> {
@@ -127,53 +138,58 @@ export class CheckoutPage {
   }
 
   async proceedToPaymentForm(): Promise<void> {
-    await test.step('Wait for the Stripe payment form to mount', async () => {
+    await test.step('Wait for the payment form to mount', async () => {
       // After the address is confirmed the flow lands on the payment page; BUY NOW
-      // renders once the Stripe Payment Element has mounted.
+      // renders once the payment form has mounted.
       await this.verify.waitForVisibility(this.locators.buyNowButton);
     });
   }
 
-  // ── Payment form (Stripe Payment Element, in cross-origin iframes) ─────────
+  // ── Payment form (Adyen secured fields, in cross-origin iframes) ───────────
 
-  /** Scans every frame for the first visible input matching one of `selectors`. */
-  private async findFrameInput(selectors: string[]): Promise<Locator | null> {
+  /**
+   * Finds a payment secured-field textbox by its accessible label across all frames.
+   * Stripe/Adyen render each field (card number / expiry / security code) in its own
+   * cross-origin iframe; matching by role + accessible name targets the real input and ignores
+   * the hidden browser-autocomplete decoy inputs that share name/autocomplete attributes.
+   */
+  private async findFrameField(name: RegExp): Promise<Locator | null> {
     for (const frame of this.page.frames()) {
-      for (const sel of selectors) {
-        const loc = frame.locator(sel).first();
-        if (await loc.isVisible().catch(() => false)) return loc;
-      }
+      const field = frame.getByRole('textbox', { name }).first();
+      if (await field.isVisible().catch(() => false)) return field;
     }
     return null;
   }
 
+  // The checkout renders either a Stripe or an Adyen card form per session; their field
+  // labels differ ("Expiration date MM / YY" vs "Expiry date"), so match both.
+  private readonly expiryField = /expir/i;
+  private readonly cvcField = /security code|cvc|cvv/i;
+
+  /** Clicks the secured field (re-found fresh) and types the value into it. */
+  private async typeIntoFrameField(name: RegExp, value: string): Promise<void> {
+    const field = await this.findFrameField(name);
+    if (!field) return;
+    await field.click();
+    await field.pressSequentially(value, { delay: 50 });
+  }
+
   async fillPaymentDetails(payment: PaymentDetails): Promise<void> {
-    await test.step('Fill Stripe card details', async () => {
-      // The card fields mount progressively inside cross-origin Stripe iframes. Poll the
-      // frames until the card-number field appears — Stripe secure inputs are matched by
-      // name or autocomplete (cc-number/cc-exp/cc-csc) to stay robust across variants.
-      let cardInput: Locator | null = null;
+    await test.step('Fill card details (Stripe/Adyen secured fields)', async () => {
+      // Wait until ALL three Adyen fields have mounted before typing — filling while the
+      // form is still rendering drops the leading characters and leaves the field incomplete
+      // (BUY NOW then stays disabled). Each field is re-found fresh right before typing.
       await expect
-        .poll(async () => {
-          cardInput = await this.findFrameInput(['input[name="number"]', 'input[autocomplete="cc-number"]', 'input[name="cardnumber"]']);
-          return cardInput !== null;
-        }, { timeout: 30_000, message: 'Stripe card-number field never mounted in any frame' })
+        .poll(async () =>
+          (await this.findFrameField(/card number/i)) !== null &&
+          (await this.findFrameField(this.expiryField)) !== null &&
+          (await this.findFrameField(this.cvcField)) !== null,
+        { timeout: 30_000, message: 'Card fields never fully mounted' })
         .toBeTruthy();
 
-      await cardInput!.click();
-      await cardInput!.pressSequentially(payment.cardNumber, { delay: 30 });
-
-      const expiryInput = await this.findFrameInput(['input[name="expiry"]', 'input[autocomplete="cc-exp"]', 'input[name="exp-date"]']);
-      if (expiryInput) {
-        await expiryInput.click();
-        await expiryInput.pressSequentially(payment.expiry, { delay: 30 });
-      }
-
-      const cvcInput = await this.findFrameInput(['input[name="cvc"]', 'input[autocomplete="cc-csc"]', 'input[name="cvv"]']);
-      if (cvcInput) {
-        await cvcInput.click();
-        await cvcInput.pressSequentially(payment.cvv, { delay: 30 });
-      }
+      await this.typeIntoFrameField(/card number/i, payment.cardNumber);
+      await this.typeIntoFrameField(this.expiryField, payment.expiry);
+      await this.typeIntoFrameField(this.cvcField, payment.cvv);
 
       // Keep billing = shipping when the "Use shipping address for billing" checkbox is present.
       if (await this.verify.isElementVisible(this.locators.billingSameAsShippingCheckbox).catch(() => false)) {
@@ -194,22 +210,8 @@ export class CheckoutPage {
 
   async completeCheckout(shipping: ShippingDetails): Promise<void> {
     await test.step('Complete checkout flow', async () => {
-      await test.step('Product intro → Select strength', async () => {
-        // Checkout may open on a product-match intro before the strength step — advance
-        // past it only if the strength heading is not already showing.
-        if (!(await this.verify.isElementVisible(this.locators.strengthHeading).catch(() => false))) {
-          await this.clickActiveContinue();
-        }
-        await this.verify.waitForVisibility(this.locators.strengthHeading);
-      });
-
-      await test.step('Select strength (High Strength — default) → quantity', async () => {
-        await this.clickActiveContinue();
-        await this.verify.waitForVisibility(this.locators.quantityHeading);
-      });
-
-      await test.step('Select quantity (12 uses/month — default) → order summary', async () => {
-        await this.clickActiveContinue();
+      await test.step('Product intro → order summary → Checkout', async () => {
+        await this.advanceToOrderSummary();
         await this.actions.click(this.locators.checkoutButton);
       });
 

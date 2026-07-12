@@ -55,6 +55,11 @@ function buildTestAccount() {
 
 const account = buildTestAccount();
 
+// The dev checkout randomly renders a Stripe OR Adyen card form per session. 5555555555554444
+// (Mastercard) is the one test number on BOTH providers' official test-card lists — 4242…
+// is Stripe-only and Adyen declines it — so it is used regardless of which form renders.
+const cardNumber = '5555555555554444';
+
 const registrationTestData: { [key: string]: RegistrationTestCaseData } = {
   'AQ-01-Sign-up-To-Approved-Order-E2E': {
     registrationDetails: {
@@ -86,7 +91,7 @@ const registrationTestData: { [key: string]: RegistrationTestCaseData } = {
         phone:         '2125550100',
       },
       payment: {
-        cardNumber: env.STRIPE_CARD_NUMBER,
+        cardNumber,
         expiry:     env.STRIPE_CARD_EXP,
         cvv:        env.STRIPE_CARD_CVV,
       },
