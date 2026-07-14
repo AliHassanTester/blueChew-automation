@@ -5,7 +5,7 @@ import { test } from '@fixtures/page.fixtures';
 const scenario = getRegistrationData('AQ-01-Sign-up-To-Approved-Order-E2E');
 
 test.describe('Feature: Sign-up to Approved Order (E2E)', () => {
-  test.only(
+  test(
     `
     Test case: '${scenario.testCaseData.testCase}'
     Description: '${scenario.testCaseData.testDescription}'

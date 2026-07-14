@@ -75,7 +75,7 @@ export default defineConfig({
       username: process.env.HTTP_AUTH_USERNAME || '',
       password: process.env.HTTP_AUTH_PASSWORD || '',
     },
-    viewport: { width: 1280, height: 720 },
+    viewport: { width: 1920, height: 1080 },
     headless: !!process.env.CI,
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
