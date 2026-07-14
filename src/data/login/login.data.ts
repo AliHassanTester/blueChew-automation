@@ -25,7 +25,6 @@ const loginTestData: { [key: string]: LoginTestCaseData } = {
     loginPageDetails: {
       // The dev gate is presented on the login page itself, so the gate and login
       // steps share the same LOGIN_URL.
-      devGateURL:   env.LOGIN_URL,
       loginURL:     env.LOGIN_URL,
       postLoginURL: env.POST_LOGIN_URL,
     },

@@ -2,7 +2,6 @@ import { Page, TestInfo, test, Locator } from '@playwright/test';
 import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
-import { passDevGateIfPresent } from '@utilities/dev-gate.utils';
 
 /**
  * Quiz wizard (dev.bluechew.com/quiz). Stable elements live in the LocatorInfo map;
@@ -45,10 +44,6 @@ export class QuizPage {
 
   async completeQuiz(answers: number[]): Promise<void> {
     await test.step('Complete quiz', async () => {
-      // After registration redirects here, the quiz-domain dev gate may appear
-      // (separate from the app-domain gate passed at test start).
-      await passDevGateIfPresent(this.page);
-
       // Transition/splash screen auto-advances — wait for first question to appear
       await this.waitForAnswerButtons();
 

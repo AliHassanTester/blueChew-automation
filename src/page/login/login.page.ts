@@ -4,7 +4,6 @@ import { PlaywrightVerificationFactory } from '@utilities/playwright.verificatio
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { LoginDetails } from '@interfaces/login.interface';
 import { LoginPageDetails } from '@interfaces/login.page.interface';
-import { passDevGateIfPresent } from '@utilities/dev-gate.utils';
 
 export class LoginPage {
   public readonly page: Page;
@@ -95,21 +94,6 @@ export class LoginPage {
     };
   }
 
-  /**
-   * Passes the dev-environment password gate when it is presented. The gate no longer
-   * appears on /log-in in every session, so it is handled conditionally — absent gate
-   * is a no-op rather than a failure.
-   */
-  async passDevGate(devGateURL: string): Promise<void> {
-    await test.step('Pass dev environment gate (if present)', async () => {
-      await this.playwrightActionsFactory.navigateToURL(devGateURL);
-      await this.playwrightActionsFactory.waitForDomLoad();
-      await this.playwrightVerificationsFactory.waitForLoaderToDisappear();
-      await passDevGateIfPresent(this.page);
-      await this.playwrightVerificationsFactory.waitForLoaderToDisappear();
-    });
-  }
-
   async navigateToLoginPage(loginURL: string): Promise<void> {
     await test.step('Navigate to login page', async () => {
       await this.playwrightActionsFactory.navigateToURL(loginURL);
@@ -165,7 +149,6 @@ export class LoginPage {
   // ── Composite methods for spec-level orchestration ─────────────────────────
 
   async navigateToPage(loginPageDetails: LoginPageDetails): Promise<void> {
-    await this.passDevGate(loginPageDetails.devGateURL);
     await this.navigateToLoginPage(loginPageDetails.loginURL);
     await this.verifyLoginPageLoaded();
   }

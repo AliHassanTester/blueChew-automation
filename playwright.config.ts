@@ -69,6 +69,12 @@ export default defineConfig({
   ],
   use: {
     baseURL: baseURLs[envType] ?? baseURLs['dev'],
+    // The dev app domain is behind HTTP auth; Playwright answers the 401 challenge
+    // on every context automatically, so no per-test auth step is needed.
+    httpCredentials: {
+      username: process.env.HTTP_AUTH_USERNAME || '',
+      password: process.env.HTTP_AUTH_PASSWORD || '',
+    },
     viewport: { width: 1280, height: 720 },
     headless: !!process.env.CI,
     screenshot: 'only-on-failure',

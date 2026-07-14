@@ -3,7 +3,6 @@ import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { RegistrationDetails } from '@interfaces/signup-to-approved-order.interface';
-import { passDevGateIfPresent } from '@utilities/dev-gate.utils';
 
 export class RegistrationPage {
   public readonly page: Page;
@@ -54,19 +53,6 @@ export class RegistrationPage {
   // ── Private helpers ──────────────────────────────────────────────────────────
 
   /**
-   * Passes the dev-environment gate when it is presented (it no longer appears in every
-   * session), and no-ops when absent. Kept here so registration is self-contained — it
-   * reaches the login page and its Create-Account CTA without depending on LoginPage.
-   */
-  private async passDevGate(devGateURL: string): Promise<void> {
-    await this.actions.navigateToURL(devGateURL);
-    await this.actions.waitForDomLoad();
-    await this.verify.waitForLoaderToDisappear();
-    await passDevGateIfPresent(this.page);
-    await this.verify.waitForLoaderToDisappear();
-  }
-
-  /**
    * Each wizard step renders its own CONTINUE button (ds-button--primary); only the
    * active step's is visible + enabled. clickFirstActionable picks it, then we wait
    * for navigation to complete.
@@ -79,9 +65,7 @@ export class RegistrationPage {
   // ── Public step methods ──────────────────────────────────────────────────────
 
   async navigateToRegistrationPage(details: RegistrationDetails): Promise<void> {
-    await test.step('Pass dev gate → login page → Create Account CTA → /register', async () => {
-      await this.passDevGate(details.devGateURL);
-
+    await test.step('Open login page → Create Account CTA → /register', async () => {
       // Land on the login page and click the Create Account CTA to reach /register.
       await this.actions.navigateToURL(details.loginURL);
       await this.page.waitForLoadState('load');

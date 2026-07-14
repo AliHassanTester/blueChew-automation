@@ -18,22 +18,18 @@ npx playwright install chromium
 
 ## Environment Setup
 
-Copy the example env file and fill in credentials:
-
-```bash
-cp .env.example .env.dev
-```
+Create a git-ignored `.env.dev` with the required variables:
 
 | Variable | Description |
 |---|---|
-| `DEV_GATE_PASSWORD` | Dev gate password |
+| `HTTP_AUTH_USERNAME` | HTTP auth username for the dev app domain |
+| `HTTP_AUTH_PASSWORD` | HTTP auth password for the dev app domain |
 | `LOGIN_URL` | Login page URL |
 | `POST_REGISTRATION_URL` | URL after registration (quiz) |
 | `user_name` | Login test account email |
 | `password` | Registration/login account password |
-| `STRIPE_CARD_NUMBER` | Stripe test card number |
-| `STRIPE_CARD_EXP` | Stripe test card expiry (MM/YY) |
-| `STRIPE_CARD_CVV` | Stripe test card CVV |
+| `STRIPE_CARD_EXP` | Test card expiry (MM/YY) |
+| `STRIPE_CARD_CVV` | Test card CVV |
 | `ADMIN_URL` | Admin portal URL |
 | `ADMIN_EMAIL` | Admin portal login email |
 | `ADMIN_PASSWORD` | Admin portal login password |

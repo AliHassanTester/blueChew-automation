@@ -4,7 +4,6 @@ node_modules/
 # Environment files (contain credentials — never commit)
 .env
 .env.*
-!.env.example
 
 # TypeScript build output
 dist/

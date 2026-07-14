@@ -22,8 +22,6 @@ export interface PaymentDetails {
 }
 
 export interface RegistrationDetails {
-  /** App-domain dev gate — https://dev.app.bluechew.com/dev-login */
-  devGateURL: string;
   /** Login page — https://dev.app.bluechew.com/log-in */
   loginURL: string;
   /** Quiz URL — where the app redirects after successful registration */

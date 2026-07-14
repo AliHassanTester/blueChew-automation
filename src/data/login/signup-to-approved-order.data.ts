@@ -14,7 +14,8 @@ const env = getEnvVars({
   QUIZ_URL:           'https://dev.bluechew.com/quiz',
   STRIPE_CARD_NUMBER: '4242424242424242',
   STRIPE_CARD_EXP:    '12/28',
-  STRIPE_CARD_CVV:    '123',
+  // 737 is Adyen's test-card CVC; Stripe accepts any CVC in test mode, so it works on both.
+  STRIPE_CARD_CVV:    '737',
   ADMIN_URL:          'https://dev.admin.bluechew.com',
   ADMIN_EMAIL:        'ali@meds.com',
   ADMIN_PASSWORD:     null,   // required — set in .env.dev
@@ -63,9 +64,6 @@ const cardNumber = '5555555555554444';
 const registrationTestData: { [key: string]: RegistrationTestCaseData } = {
   'AQ-01-Sign-up-To-Approved-Order-E2E': {
     registrationDetails: {
-      // The dev gate is presented on the login page itself, so the gate and login
-      // steps share the same LOGIN_URL.
-      devGateURL:      env.LOGIN_URL,
       loginURL:        env.LOGIN_URL,
       quizURL:         env.QUIZ_URL,
       adminURL:        env.ADMIN_URL,

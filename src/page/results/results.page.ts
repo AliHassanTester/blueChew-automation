@@ -2,7 +2,6 @@ import { Page, TestInfo, test } from '@playwright/test';
 import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
-import { passDevGateIfPresent } from '@utilities/dev-gate.utils';
 
 /**
  * Funnel-gold / recommendations page (https://dev.bluechew.com/results).
@@ -48,11 +47,6 @@ export class ResultsPage {
     await test.step('Click TRY GOLD and navigate to medical profile', async () => {
       await this.actions.click(this.locators.tryGoldButton);
       await this.actions.waitForDomLoad();
-      await this.verify.waitForLoaderToDisappear();
-
-      // TRY GOLD redirects a logged-in user straight to /medical; the dev gate only
-      // re-prompts if session state differs. passDevGateIfPresent handles it defensively.
-      await passDevGateIfPresent(this.page);
       await this.verify.waitForLoaderToDisappear();
 
       // Wait for the medical profile form (first visible DS input on /medical)
