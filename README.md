@@ -28,6 +28,7 @@ Create a git-ignored `.env.dev` with the required variables:
 | `POST_REGISTRATION_URL` | URL after registration (quiz) |
 | `user_name` | Login test account email |
 | `password` | Registration/login account password |
+| `STRIPE_CARD_NUMBER` | Test card number (Stripe/Adyen-valid) |
 | `STRIPE_CARD_EXP` | Test card expiry (MM/YY) |
 | `STRIPE_CARD_CVV` | Test card CVV |
 | `ADMIN_URL` | Admin portal URL |

@@ -12,7 +12,7 @@ const env = getEnvVars({
   password:           null,   // required — registration + login password
   LOGIN_URL:          'https://dev.app.bluechew.com/log-in',
   QUIZ_URL:           'https://dev.bluechew.com/quiz',
-  STRIPE_CARD_NUMBER: '4242424242424242',
+  STRIPE_CARD_NUMBER: '5555555555554444',
   STRIPE_CARD_EXP:    '12/28',
   // 737 is Adyen's test-card CVC; Stripe accepts any CVC in test mode, so it works on both.
   STRIPE_CARD_CVV:    '737',
@@ -56,10 +56,10 @@ function buildTestAccount() {
 
 const account = buildTestAccount();
 
-// The dev checkout randomly renders a Stripe OR Adyen card form per session. 5555555555554444
-// (Mastercard) is the one test number on BOTH providers' official test-card lists — 4242…
-// is Stripe-only and Adyen declines it — so it is used regardless of which form renders.
-const cardNumber = '5555555555554444';
+// Card number is env-driven (STRIPE_CARD_NUMBER). Default 5555555555554444 (Mastercard) is
+// the one test number on BOTH providers' test-card lists — the dev checkout randomly renders
+// Stripe or Adyen, and 4242… is Stripe-only (Adyen declines it).
+const cardNumber = env.STRIPE_CARD_NUMBER;
 
 const registrationTestData: { [key: string]: RegistrationTestCaseData } = {
   'AQ-01-Sign-up-To-Approved-Order-E2E': {
