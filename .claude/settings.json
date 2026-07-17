@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node scripts/capture-register-dom.js)",
+      "Bash(node scripts/capture-quiz-dom.js)",
+      "Bash(npx cross-env *)",
+      "Bash(node scripts/capture-post-quiz.js)",
+      "Bash(node scripts/capture-post-results.js)",
+      "Bash(node scripts/capture-try-gold-flow.js)",
+      "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\('dom-snapshots/try-gold-flow/02-medical.json','utf8'\\)\\); const inputs=d.elements.filter\\(e=>['input','select','textarea'].includes\\(e.tag\\)\\); inputs.forEach\\(i=>console.log\\(JSON.stringify\\({tag:i.tag,fcn:i.fcn,type:i.type,id:i.id,cls:i.cls?.slice\\(0,60\\),text:i.text?.slice\\(0,60\\)}\\)\\)\\);\")",
+      "Bash(node scripts/capture-medical-checkout.js)",
+      "Bash(node scripts/capture-checkout-forward.js)",
+      "Bash(node scripts/capture-strength-forward.js)",
+      "Bash(npx tsc *)",
+      "Bash(node scripts/capture-payment-admin.js)",
+      "Bash(node -e ' *)",
+      "Bash(npm run *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\BrainNotFound\\\\Documents\\\\GitHub\\\\blueChew-automation\" -Recurse)",
+      "Bash(Select-Object -Property Name, FullName)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(Remove-Item -Recurse -Force scripts/)",
+      "Bash(npx playwright *)",
+      "Bash(npx ts-node -e ' *)",
+      "Bash(node scripts/trace-medical.js)",
+      "Bash(node scripts/trace-medical2.js)",
+      "Bash(Get-Content \"C:\\\\Users\\\\BRAINN~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-BrainNotFound-Documents-GitHub-blueChew-automation\\\\3a156248-a578-4384-ad0d-f04941316202\\\\tasks\\\\bf0zcrbyr.output\")",
+      "Bash(npx allure *)",
+      "Bash(npm install *)",
+      "PowerShell($jh = $env:JAVA_HOME; Write-Output \"JAVA_HOME=[$jh]\"; try { $v = & java -version 2>&1 | Select-Object -First 1; Write-Output \"JAVA: $v\" } catch { Write-Output \"java NOT found\" })",
+      "Bash(npm uninstall *)",
+      "Bash(node -e \"const fs=require\\('fs'\\);fs.rmSync\\('allure-results',{recursive:true,force:true}\\)\")",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('allure-results/categories.json','utf8'\\)\\).forEach\\(c=>console.log\\(' - '+c.name\\)\\)\")",
+      "Bash(node -e \"console.log\\('playwright:', require\\('@playwright/test/package.json'\\).version\\)\")",
+      "Bash(node scripts/explore-admin.js)",
+      "Bash(node scripts/explore-add-order.js)",
+      "Bash(node scripts/verify-admin.js)",
+      "Bash(git mv *)",
+      "Bash(node scripts/explore-subscription.js)",
+      "Bash(node scripts/explore-televisit.js)",
+      "Bash(node scripts/explore-televisit-patient.js)"
+    ]
+  }
+}

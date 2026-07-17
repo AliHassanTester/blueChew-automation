@@ -1,1 +1,0 @@
-2026-05-18 17:36:32 info: [LoginPage] ── STEP: Navigating to http://localhost:3000/log-in

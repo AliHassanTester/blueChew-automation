@@ -1,133 +1,98 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 import * as dotenv from 'dotenv';
-import * as path from 'path';
 
-// Resolve and load the correct .env file before the config is evaluated.
-// playwright.config.ts intentionally reads env vars directly to stay
-// self-contained and avoid a circular dependency with environment.config.ts.
-const nodeEnv = process.env.NODE_ENV ?? 'development';
-const envFile = nodeEnv === 'production' ? '.env.prod' : '.env.dev';
-dotenv.config({ path: path.resolve(process.cwd(), envFile) });
+// ENV_TYPE is set by the npm script (cross-env ENV_TYPE=dev) before this config
+// runs, so the correct .env file is loaded before any test data file initialises.
+const envType = process.env.ENV_TYPE || 'dev';
+dotenv.config({ path: `.env.${envType}` });
 
-const isCI = !!process.env.CI;
-const baseURL = process.env.BASE_URL ?? 'http://localhost:3000';
-const headless = process.env.HEADLESS !== 'false';
-const defaultTimeout = parseInt(process.env.DEFAULT_TIMEOUT ?? '30000', 10);
-const retries = isCI ? 2 : parseInt(process.env.TEST_RETRIES ?? '1', 10);
-const workers = isCI ? 4 : undefined; // undefined = logical CPU count in local mode
+const baseURLs: Record<string, string> = {
+  dev: 'https://dev.app.bluechew.com',
+  prod: 'https://app.bluechew.com',
+};
 
 export default defineConfig({
-  testDir: './tests',
-
-  // Run tests in each file in parallel; files run sequentially by default
-  fullyParallel: true,
-
-  // Fail the CI build if test.only is accidentally committed
-  forbidOnly: isCI,
-
-  retries,
-  workers,
-  timeout: defaultTimeout,
-
+  testDir: '.',
+  testMatch: ['src/specs/**/*.spec.ts'],
+  // Per-test ceiling — the maximum wall-clock time any single test may run before
+  // it is force-failed. The full onboarding flow legitimately runs ~10 min, so this
+  // is a generous last-resort safety net; individual stuck actions are caught much
+  // sooner by actionTimeout / navigationTimeout below.
+  timeout: 900_000,
+  // Web-first assertion timeout — expect(locator).toBeVisible(), toHaveText(), etc.
+  expect: { timeout: 15_000 },
+  retries: process.env.CI ? 1 : 0,
+  workers: process.env.CI ? 4 : 1,
   reporter: [
-    ['list'],
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
-    [
-      'allure-playwright',
-      {
-        outputFolder: 'allure-results',
-        suiteTitle: false,
-        environmentInfo: {
-          Environment: nodeEnv,
-          BaseURL: baseURL,
-          Node: process.version,
-          Platform: process.platform,
-        },
+    ['junit', { outputFile: 'test-results/junit.xml' }],
+    ['allure-playwright', {
+      resultsDir: 'allure-results',
+      detail: true,
+      // Shown in the Allure "Environment" widget on the overview page
+      environmentInfo: {
+        Environment:  envType,
+        Base_URL:     baseURLs[envType] ?? baseURLs['dev'],
+        Node_Version: process.version,
+        OS:           `${process.platform} ${process.arch}`,
+        CI:           process.env.CI ? 'true' : 'false',
       },
-    ],
-    ['./reporters/custom.reporter.ts'],
-    ...(isCI
-      ? ([['junit', { outputFile: 'test-results/junit.xml' }]] as [string, Record<string, string>][])
-      : []),
+      // Classifies failures on the Allure "Categories" tab
+      categories: [
+        {
+          name: 'Timeouts',
+          matchedStatuses: ['broken', 'failed'],
+          messageRegex: '.*Timeout.*exceeded.*',
+        },
+        {
+          name: 'Network / connection issues',
+          matchedStatuses: ['broken', 'failed'],
+          messageRegex: '.*(net::|ECONNREFUSED|ERR_|ENOTFOUND).*',
+        },
+        {
+          name: 'Element not found / not visible',
+          matchedStatuses: ['broken', 'failed'],
+          messageRegex: '.*(locator|waiting for|not visible|outside of the viewport).*',
+        },
+        {
+          name: 'Assertion failures (product defects)',
+          matchedStatuses: ['failed'],
+          messageRegex: '.*(expect|toHaveLength|toBe|toEqual|toContain).*',
+        },
+        {
+          name: 'Ignored / skipped tests',
+          matchedStatuses: ['skipped'],
+        },
+      ],
+    }],
+    ['list'],
   ],
-
   use: {
-    baseURL,
-    headless,
-
-    // Capture artefacts only on failure to keep storage lean
+    baseURL: baseURLs[envType] ?? baseURLs['dev'],
+    // The dev app domain is behind HTTP auth; Playwright answers the 401 challenge
+    // on every context automatically, so no per-test auth step is needed.
+    httpCredentials: {
+      username: process.env.HTTP_AUTH_USERNAME || '',
+      password: process.env.HTTP_AUTH_PASSWORD || '',
+    },
+    viewport: { width: 1920, height: 1080 },
+    headless: !!process.env.CI,
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    trace: 'on-first-retry',
-
-    // Granular timeouts — this is a slow Angular SPA (15-20s cold load)
-    actionTimeout: 15_000,
+    trace: 'retain-on-failure',
+    // Default timeout for a single action (click, fill, selectOption, check…)
+    // when no explicit timeout is passed — stops a stuck element from hanging
+    // until the per-test ceiling. Explicit waitFor({ timeout }) calls override this.
+    actionTimeout: 30_000,
+    // Default timeout for navigations (goto, waitForURL, waitForLoadState).
+    // The Angular SPA + dev-gate redirects can be slow, so this is more generous.
     navigationTimeout: 60_000,
-
-    locale: 'en-US',
-    timezoneId: 'America/New_York',
-
-    // Tag every automated request so server logs can distinguish test traffic
-    extraHTTPHeaders: {
-      'x-automated-test': 'true',
-      'x-framework-version': '1.0.0',
-    },
   },
-
   projects: [
-    // ── Desktop browsers ──────────────────────────────────────────────────
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-    {
-      name: 'edge',
-      use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    },
-
-    // ── Mobile viewports ──────────────────────────────────────────────────
-    {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 7'] },
-    },
-    {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 14'] },
+      name: 'chromium-functional',
+      testMatch: 'src/specs/**/*.spec.ts',
+      use: { browserName: 'chromium' },
     },
   ],
-
-  outputDir: 'test-results',
-
-  expect: {
-    // Assertion timeout — distinct from action/navigation timeouts
-    timeout: 10_000,
-
-    toHaveScreenshot: {
-      // Tolerance for anti-aliasing and sub-pixel rendering differences.
-      // Visual tests run on Chromium only (set via test.use) so cross-browser
-      // rendering variance is not a factor.
-      maxDiffPixels: 150,
-      threshold: 0.2,
-      // Animations are disabled per-test via disableAnimations() in visual.helper.ts
-      animations: 'disabled',
-    },
-
-    toMatchSnapshot: {
-      maxDiffPixelRatio: 0.02,
-    },
-  },
-
-  // Baseline snapshots live alongside the spec files in __snapshots__ dirs.
-  // To regenerate after intentional UI changes: npx playwright test --update-snapshots
-
-  globalSetup: './hooks/global.setup.ts',
-  globalTeardown: './hooks/global.teardown.ts',
 });
