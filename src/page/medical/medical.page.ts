@@ -43,6 +43,55 @@ export class MedicalPage {
         description: 'Active Step CONTINUE / SUBMIT Button',
         locator: this.page.locator('button[class*="ds-button--primary"]').filter({ visible: true }).first(),
       },
+      // Generic CONTINUE link on transition / info pages that lack the DS button.
+      proceedLink: {
+        description: 'Generic CONTINUE Link (transition pages)',
+        locator: this.page.locator(':text-is("CONTINUE")'),
+      },
+
+      // ── Overlays ────────────────────────────────────────────────────────────
+      // Transient "danger" snackbar toast that can overlay CONTINUE and intercept clicks.
+      snackbar: {
+        description: 'Snackbar Toast (overlay)',
+        locator: this.page.locator('#snackbar'),
+      },
+
+      // ── Data-driven question controls (base locators; scoped by text/role at use) ──
+      // Option tiles: DS option buttons (sex/patient) and ARIA radios (walk/climb).
+      optionTiles: {
+        description: 'Option Tiles (DS options / ARIA radios)',
+        locator: this.page.locator('button.ds-option-selector__option, [role="radio"]'),
+      },
+      radioGroups: {
+        description: 'Question Radiogroups',
+        locator: this.page.getByRole('radiogroup'),
+      },
+      checkboxes: {
+        description: 'Question Checkboxes',
+        locator: this.page.getByRole('checkbox'),
+      },
+      // "I have NONE of these" / "I DO NOT take any of these" — safe multi-select opt-out.
+      noneCheckbox: {
+        description: 'Multi-select "none / do not" opt-out checkbox',
+        locator: this.page.getByRole('checkbox', { name: /none|do not|don'?t/i }),
+      },
+      // Fallback option for checkbox steps without a "none" choice (e.g. the Reason step).
+      fallbackCheckboxLabel: {
+        description: 'First selectable checkbox label (fallback)',
+        locator: this.page.locator('label:not(.ds-input__label)'),
+      },
+      // First actionable control of whatever step is showing — used to await step render.
+      stepControl: {
+        description: 'Active Step First Control',
+        locator: this.page.locator(
+          'button.ds-option-selector__option, [role="radio"], [role="checkbox"], :text-is("CONTINUE")',
+        ),
+      },
+      // Page body — read as text to classify the current question.
+      pageBody: {
+        description: 'Page Body Text',
+        locator: this.page.locator('body'),
+      },
     };
   }
 
@@ -59,6 +108,11 @@ export class MedicalPage {
     return cont.isEnabled().catch(() => false);
   }
 
+  /** Waits for any blocking snackbar toast to auto-dismiss before interacting. */
+  private async dismissSnackbar(): Promise<void> {
+    await this.locators.snackbar.locator.waitFor({ state: 'detached' }).catch(() => undefined);
+  }
+
   /**
    * Clicks CONTINUE. Playwright auto-waits for the button to be visible AND enabled
    * (DS steps keep it disabled until the step is satisfied). A transient "danger"
@@ -66,13 +120,13 @@ export class MedicalPage {
    * for any such toast to auto-dismiss.
    */
   private async clickContinue(): Promise<void> {
-    await this.page.locator('#snackbar').waitFor({ state: 'detached' }).catch(() => undefined);
+    await this.dismissSnackbar();
     await this.actions.click(this.locators.continueButton);
   }
 
-  /** Option tiles a step can render — DS option buttons (sex/patient) and ARIA radios (walk/climb). */
+  /** Option tiles a step can render, optionally narrowed to an exact (case-insensitive) label. */
   private optionTiles(text?: string): Locator {
-    const base = this.page.locator('button.ds-option-selector__option, [role="radio"]');
+    const base = this.locators.optionTiles.locator;
     return text ? base.filter({ hasText: new RegExp(`^${text}$`, 'i') }) : base;
   }
 
@@ -111,16 +165,15 @@ export class MedicalPage {
     // list (incl. the safe option, which renders last) has rendered.
     await this.verify.waitForVisibility(this.locators.continueButton);
 
-    // The "none" option is worded differently per step: "I have NONE of these",
-    // "I DO NOT take any of these", etc. Match any of them — selecting it avoids the
-    // follow-up required fields that ticking a real option would trigger.
-    const noneCheckbox = this.page.getByRole('checkbox', { name: /none|do not|don'?t/i });
+    // Selecting the "none" option avoids the follow-up required fields that ticking a
+    // real option would trigger.
+    const noneCheckbox = this.locators.noneCheckbox.locator;
     if (await noneCheckbox.count() > 0) {
       // Hidden inputs are positioned off-screen — DOM .click() bypasses coordinate
       // checks and still triggers Angular's change detection.
       await noneCheckbox.first().evaluate((el: HTMLElement) => el.click());
     } else {
-      await this.page.locator('label:not(.ds-input__label)').filter({ visible: true }).first().click();
+      await this.locators.fallbackCheckboxLabel.locator.filter({ visible: true }).first().click();
     }
     await this.clickContinue();
   }
@@ -137,7 +190,7 @@ export class MedicalPage {
    */
   private async answerAllRadiogroups(bodyText: string): Promise<void> {
     const preferYes = this.answerFor(bodyText) === 'Yes';
-    const groups = this.page.getByRole('radiogroup');
+    const groups = this.locators.radioGroups.locator;
     const total = await groups.count();
 
     for (let i = 0; i < total; i++) {
@@ -158,11 +211,11 @@ export class MedicalPage {
    * element styled as a CONTINUE link. Dismisses any blocking snackbar first.
    */
   private async clickProceed(): Promise<void> {
-    await this.page.locator('#snackbar').waitFor({ state: 'detached' }).catch(() => undefined);
+    await this.dismissSnackbar();
     if (await this.verify.isElementVisible(this.locators.continueButton).catch(() => false)) {
       await this.actions.click(this.locators.continueButton);
     } else {
-      await this.page.locator(':text-is("CONTINUE")').filter({ visible: true }).first().click();
+      await this.locators.proceedLink.locator.filter({ visible: true }).first().click();
     }
   }
 
@@ -177,18 +230,16 @@ export class MedicalPage {
    * Loops until the flow leaves /medical.
    */
   private async completeRemainingMedicalSteps(): Promise<void> {
-    const stepControl = this.page
-      .locator('button.ds-option-selector__option, [role="radio"], [role="checkbox"], :text-is("CONTINUE")')
-      .first();
+    const stepControl = this.locators.stepControl.locator.first();
 
     for (let step = 0; step < 50; step++) {
       if (!this.page.url().includes('/medical')) break;
       await stepControl.waitFor({ state: 'visible' }).catch(() => undefined);
       if (!this.page.url().includes('/medical')) break;
 
-      const bodyText      = (await this.page.locator('body').innerText().catch(() => '')).toLowerCase();
-      const hasCheckbox   = (await this.page.getByRole('checkbox').count()) > 0;
-      const hasRadiogroup = (await this.page.getByRole('radiogroup').count()) > 0;
+      const bodyText      = (await this.locators.pageBody.locator.innerText().catch(() => '')).toLowerCase();
+      const hasCheckbox   = (await this.locators.checkboxes.locator.count()) > 0;
+      const hasRadiogroup = (await this.locators.radioGroups.locator.count()) > 0;
       const hasOptions    = (await this.optionTiles().count()) > 0;
 
       if (hasCheckbox) {
@@ -253,6 +304,14 @@ export class MedicalPage {
   async verifyNavigatedToCheckout(): Promise<void> {
     await test.step('Verify navigation to checkout', async () => {
       await this.actions.waitForURL(/\/checkout/);
+    });
+  }
+
+  /** Complete the whole medical profile, then confirm the flow reached checkout. */
+  async completeMedicalAndProceed(details: MedicalDetails): Promise<void> {
+    await test.step('Complete medical profile and reach checkout', async () => {
+      await this.completeMedicalProfile(details);
+      await this.verifyNavigatedToCheckout();
     });
   }
 }

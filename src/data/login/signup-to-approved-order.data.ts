@@ -11,7 +11,7 @@ export interface RegistrationTestCaseData {
 const env = getEnvVars({
   password:           null,   // required — registration + login password
   LOGIN_URL:          'https://dev.app.bluechew.com/log-in',
-  QUIZ_URL:           'https://dev.bluechew.com/quiz',
+  QUIZ_URL:           'https://dev.app.bluechew.com/quiz',
   STRIPE_CARD_NUMBER: '5555555555554444',
   STRIPE_CARD_EXP:    '12/28',
   // 737 is Adyen's test-card CVC; Stripe accepts any CVC in test mode, so it works on both.
@@ -46,7 +46,7 @@ function randomDOB(): string {
 function buildTestAccount() {
   const runId = `${generateRandomAlphanumeric(4)}.${Date.now()}`;
   return {
-    email:         `test.${runId}@automation-test.com`,
+    email:         `test.${runId}+stripe@meds.com`,
     firstName:     `${pick(FIRST_NAMES)}.${runId}`,
     lastName:      `${pick(LAST_NAMES)}.${runId}`,
     birthday:      randomDOB(),

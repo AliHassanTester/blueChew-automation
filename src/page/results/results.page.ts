@@ -53,4 +53,12 @@ export class ResultsPage {
       await this.verify.waitForVisibility(this.locators.medicalFirstNameInput);
     });
   }
+
+  /** Confirm the results page loaded, then choose Gold and move on to the medical profile. */
+  async selectGoldPlan(): Promise<void> {
+    await test.step('Review results and choose the Gold plan', async () => {
+      await this.verifyResultsPageLoaded();
+      await this.clickTryGold();
+    });
+  }
 }

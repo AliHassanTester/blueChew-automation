@@ -86,6 +86,15 @@ export class ConfirmationPage {
     });
   }
 
+  /** Upload the ID photo, then wait through provider connection into the queue. */
+  async submitIdAndAwaitProvider(): Promise<void> {
+    await test.step('Submit ID photo and wait for provider queue', async () => {
+      await this.uploadIdPhoto();
+      await this.verifyConnectingToProvider();
+      await this.waitForProviderQueue();
+    });
+  }
+
   /**
    * After the provider approves the patient in the admin/care portal, refreshing the
    * patient's page (the one left in the provider queue) resolves to the "MY PLAN"

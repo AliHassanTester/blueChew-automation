@@ -141,6 +141,25 @@ export class PlaywrightVerificationFactory {
     }
   }
 
+  /**
+   * Waits for the app's "Just a moment" loader to fully cycle: up to `appearTimeout`
+   * for it to mount (it may never — that's fine), then up to `settleTimeout` for it to
+   * clear. Unlike waitForLoaderToDisappear — which returns instantly when the loader
+   * hasn't mounted *yet* and so can let the next action fire too early — this closes the
+   * race where the loader appears a beat after a click (e.g. the checkout carousel's
+   * strength → quantity → summary transitions, which fetch pricing between slides).
+   */
+  async waitForLoaderSettled(appearTimeout = 1_000, settleTimeout = 30_000): Promise<void> {
+    const loader = this.page.locator("text='Just a moment'").first();
+    const appeared = await loader
+      .waitFor({ state: 'visible', timeout: appearTimeout })
+      .then(() => true)
+      .catch(() => false);
+    if (appeared) {
+      await loader.waitFor({ state: 'detached', timeout: settleTimeout }).catch(() => undefined);
+    }
+  }
+
   async waitForProcessingLoaderToDisappear(): Promise<void> {
     try {
       await this.page.waitForSelector(

@@ -50,6 +50,16 @@ export class RegistrationPage {
     };
   }
 
+  // ── Dynamic locators ─────────────────────────────────────────────────────────
+  // State options only exist while the listbox is open and vary by state name, so
+  // they can't be a fixed entry in the locators list above — build them on demand.
+  private stateOption(state: string): LocatorInfo {
+    return {
+      description: `State Option — ${state}`,
+      locator: this.page.locator(`//button[normalize-space()='${state}']`),
+    };
+  }
+
   // ── Private helpers ──────────────────────────────────────────────────────────
 
   /**
@@ -60,6 +70,17 @@ export class RegistrationPage {
   private async clickActiveStepContinue(): Promise<void> {
     await this.actions.clickFirstActionable("//button[normalize-space()='CONTINUE']");
     await this.page.waitForLoadState('load');
+  }
+
+  /**
+   * Shared flow for the single-input wizard steps (email, password): wait for the
+   * field, fill it, Tab to trigger validation/blur, then advance to the next step.
+   */
+  private async fillInputStep(input: LocatorInfo, value: string): Promise<void> {
+    await this.actions.waitForVisibility(input);
+    await this.actions.sendKeys(input, value);
+    await this.actions.pressKey(input, 'Tab');
+    await this.clickActiveStepContinue();
   }
 
   // ── Public step methods ──────────────────────────────────────────────────────
@@ -80,39 +101,28 @@ export class RegistrationPage {
     await test.step('Step 1 — select state and accept terms', async () => {
       await this.actions.waitForVisibility(this.locators.stateDropdownTrigger);
       await this.actions.click(this.locators.stateDropdownTrigger);
-      // Options are <button>s labelled by state name, present only while the listbox is open.
-      await this.actions.click({
-        description: `State Option — ${state}`,
-        locator: this.page.locator(`//button[normalize-space()='${state}']`),
-      });
+      await this.actions.click(this.stateOption(state));
       await this.actions.selectRadioButtonOrCheckBox(this.locators.termsCheckbox);
       await this.clickActiveStepContinue();
     });
   }
 
   async completeEmailStep(email: string): Promise<void> {
-    await test.step('Step 2 — enter email address', async () => {
-      await this.actions.waitForVisibility(this.locators.emailInput);
-      await this.actions.sendKeys(this.locators.emailInput, email);
-      await this.actions.pressKey(this.locators.emailInput, 'Tab');
-      await this.clickActiveStepContinue();
-    });
+    await test.step('Step 2 — enter email address', () =>
+      this.fillInputStep(this.locators.emailInput, email));
   }
 
   async completePasswordStep(password: string): Promise<void> {
-    await test.step('Step 3 — set password', async () => {
-      await this.actions.waitForVisibility(this.locators.passwordInput);
-      await this.actions.sendKeys(this.locators.passwordInput, password);
-      await this.actions.pressKey(this.locators.passwordInput, 'Tab');
-      await this.clickActiveStepContinue();
-    });
+    await test.step('Step 3 — set password', () =>
+      this.fillInputStep(this.locators.passwordInput, password));
   }
 
   async verifyRegistrationSuccess(quizURL: string): Promise<void> {
     await test.step('Verify registration succeeded — redirected to quiz', async () => {
-      // Escape special chars for regex — matches the quiz URL regardless of query params
-      const escapedBase = quizURL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      await this.actions.waitForURL(new RegExp(escapedBase));
+      // Match the quiz PATH on any host — the quiz has moved between the marketing and app
+      // domains, so key off the /quiz path rather than a fixed origin.
+      const quizPath = new URL(quizURL).pathname.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      await this.actions.waitForURL(new RegExp(`${quizPath}(?:[/?#]|$)`));
     });
   }
 
@@ -123,6 +133,15 @@ export class RegistrationPage {
       await this.completeStateAndTerms(details.state);
       await this.completeEmailStep(details.email);
       await this.completePasswordStep(details.password);
+    });
+  }
+
+  /** Full registration journey: login page → wizard → landed on the quiz. */
+  async completeRegistration(details: RegistrationDetails): Promise<void> {
+    await test.step('Register new customer (login → wizard → quiz)', async () => {
+      await this.navigateToRegistrationPage(details);
+      await this.completeRegistrationWizard(details);
+      await this.verifyRegistrationSuccess(details.quizURL);
     });
   }
 }

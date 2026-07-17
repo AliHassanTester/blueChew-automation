@@ -1,4 +1,5 @@
 import { Page, test, expect, BrowserContext } from '@playwright/test';
+import { RegistrationDetails } from '@interfaces/signup-to-approved-order.interface';
 
 export class AdminPage {
   private _page: Page | null = null;
@@ -196,6 +197,27 @@ export class AdminPage {
 
       // Only an active (started) subscription can be put on hold
       await expect(page.locator('button:has-text("Put On Hold")')).toBeVisible();
+    });
+  }
+
+  /**
+   * End-to-end admin/care-portal flow for a freshly-registered patient: log in, find the
+   * user, approve them in the care portal, create their first order, verify the order and
+   * that the subscription started, then close the admin tab (returning focus to the patient
+   * tab). Idempotent close means fixture teardown stays a no-op.
+   */
+  async approveAndCreateFirstOrder(details: RegistrationDetails): Promise<void> {
+    await test.step('Admin portal — approve patient and create first order', async () => {
+      await this.navigateAndLogin(details.adminURL, details.adminEmail, details.adminPassword);
+      await this.navigateToUsers();
+      await this.searchUser(details.email);
+      await this.openUserDetail(details.email);
+      await this.reviewAndApprove(details.adminEmail, details.adminPassword);
+      await this.verifyApprovedStatus();
+      await this.addOrder('$0 - Next Business Day', 'Automation test order');
+      await this.verifyOrderAdded();
+      await this.verifySubscriptionStarted();
+      await this.close();
     });
   }
 }

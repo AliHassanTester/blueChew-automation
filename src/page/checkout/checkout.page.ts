@@ -97,7 +97,9 @@ export class CheckoutPage {
       const continueControl = this.page.getByText('CONTINUE', { exact: true }).filter({ visible: true }).first();
       if (!(await continueControl.isVisible().catch(() => false))) break;
       await continueControl.click();
-      await this.verify.waitForLoaderToDisappear();
+      // Wait for the inter-slide loader to actually cycle (it fetches pricing on the
+      // strength/quantity transitions) rather than racing ahead before it mounts.
+      await this.verify.waitForLoaderSettled();
     }
     await this.verify.waitForVisibility(this.locators.checkoutButton);
   }
@@ -227,6 +229,21 @@ export class CheckoutPage {
       await this.verify.waitForLoaderToDisappear();
       await this.verify.waitForProcessingLoaderToDisappear();
       await this.actions.waitForURL(/\/checkout\/confirmation/);
+    });
+  }
+
+  /**
+   * Full checkout journey: product carousel → order summary → shipping → payment form →
+   * pay → confirmation page. Card entry handles whichever provider (Stripe/Adyen) mounts.
+   */
+  async completeCheckoutAndPay(shipping: ShippingDetails, payment: PaymentDetails): Promise<void> {
+    await test.step('Complete checkout and pay', async () => {
+      await this.completeCheckout(shipping);
+      await this.verifyOrderSummary();
+      await this.proceedToPaymentForm();
+      await this.fillPaymentDetails(payment);
+      await this.completePurchase();
+      await this.verifyCheckoutComplete();
     });
   }
 }
