@@ -16,6 +16,8 @@ allure-report/
 
 # DOM capture dev artifacts (one-off locator derivation, not part of test suite)
 dom-snapshots/
+# Playwright MCP browser artifacts
+.playwright-mcp/
 
 # OS
 .DS_Store

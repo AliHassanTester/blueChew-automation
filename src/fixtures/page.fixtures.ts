@@ -7,6 +7,7 @@ import { MedicalPage } from '@page/medical/medical.page';
 import { CheckoutPage } from '@page/checkout/checkout.page';
 import { ConfirmationPage } from '@page/confirmation/confirmation.page';
 import { AdminPage } from '@page/admin/admin.page';
+import { ProfilePage } from '@page/account/profile.page';
 
 type TestFixtures = {
   loginPage: LoginPage;
@@ -17,6 +18,7 @@ type TestFixtures = {
   checkoutPage: CheckoutPage;
   confirmationPage: ConfirmationPage;
   adminPage: AdminPage;
+  profilePage: ProfilePage;
 };
 
 export const test = base.extend<TestFixtures>({
@@ -55,6 +57,9 @@ export const test = base.extend<TestFixtures>({
     const adminPage = new AdminPage(context);
     await use(adminPage);
     await adminPage.close();
+  },
+  profilePage: async ({ page }, use) => {
+    await use(new ProfilePage(page, base.info()));
   },
 });
 
