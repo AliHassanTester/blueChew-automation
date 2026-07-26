@@ -4,16 +4,19 @@ import { PlaywrightVerificationFactory } from '@utilities/playwright.verificatio
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { LoginDetails } from '@interfaces/login.interface';
 import { LoginPageDetails } from '@interfaces/login.page.interface';
+import { ApplitoolsVisualHelper } from '@utilities/applitools.utils';
 
 export class LoginPage {
   public readonly page: Page;
   private readonly playwrightActionsFactory: PlaywrightActionFactory;
+  private readonly visualHelper?: ApplitoolsVisualHelper;
   private readonly playwrightVerificationsFactory: PlaywrightVerificationFactory;
   private readonly locators: { [key: string]: LocatorInfo };
 
-  constructor(page: Page, testInfo: TestInfo) {
+  constructor(page: Page, testInfo: TestInfo, visualHelper?: ApplitoolsVisualHelper) {
     this.page = page;
     this.playwrightActionsFactory = new PlaywrightActionFactory(page, testInfo);
+    this.visualHelper = visualHelper;
     this.playwrightVerificationsFactory = new PlaywrightVerificationFactory(page, testInfo);
 
     // Locators are XPath, anchored on stable attributes (data-test-id) and semantic
@@ -104,6 +107,7 @@ export class LoginPage {
 
   async verifyLoginPageLoaded(): Promise<void> {
     await test.step('Verify login page is loaded', async () => {
+      await this.page.waitForLoadState('load');
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.loginPageContainer);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.emailInput);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.passwordInput);
@@ -126,7 +130,7 @@ export class LoginPage {
 
   async verifyLoginSuccess(): Promise<void> {
     await test.step('Verify login succeeded — account page rendered', async () => {
-      await this.playwrightVerificationsFactory.waitForLoaderToDisappear();
+      await this.playwrightVerificationsFactory.waitForLoaderSettled();
       await this.playwrightVerificationsFactory.waitForProcessingLoaderToDisappear();
       // Login redirects into /account (default landing tab is /membership).
       await this.playwrightActionsFactory.waitForURL(/\/account\//);
@@ -151,6 +155,7 @@ export class LoginPage {
   async navigateToPage(loginPageDetails: LoginPageDetails): Promise<void> {
     await this.navigateToLoginPage(loginPageDetails.loginURL);
     await this.verifyLoginPageLoaded();
+    await this.visualHelper?.captureCheckpoint('Login flow', 'Login page', 'BlueChew Login');
   }
 
   async loginWithCredentials(loginDetails: LoginDetails): Promise<void> {
@@ -160,5 +165,6 @@ export class LoginPage {
 
   async verifySuccessfulLogin(): Promise<void> {
     await this.verifyLoginSuccess();
+    await this.visualHelper?.captureCheckpoint('Login flow', 'Authenticated account page', 'BlueChew Login');
   }
 }

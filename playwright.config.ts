@@ -11,6 +11,58 @@ const baseURLs: Record<string, string> = {
   prod: 'https://app.bluechew.com',
 };
 
+const isVisualMode = process.env.APPLITOOLS_ENABLED === 'true';
+
+const reporters: Array<readonly [string] | readonly [string, Record<string, unknown>]> = isVisualMode
+  ? [
+      ['@applitools/eyes-playwright/reporter', { open: 'never', outputFolder: 'eyes-playwright-report' }],
+      ['list'],
+    ]
+  : [
+      ['html', { outputFolder: 'playwright-report', open: 'never' }],
+      ['junit', { outputFile: 'test-results/junit.xml' }],
+      ['allure-playwright', {
+        resultsDir: 'allure-results',
+        detail: true,
+        // Shown in the Allure "Environment" widget on the overview page
+        environmentInfo: {
+          Environment:  envType,
+          Base_URL:     baseURLs[envType] ?? baseURLs['dev'],
+          Node_Version: process.version,
+          OS:           `${process.platform} ${process.arch}`,
+          CI:           process.env.CI ? 'true' : 'false',
+        },
+        // Classifies failures on the Allure "Categories" tab
+        categories: [
+          {
+            name: 'Timeouts',
+            matchedStatuses: ['broken', 'failed'],
+            messageRegex: '.*Timeout.*exceeded.*',
+          },
+          {
+            name: 'Network / connection issues',
+            matchedStatuses: ['broken', 'failed'],
+            messageRegex: '.*(net::|ECONNREFUSED|ERR_|ENOTFOUND).*',
+          },
+          {
+            name: 'Element not found / not visible',
+            matchedStatuses: ['broken', 'failed'],
+            messageRegex: '.*(locator|waiting for|not visible|outside of the viewport).*',
+          },
+          {
+            name: 'Assertion failures (product defects)',
+            matchedStatuses: ['failed'],
+            messageRegex: '.*(expect|toHaveLength|toBe|toEqual|toContain).*',
+          },
+          {
+            name: 'Ignored / skipped tests',
+            matchedStatuses: ['skipped'],
+          },
+        ],
+      }],
+      ['list'],
+    ];
+
 export default defineConfig({
   testDir: '.',
   testMatch: ['src/specs/**/*.spec.ts'],
@@ -23,50 +75,7 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 4 : 1,
-  reporter: [
-    ['html', { outputFolder: 'playwright-report', open: 'never' }],
-    ['junit', { outputFile: 'test-results/junit.xml' }],
-    ['allure-playwright', {
-      resultsDir: 'allure-results',
-      detail: true,
-      // Shown in the Allure "Environment" widget on the overview page
-      environmentInfo: {
-        Environment:  envType,
-        Base_URL:     baseURLs[envType] ?? baseURLs['dev'],
-        Node_Version: process.version,
-        OS:           `${process.platform} ${process.arch}`,
-        CI:           process.env.CI ? 'true' : 'false',
-      },
-      // Classifies failures on the Allure "Categories" tab
-      categories: [
-        {
-          name: 'Timeouts',
-          matchedStatuses: ['broken', 'failed'],
-          messageRegex: '.*Timeout.*exceeded.*',
-        },
-        {
-          name: 'Network / connection issues',
-          matchedStatuses: ['broken', 'failed'],
-          messageRegex: '.*(net::|ECONNREFUSED|ERR_|ENOTFOUND).*',
-        },
-        {
-          name: 'Element not found / not visible',
-          matchedStatuses: ['broken', 'failed'],
-          messageRegex: '.*(locator|waiting for|not visible|outside of the viewport).*',
-        },
-        {
-          name: 'Assertion failures (product defects)',
-          matchedStatuses: ['failed'],
-          messageRegex: '.*(expect|toHaveLength|toBe|toEqual|toContain).*',
-        },
-        {
-          name: 'Ignored / skipped tests',
-          matchedStatuses: ['skipped'],
-        },
-      ],
-    }],
-    ['list'],
-  ],
+  reporter: reporters,
   use: {
     baseURL: baseURLs[envType] ?? baseURLs['dev'],
     // The dev app domain is behind HTTP auth; Playwright answers the 401 challenge
@@ -95,4 +104,5 @@ export default defineConfig({
       use: { browserName: 'chromium' },
     },
   ],
+  grep: process.env.APPLITOOLS_ENABLED === 'true' ? /@visual/ : undefined,
 });

@@ -11,6 +11,7 @@
     "test:regression": "cross-env ENV_TYPE=dev npx playwright test src/specs --grep @regression",
     "test:login": "cross-env ENV_TYPE=dev npx playwright test src/specs/login/login.spec.ts",
     "test:e2e": "cross-env ENV_TYPE=dev npx playwright test src/specs/login/signup-to-approved-order.spec.ts",
+    "test:visual": "cross-env ENV_TYPE=dev APPLITOOLS_ENABLED=true npx playwright test src/specs --grep @visual",
     "allure:clean": "node -e \"const fs=require('fs');for(const d of ['allure-results','allure-report'])fs.rmSync(d,{recursive:true,force:true})\"",
     "allure:generate": "allure generate allure-results --output allure-report",
     "allure:open": "allure open allure-report",
@@ -18,6 +19,7 @@
     "allure:report": "npm run allure:generate && npm run allure:open"
   },
   "devDependencies": {
+    "@applitools/eyes-playwright": "^1.47.13",
     "@playwright/test": "^1.44.0",
     "@types/node": "^20.12.0",
     "allure": "^3.9.0",

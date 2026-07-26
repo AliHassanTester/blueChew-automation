@@ -8,6 +8,7 @@ import { CheckoutPage } from '@page/checkout/checkout.page';
 import { ConfirmationPage } from '@page/confirmation/confirmation.page';
 import { AdminPage } from '@page/admin/admin.page';
 import { ProfilePage } from '@page/account/profile.page';
+import { createApplitoolsVisualHelper, ApplitoolsVisualHelper } from '@utilities/applitools.utils';
 
 type TestFixtures = {
   loginPage: LoginPage;
@@ -19,10 +20,10 @@ type TestFixtures = {
   confirmationPage: ConfirmationPage;
   adminPage: AdminPage;
   profilePage: ProfilePage;
+  visual: ApplitoolsVisualHelper;
 };
 
 export const test = base.extend<TestFixtures>({
-  // Grant camera + microphone for the confirmation/provider flow
   context: async ({ browser }, use) => {
     const context = await browser.newContext({
       permissions: ['camera', 'microphone'],
@@ -31,11 +32,11 @@ export const test = base.extend<TestFixtures>({
     await context.close();
   },
 
-  loginPage: async ({ page }, use) => {
-    await use(new LoginPage(page, base.info()));
+  loginPage: async ({ page, visual }, use) => {
+    await use(new LoginPage(page, base.info(), visual));
   },
-  registrationPage: async ({ page }, use) => {
-    await use(new RegistrationPage(page, base.info()));
+  registrationPage: async ({ page, visual }, use) => {
+    await use(new RegistrationPage(page, base.info(), visual));
   },
   quizPage: async ({ page }, use) => {
     await use(new QuizPage(page, base.info()));
@@ -60,6 +61,11 @@ export const test = base.extend<TestFixtures>({
   },
   profilePage: async ({ page }, use) => {
     await use(new ProfilePage(page, base.info()));
+  },
+  visual: async ({ page }, use, testInfo) => {
+    const helper = createApplitoolsVisualHelper(page, testInfo);
+    await use(helper);
+    await helper.closeEyes();
   },
 });
 

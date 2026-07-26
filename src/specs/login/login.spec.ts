@@ -3,12 +3,12 @@ import { getLoginData } from '@data/login/login.data';
 import { test } from '@fixtures/page.fixtures';
 
 const scenario = getLoginData('AQ-02-User-Login');
-
+test.use({viewport: {width: 1280, height: 720}});
 test.describe('Feature: User Login', () => {
   test(
     `Test case: '${scenario.testCaseData.testCase}'
     Description: '${scenario.testCaseData.testDescription}'
-    Tags: '${scenario.testCaseData.tags}'
+    Tags: '${scenario.testCaseData.tags} @visual'
   `,
     async ({ loginPage }) => {
       await logTestCaseData(test.info(), scenario.testCaseData, {
@@ -24,6 +24,9 @@ test.describe('Feature: User Login', () => {
         await loginPage.loginWithCredentials(scenario.loginDetails);
       });
 
+      await test.step('Open the navigation menu and verify the main links', async () => {
+        await loginPage.verifyNavLinksVisible();
+      });
       await test.step('Verify successful login — account page rendered', async () => {
         await loginPage.verifySuccessfulLogin();
       });

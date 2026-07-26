@@ -4,16 +4,19 @@ import { PlaywrightVerificationFactory } from '@utilities/playwright.verificatio
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { RegistrationDetails } from '@interfaces/signup-to-approved-order.interface';
 import { RegistrationValidationDetails } from '@interfaces/registration-validation.interface';
+import { ApplitoolsVisualHelper } from '@utilities/applitools.utils';
 
 export class RegistrationPage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
+  private readonly visualHelper?: ApplitoolsVisualHelper;
   private readonly verify: PlaywrightVerificationFactory;
   private readonly locators: { [key: string]: LocatorInfo };
 
-  constructor(page: Page, testInfo: TestInfo) {
+  constructor(page: Page, testInfo: TestInfo, visualHelper?: ApplitoolsVisualHelper) {
     this.page = page;
     this.actions = new PlaywrightActionFactory(page, testInfo);
+    this.visualHelper = visualHelper;
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
 
     this.locators = {
@@ -181,10 +184,11 @@ export class RegistrationPage {
   /** Asserts the duplicate-email danger alert is shown and the funnel did not advance. */
   async verifyDuplicateEmailErrorShown(): Promise<void> {
     await test.step('Verify duplicate-email error shown and registration blocked', async () => {
+      await this.actions.waitForSec(10);
       await this.actions.waitForVisibility(this.locators.duplicateEmailError);
       await this.verify.expectElementExist(this.locators.duplicateEmailError);
-      // Blocked → still on /register, never advanced to the quiz.
       await this.verify.verifyUserHasAccess('/quiz', false);
+      await this.visualHelper?.captureCheckpoint('Registration validation error', 'registration validation error', 'BlueChew Registration');
     });
   }
 }
