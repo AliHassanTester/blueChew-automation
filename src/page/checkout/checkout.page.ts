@@ -3,6 +3,7 @@ import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { ShippingDetails, PaymentDetails } from '@interfaces/signup-to-approved-order.interface';
+import { ApplitoolsVisualHelper } from '@utilities/applitools.utils';
 
 /**
  * Checkout wizard (/checkout): product intro → Select strength → Select quantity → order
@@ -17,12 +18,14 @@ export class CheckoutPage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
   private readonly verify: PlaywrightVerificationFactory;
+  private readonly visualHelper?: ApplitoolsVisualHelper;
   private readonly locators: { [key: string]: LocatorInfo };
 
-  constructor(page: Page, testInfo: TestInfo) {
+  constructor(page: Page, testInfo: TestInfo, visualHelper?: ApplitoolsVisualHelper) {
     this.page = page;
     this.actions = new PlaywrightActionFactory(page, testInfo);
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
+    this.visualHelper = visualHelper;
 
     this.locators = {
       // ── Order summary ──────────────────────────────────────────────────────
@@ -136,6 +139,7 @@ export class CheckoutPage {
       await this.page.waitForFunction(
         () => (document.body as HTMLElement).innerText.includes('229'),
       );
+      await this.visualHelper?.captureCheckpoint('Checkout flow', 'Checkout - order summary', 'BlueChew Checkout');
     });
   }
 
@@ -225,9 +229,10 @@ export class CheckoutPage {
 
   async verifyCheckoutComplete(): Promise<void> {
     await test.step('Verify checkout reached confirmation page', async () => {
-      await this.actions.waitForDomLoad();
+      await this.page.waitForLoadState('load');
       await this.verify.waitForLoaderToDisappear();
       await this.verify.waitForProcessingLoaderToDisappear();
+      await this.visualHelper?.captureCheckpoint('Checkout flow', 'Checkout - confirmation', 'BlueChew Checkout');
       await this.actions.waitForURL(/\/checkout\/confirmation/);
     });
   }

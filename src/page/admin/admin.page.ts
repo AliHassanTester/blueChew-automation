@@ -1,11 +1,16 @@
-import { Page, test, expect, BrowserContext } from '@playwright/test';
+import { Page, test, expect, BrowserContext, TestInfo } from '@playwright/test';
 import { RegistrationDetails } from '@interfaces/signup-to-approved-order.interface';
+import { ApplitoolsVisualHelper } from '@utilities/applitools.utils';
 
 export class AdminPage {
   private _page: Page | null = null;
   private _origin = '';
 
-  constructor(private readonly context: BrowserContext) {}
+  constructor(
+    private readonly context: BrowserContext,
+    private readonly visualHelper?: ApplitoolsVisualHelper,
+    private readonly testInfo?: TestInfo,
+  ) {}
 
   // Opens the admin tab on first call; subsequent calls reuse it.
   private async getPage(): Promise<Page> {
@@ -24,29 +29,59 @@ export class AdminPage {
     }
   }
 
+  private async captureAdminCheckpoint(checkpointName: string): Promise<void> {
+    await this._page?.waitForLoadState('load').catch(() => undefined);
+    await this.visualHelper?.captureCheckpoint('Admin flow', checkpointName, 'BlueChew Admin');
+  }
+
+  private isMobileProject(): boolean {
+    const viewport = this.testInfo?.project.use.viewport;
+    return this.testInfo?.project.name.includes('mobile') === true || (typeof viewport?.width === 'number' && viewport.width < 800);
+  }
+
+  private async runWithDesktopViewport<T>(page: Page, action: () => Promise<T>): Promise<T> {
+    if (!this.isMobileProject()) {
+      return action();
+    }
+
+    const originalViewport = page.viewportSize();
+    await page.setViewportSize({ width: 1440, height: 900 });
+
+    try {
+      return await action();
+    } finally {
+      if (originalViewport) {
+        await page.setViewportSize(originalViewport);
+      }
+    }
+  }
+
   async navigateAndLogin(adminURL: string, email: string, password: string): Promise<void> {
     await test.step('Navigate to admin portal and log in', async () => {
       this._origin = new URL(adminURL).origin;
       const page = await this.getPage();
-      await page.goto(adminURL, { waitUntil: 'domcontentloaded' });
+      await this.runWithDesktopViewport(page, async () => {
+        await page.goto(adminURL, { waitUntil: 'domcontentloaded' });
 
-      const emailField = page.locator('input[type="email"], input[formcontrolname="email"], input[name="email"]').first();
-      const pwField = page.locator('input[type="password"]').first();
-      // "Log In" only (not "Log in with Google")
-      const loginBtn = page.getByRole('button', { name: /^\s*log\s*in\s*$/i }).first();
+        const emailField = page.locator('input[type="email"], input[formcontrolname="email"], input[name="email"]').first();
+        const pwField = page.locator('input[type="password"]').first();
+        // "Log In" only (not "Log in with Google")
+        const loginBtn = page.getByRole('button', { name: /^\s*log\s*in\s*$/i }).first();
 
-      // Wait for the login form to settle (root URL redirects to /auth/log-in) before
-      // filling, otherwise the redirect resets the form and drops the password.
-      await pwField.waitFor({ state: 'visible' });
-      await emailField.fill(email);
-      await pwField.fill(password);
+        // Wait for the login form to settle (root URL redirects to /auth/log-in) before
+        // filling, otherwise the redirect resets the form and drops the password.
+        await pwField.waitFor({ state: 'visible' });
+        await emailField.fill(email);
+        await pwField.fill(password);
 
-      // The button enables only once both fields are valid — confirms the fills stuck
-      await expect(loginBtn).toBeEnabled();
-      await loginBtn.click();
+        // The button enables only once both fields are valid — confirms the fills stuck
+        await expect(loginBtn).toBeEnabled();
+        await loginBtn.click();
 
-      // Wait until login completes and we leave the /auth/* pages
-      await page.waitForURL((u) => !u.toString().includes('/auth'));
+        // Wait until login completes and we leave the /auth/* pages
+        await page.waitForURL((u) => !u.toString().includes('/auth'));
+        await this.captureAdminCheckpoint('Admin - portal dashboard');
+      });
     });
   }
 
@@ -54,6 +89,7 @@ export class AdminPage {
     await test.step('Navigate to Users section', async () => {
       const page = await this.getPage();
       await page.goto(`${this._origin}/users`, { waitUntil: 'domcontentloaded' });
+      await this.captureAdminCheckpoint('Admin - users list');
     });
   }
 
@@ -76,6 +112,7 @@ export class AdminPage {
       await page.waitForURL(/\/users\/\d+/);
       // Status block confirms the detail page rendered
       await page.locator("xpath=//strong[text()='Status:']").waitFor({ state: 'visible' });
+      await this.captureAdminCheckpoint('Admin - user detail');
     });
   }
 
@@ -93,33 +130,35 @@ export class AdminPage {
         this.context.waitForEvent('page'),
         page.locator("xpath=//span[text()=' Review ']").first().click(),
       ]);
-      await careTab.waitForLoadState('domcontentloaded');
+      await this.runWithDesktopViewport(careTab, async () => {
+        await careTab.waitForLoadState('domcontentloaded');
 
-      // The care portal redirects an unauthenticated open to /auth/log-in — wait for
-      // the login form (waitFor actually waits, unlike isVisible which is instant).
-      const careEmailInput = careTab.locator('input[formcontrolname="email"]');
-      const needsLogin = await careEmailInput
-        .waitFor({ state: 'visible' })
-        .then(() => true)
-        .catch(() => false);
-      if (needsLogin) {
-        await careEmailInput.fill(careEmail);
-        await careTab.locator('input[formcontrolname="pass"]').fill(carePassword);
-        await careTab.locator('button:has-text("Log In")').first().click();
-      }
+        // The care portal redirects an unauthenticated open to /auth/log-in — wait for
+        // the login form (waitFor actually waits, unlike isVisible which is instant).
+        const careEmailInput = careTab.locator('input[formcontrolname="email"]');
+        const needsLogin = await careEmailInput
+          .waitFor({ state: 'visible' })
+          .then(() => true)
+          .catch(() => false);
+        if (needsLogin) {
+          await careEmailInput.fill(careEmail);
+          await careTab.locator('input[formcontrolname="pass"]').fill(carePassword);
+          await careTab.locator('button:has-text("Log In")').first().click();
+        }
 
-      // The patient-review content loads behind a spinner — wait for the button itself
-      const setIdVerified = careTab.locator("xpath=//span[text()=' Set ID Verified']/parent::button");
-      await setIdVerified.waitFor({ state: 'visible' });
-      await setIdVerified.click();
+        // The patient-review content loads behind a spinner — wait for the button itself
+        const setIdVerified = careTab.locator("xpath=//span[text()=' Set ID Verified']/parent::button");
+        await setIdVerified.waitFor({ state: 'visible' });
+        await setIdVerified.click();
 
-      // "Approve" only appears once the ID is verified
-      const approve = careTab.locator("xpath=//button[text()=' Approve ']");
-      await approve.waitFor({ state: 'visible' });
-      await approve.click();
+        // "Approve" only appears once the ID is verified
+        const approve = careTab.locator("xpath=//button[text()=' Approve ']");
+        await approve.waitFor({ state: 'visible' });
+        await approve.click();
 
-      // Approval redirects to the review queue — wait for that before closing the tab
-      await careTab.waitForURL(/\/patients\/approval\/new/).catch(() => undefined);
+        // Approval redirects to the review queue — wait for that before closing the tab
+        await careTab.waitForURL(/\/patients\/approval\/new/).catch(() => undefined);
+      });
       await careTab.close();
     });
   }
@@ -133,6 +172,7 @@ export class AdminPage {
         "xpath=//strong[text()='Status:']/../..//span[text()=' Approved, Provider Review ']",
       );
       await expect(status).toBeVisible();
+      await this.captureAdminCheckpoint('Admin - approval state');
     });
   }
 
@@ -208,15 +248,18 @@ export class AdminPage {
    */
   async approveAndCreateFirstOrder(details: RegistrationDetails): Promise<void> {
     await test.step('Admin portal — approve patient and create first order', async () => {
-      await this.navigateAndLogin(details.adminURL, details.adminEmail, details.adminPassword);
-      await this.navigateToUsers();
-      await this.searchUser(details.email);
-      await this.openUserDetail(details.email);
-      await this.reviewAndApprove(details.adminEmail, details.adminPassword);
-      await this.verifyApprovedStatus();
-      await this.addOrder('$0 - Next Business Day', 'Automation test order');
-      await this.verifyOrderAdded();
-      await this.verifySubscriptionStarted();
+      const page = await this.getPage();
+      await this.runWithDesktopViewport(page, async () => {
+        await this.navigateAndLogin(details.adminURL, details.adminEmail, details.adminPassword);
+        await this.navigateToUsers();
+        await this.searchUser(details.email);
+        await this.openUserDetail(details.email);
+        await this.reviewAndApprove(details.adminEmail, details.adminPassword);
+        await this.verifyApprovedStatus();
+        await this.addOrder('$0 - Next Business Day', 'Automation test order');
+        await this.verifyOrderAdded();
+        await this.verifySubscriptionStarted();
+      });
       await this.close();
     });
   }

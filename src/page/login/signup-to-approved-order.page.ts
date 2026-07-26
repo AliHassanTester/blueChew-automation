@@ -188,7 +188,7 @@ export class RegistrationPage {
       await this.actions.waitForVisibility(this.locators.duplicateEmailError);
       await this.verify.expectElementExist(this.locators.duplicateEmailError);
       await this.verify.verifyUserHasAccess('/quiz', false);
-      await this.visualHelper?.captureCheckpoint('Registration validation error', 'registration validation error', 'BlueChew Registration');
+      await this.visualHelper?.captureCheckpoint('Registration validation', 'Registration - duplicate email error', 'BlueChew Registration');
     });
   }
 }

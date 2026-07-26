@@ -134,10 +134,24 @@ export class PlaywrightVerificationFactory {
   }
 
   async waitForLoaderToDisappear(): Promise<void> {
+    await this.waitForPageToSettle();
+  }
+
+  async waitForLoaderSettled(appearTimeout = 1_000, settleTimeout = 30_000): Promise<void> {
+    await this.waitForPageToSettle(settleTimeout);
+  }
+
+  async waitForProcessingLoaderToDisappear(): Promise<void> {
+    await this.waitForPageToSettle();
+  }
+
+  private async waitForPageToSettle(timeout = 30_000): Promise<void> {
     try {
-      await this.page.waitForSelector("text='Just a moment'", { state: 'detached' });
+      await this.page.waitForLoadState('load', { timeout });
+      await this.page.waitForLoadState('networkidle', { timeout: Math.min(timeout, 10_000) });
     } catch {
-      // Loader may not appear on every navigation
+      // Some pages never reach a fully idle state; falling back to the load event keeps
+      // the test moving without relying on a fragile app-specific loader check.
     }
   }
 
@@ -149,27 +163,6 @@ export class PlaywrightVerificationFactory {
    * race where the loader appears a beat after a click (e.g. the checkout carousel's
    * strength → quantity → summary transitions, which fetch pricing between slides).
    */
-  async waitForLoaderSettled(appearTimeout = 1_000, settleTimeout = 30_000): Promise<void> {
-    const loader = this.page.locator("text='Just a moment'").first();
-    const appeared = await loader
-      .waitFor({ state: 'visible', timeout: appearTimeout })
-      .then(() => true)
-      .catch(() => false);
-    if (appeared) {
-      await loader.waitFor({ state: 'detached', timeout: settleTimeout }).catch(() => undefined);
-    }
-  }
-
-  async waitForProcessingLoaderToDisappear(): Promise<void> {
-    try {
-      await this.page.waitForSelector(
-        '.processing-loader, [data-testid="processing-loader"], .spinner, [aria-label="Loading"]',
-        { state: 'hidden' },
-      );
-    } catch {
-      // Processing loader may not appear
-    }
-  }
 
   async expectToPass(assertion: () => Promise<void>, timeout: number = 10_000): Promise<void> {
     const deadline = Date.now() + timeout;

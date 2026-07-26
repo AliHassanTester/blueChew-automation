@@ -5,6 +5,15 @@
 The current implementation adds opt-in visual regression testing to the existing Playwright + TypeScript automation framework. It uses Applitools Eyes via the Playwright SDK and is designed to stay low-risk: functional test execution remains unchanged unless visual mode is explicitly enabled.
 
 The integration is currently focused on critical user flows such as login and registration validation, with visual checkpoints captured at meaningful UI states.
+# Applitools integration and multi-device visual testing
+
+## Overview
+
+The current implementation adds opt-in visual regression testing to the BlueChew Playwright framework. It uses Applitools Eyes through the Playwright SDK and is designed to stay low-risk: functional test execution remains unchanged unless visual mode is explicitly enabled.
+
+The integration now also supports running the same visual flows across two device viewports:
+- Desktop: 1440 × 900
+- Mobile: 393 × 852
 
 ---
 
@@ -117,6 +126,49 @@ These are good candidates for visual regression monitoring because they represen
 
 ---
 
+## Dedicated page and checkpoint coverage
+
+The visual suite is organized around the following page objects and the specific states each one captures.
+
+### LoginPage
+- Login - initial form
+- Login - authenticated account overview
+
+### RegistrationPage
+- Registration - duplicate email error
+
+### QuizPage
+- Quiz - completed results overview
+
+### ResultsPage
+- Results - recommendations overview
+
+### MedicalPage
+- Medical profile - completed questionnaire
+
+### CheckoutPage
+- Checkout - order summary
+- Checkout - confirmation
+
+### ConfirmationPage
+- Confirmation - provider queue
+- Confirmation - post-approval plan
+
+### ProfilePage
+- Profile - password change success
+- Profile - shipping address updated
+- Profile - preferences overview
+
+### AdminPage
+- Admin - portal dashboard
+- Admin - users list
+- Admin - user detail
+- Admin - approval state
+
+This page-by-page map makes it easier to understand what each visual checkpoint represents and keeps the Applitools dashboard organized by user journey and page state.
+
+---
+
 ## Advantages added by this implementation
 
 ### 1. Opt-in and low-risk
@@ -197,9 +249,138 @@ This will:
 - run only the `@visual` tests
 - capture the configured checkpoints
 - send the results to the Applitools dashboard
+### 1. Applitools orchestration
+
+The project now includes a shared visual helper layer in [src/utilities/applitools.utils.ts](../src/utilities/applitools.utils.ts) that provides:
+- `openEyes(...)` to start an Applitools session
+- `checkWindow(...)` to capture a checkpoint
+- `closeEyes()` to end the session cleanly
+- `captureCheckpoint(...)` for one-off visual snapshots
+- `runVisualStep(...)` for wrapping an action and capturing the post-action state
+
+This keeps the logic centralized and reusable rather than scattering Applitools calls through the test files.
+
+### 2. Fixture-based access to the visual helper
+
+The shared fixture setup in [src/fixtures/page.fixtures.ts](../src/fixtures/page.fixtures.ts) exposes a `visual` fixture that page objects can consume. This gives the page-object layer access to the helper without making the specs responsible for setup details.
+
+### 3. Page-object-level checkpoints
+
+Visual checkpoints are now attached to the page objects rather than the specs.
+
+Examples:
+- [src/page/login/login.page.ts](../src/page/login/login.page.ts)
+  - captures the login page state
+  - captures the authenticated account page state
+- [src/page/login/signup-to-approved-order.page.ts](../src/page/login/signup-to-approved-order.page.ts)
+  - captures the duplicate-email validation error state
+
+This keeps specs focused on business behavior and makes the visual assertions easier to maintain.
+
+### 4. Multi-device viewport support
+
+The Playwright config now defines two projects so the same test suite runs for both desktop and mobile viewports:
+- `chromium-desktop` with a viewport of 1440 × 900
+- `chromium-mobile` with a viewport of 393 × 852
+
+This is configured in [playwright.config.ts](../playwright.config.ts).
+
+---
+
+## How it works
+
+### Visual mode activation
+
+Applitools only runs when the environment variable `APPLITOOLS_ENABLED=true` is set.
+
+In that mode:
+- the Applitools reporter is selected
+- tests tagged with `@visual` are included in the run
+- the configured checkpoints are sent to Applitools for comparison
+
+### Device execution model
+
+Each test is executed once per configured project:
+1. desktop project
+2. mobile project
+
+That means a single spec can produce two visual runs, one for each viewport, without duplicating the test logic itself.
+
+### Why this is useful
+
+It gives coverage for both:
+- wide-screen layouts and spacing
+- mobile-specific stacking, overflow, and tap targets
+
+This is especially important for responsive apps where the same UI may render very differently across devices.
+
+---
+
+## Selective execution
+
+You can run only one viewport set at a time by targeting the specific Playwright project.
+
+### Run only desktop tests
+
+```bash
+npx playwright test --project=chromium-desktop
+```
+
+### Run only mobile tests
+
+```bash
+npx playwright test --project=chromium-mobile
+```
+
+### Recommended custom commands
+
+To make this simpler for the team, add npm scripts such as:
+
+```json
+"test:visual:desktop": "cross-env ENV_TYPE=dev APPLITOOLS_ENABLED=true npx playwright test src/specs --project=chromium-desktop --grep @visual",
+"test:visual:mobile": "cross-env ENV_TYPE=dev APPLITOOLS_ENABLED=true npx playwright test src/specs --project=chromium-mobile --grep @visual"
+```
+
+These commands make it easy to run only the desktop or only the mobile visual suite without changing the test code.
+
+---
+
+## Best practices used in the implementation
+
+- Keep visual logic centralized in shared helpers
+- Keep specs focused on functional flow and test data
+- Use page objects for UI-state capture
+- Use project-based configuration for device matrix coverage
+- Keep visual testing opt-in so regular functional runs stay simple
+- Use meaningful checkpoint names that reflect the user-visible state
+
+---
+
+## Benefits added by this implementation
+
+### 1. Responsive UI coverage
+
+The suite now validates the UI for both desktop and mobile layouts, which helps catch responsive regressions.
+
+### 2. Lower maintenance cost
+
+The same tests run across devices without branching logic in each spec.
+
+### 3. Better visual regression detection
+
+Layout issues that only show up on one device type are easier to detect.
+
+### 4. Cleaner test structure
+
+The business flow remains in the specs while the visual orchestration lives in the helper and page-object layer.
+
+### 5. Flexible execution
+
+You can run the full matrix, only desktop, or only mobile depending on the need.
 
 ---
 
 ## Summary
 
 The current Applitools integration is a practical, maintainable, and low-risk addition to the framework. It keeps the test suite clean, centralizes visual logic, improves regression coverage, and provides a stronger reporting path for UI-sensitive flows.
+The current implementation now provides a robust visual testing foundation for both desktop and mobile experiences. It combines Applitools-based visual validation with Playwright project-based device coverage, while keeping the test structure maintainable and easy to extend.

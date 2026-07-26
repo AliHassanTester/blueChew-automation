@@ -130,8 +130,7 @@ export class LoginPage {
 
   async verifyLoginSuccess(): Promise<void> {
     await test.step('Verify login succeeded — account page rendered', async () => {
-      await this.playwrightVerificationsFactory.waitForLoaderSettled();
-      await this.playwrightVerificationsFactory.waitForProcessingLoaderToDisappear();
+      await this.page.waitForLoadState();
       // Login redirects into /account (default landing tab is /membership).
       await this.playwrightActionsFactory.waitForURL(/\/account\//);
       // One locator per section — the nav tab bar and the page content — confirms the
@@ -155,7 +154,7 @@ export class LoginPage {
   async navigateToPage(loginPageDetails: LoginPageDetails): Promise<void> {
     await this.navigateToLoginPage(loginPageDetails.loginURL);
     await this.verifyLoginPageLoaded();
-    await this.visualHelper?.captureCheckpoint('Login flow', 'Login page', 'BlueChew Login');
+    await this.visualHelper?.captureCheckpoint('Login flow', 'Login - initial form', 'BlueChew Login');
   }
 
   async loginWithCredentials(loginDetails: LoginDetails): Promise<void> {
@@ -165,6 +164,6 @@ export class LoginPage {
 
   async verifySuccessfulLogin(): Promise<void> {
     await this.verifyLoginSuccess();
-    await this.visualHelper?.captureCheckpoint('Login flow', 'Authenticated account page', 'BlueChew Login');
+    await this.visualHelper?.captureCheckpoint('Login flow', 'Login - authenticated account overview', 'BlueChew Login');
   }
 }

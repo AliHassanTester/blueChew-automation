@@ -11,57 +11,51 @@ const baseURLs: Record<string, string> = {
   prod: 'https://app.bluechew.com',
 };
 
-const isVisualMode = process.env.APPLITOOLS_ENABLED === 'true';
+const desktopViewport = { width: 1440, height: 900 };
+const mobileViewport = { width: 393, height: 852 };
 
-const reporters: Array<readonly [string] | readonly [string, Record<string, unknown>]> = isVisualMode
-  ? [
-      ['@applitools/eyes-playwright/reporter', { open: 'never', outputFolder: 'eyes-playwright-report' }],
-      ['list'],
-    ]
-  : [
-      ['html', { outputFolder: 'playwright-report', open: 'never' }],
-      ['junit', { outputFile: 'test-results/junit.xml' }],
-      ['allure-playwright', {
-        resultsDir: 'allure-results',
-        detail: true,
-        // Shown in the Allure "Environment" widget on the overview page
-        environmentInfo: {
-          Environment:  envType,
-          Base_URL:     baseURLs[envType] ?? baseURLs['dev'],
-          Node_Version: process.version,
-          OS:           `${process.platform} ${process.arch}`,
-          CI:           process.env.CI ? 'true' : 'false',
-        },
-        // Classifies failures on the Allure "Categories" tab
-        categories: [
-          {
-            name: 'Timeouts',
-            matchedStatuses: ['broken', 'failed'],
-            messageRegex: '.*Timeout.*exceeded.*',
-          },
-          {
-            name: 'Network / connection issues',
-            matchedStatuses: ['broken', 'failed'],
-            messageRegex: '.*(net::|ECONNREFUSED|ERR_|ENOTFOUND).*',
-          },
-          {
-            name: 'Element not found / not visible',
-            matchedStatuses: ['broken', 'failed'],
-            messageRegex: '.*(locator|waiting for|not visible|outside of the viewport).*',
-          },
-          {
-            name: 'Assertion failures (product defects)',
-            matchedStatuses: ['failed'],
-            messageRegex: '.*(expect|toHaveLength|toBe|toEqual|toContain).*',
-          },
-          {
-            name: 'Ignored / skipped tests',
-            matchedStatuses: ['skipped'],
-          },
-        ],
-      }],
-      ['list'],
-    ];
+const reporters: Array<readonly [string] | readonly [string, Record<string, unknown>]> = [
+  ['@applitools/eyes-playwright/reporter', { outputFolder: 'playwright-report', open: 'never' }],
+  ['junit', { outputFile: 'test-results/junit.xml' }],
+  ['allure-playwright', {
+    resultsDir: 'allure-results',
+    detail: true,
+    environmentInfo: {
+      Environment: envType,
+      Base_URL: baseURLs[envType] ?? baseURLs['dev'],
+      Node_Version: process.version,
+      OS: `${process.platform} ${process.arch}`,
+      CI: process.env.CI ? 'true' : 'false',
+    },
+    categories: [
+      {
+        name: 'Timeouts',
+        matchedStatuses: ['broken', 'failed'],
+        messageRegex: '.*Timeout.*exceeded.*',
+      },
+      {
+        name: 'Network / connection issues',
+        matchedStatuses: ['broken', 'failed'],
+        messageRegex: '.*(net::|ECONNREFUSED|ERR_|ENOTFOUND).*',
+      },
+      {
+        name: 'Element not found / not visible',
+        matchedStatuses: ['broken', 'failed'],
+        messageRegex: '.*(locator|waiting for|not visible|outside of the viewport).*',
+      },
+      {
+        name: 'Assertion failures (product defects)',
+        matchedStatuses: ['failed'],
+        messageRegex: '.*(expect|toHaveLength|toBe|toEqual|toContain).*',
+      },
+      {
+        name: 'Ignored / skipped tests',
+        matchedStatuses: ['skipped'],
+      },
+    ],
+  }],
+  ['list'],
+];
 
 export default defineConfig({
   testDir: '.',
@@ -84,7 +78,6 @@ export default defineConfig({
       username: process.env.HTTP_AUTH_USERNAME || '',
       password: process.env.HTTP_AUTH_PASSWORD || '',
     },
-    viewport: { width: 1920, height: 1080 },
     headless: !!process.env.CI,
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -99,9 +92,20 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'chromium-functional',
+      name: 'chromium-desktop',
       testMatch: 'src/specs/**/*.spec.ts',
-      use: { browserName: 'chromium' },
+      use: {
+        browserName: 'chromium',
+        viewport: desktopViewport,
+      },
+    },
+    {
+      name: 'chromium-mobile',
+      testMatch: 'src/specs/**/*.spec.ts',
+      use: {
+        browserName: 'chromium',
+        viewport: mobileViewport,
+      },
     },
   ],
   grep: process.env.APPLITOOLS_ENABLED === 'true' ? /@visual/ : undefined,

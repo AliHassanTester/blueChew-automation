@@ -3,7 +3,6 @@ import { getLoginData } from '@data/login/login.data';
 import { test } from '@fixtures/page.fixtures';
 
 const scenario = getLoginData('AQ-02-User-Login');
-test.use({viewport: {width: 1280, height: 720}});
 test.describe('Feature: User Login', () => {
   test(
     `Test case: '${scenario.testCaseData.testCase}'

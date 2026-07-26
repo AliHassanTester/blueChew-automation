@@ -3,6 +3,7 @@ import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { MedicalDetails } from '@interfaces/signup-to-approved-order.interface';
+import { ApplitoolsVisualHelper } from '@utilities/applitools.utils';
 
 /**
  * Medical-profile wizard (/medical). Stable fields expose aria-labels / formcontrolname,
@@ -14,12 +15,16 @@ export class MedicalPage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
   private readonly verify: PlaywrightVerificationFactory;
+  private readonly visualHelper?: ApplitoolsVisualHelper;
   private readonly locators: { [key: string]: LocatorInfo };
+  private readonly testInfo: TestInfo;
 
-  constructor(page: Page, testInfo: TestInfo) {
+  constructor(page: Page, testInfo: TestInfo, visualHelper?: ApplitoolsVisualHelper) {
     this.page = page;
+    this.testInfo = testInfo;
     this.actions = new PlaywrightActionFactory(page, testInfo);
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
+    this.visualHelper = visualHelper;
 
     this.locators = {
       // ── Step 1: legal name ─────────────────────────────────────────────────
@@ -255,49 +260,73 @@ export class MedicalPage {
     }
   }
 
+  private isMobileProject(): boolean {
+    const viewport = this.testInfo.project.use.viewport;
+    return this.testInfo.project.name.includes('mobile') || (typeof viewport?.width === 'number' && viewport.width < 800);
+  }
+
+  private async runWithDesktopViewport<T>(action: () => Promise<T>): Promise<T> {
+    if (!this.isMobileProject()) {
+      return action();
+    }
+
+    const originalViewport = this.page.viewportSize();
+    await this.page.setViewportSize({ width: 1440, height: 900 });
+
+    try {
+      return await action();
+    } finally {
+      if (originalViewport) {
+        await this.page.setViewportSize(originalViewport);
+      }
+    }
+  }
+
   // ── Public API ───────────────────────────────────────────────────────────────
 
   async completeMedicalProfile(details: MedicalDetails): Promise<void> {
     await test.step('Complete medical profile', async () => {
+      await this.runWithDesktopViewport(async () => {
+        // ── Step 1: Legal name ─────────────────────────────────────────────────
+        await test.step('Enter legal name', async () => {
+          await this.actions.sendKeys(this.locators.firstNameInput, details.firstName);
+          await this.actions.sendKeys(this.locators.lastNameInput, details.lastName);
+          await this.clickContinue();
+        });
 
-      // ── Step 1: Legal name ─────────────────────────────────────────────────
-      await test.step('Enter legal name', async () => {
-        await this.actions.sendKeys(this.locators.firstNameInput, details.firstName);
-        await this.actions.sendKeys(this.locators.lastNameInput, details.lastName);
-        await this.clickContinue();
+        // ── Step 2: Date of birth ──────────────────────────────────────────────
+        await test.step('Enter date of birth', async () => {
+          await this.actions.click(this.locators.birthdayInput);
+          // Type digits only — the field auto-formats to MM/DD/YYYY
+          await this.locators.birthdayInput.locator.pressSequentially(details.birthday.replace(/\//g, ''), { delay: 50 });
+          await this.clickContinue();
+        });
+
+        // ── Step 3: Sex → Male (auto-advances) ────────────────────────────────
+        await test.step('Select biological sex', async () => {
+          await this.optionTiles('Male').first().click();
+        });
+
+        // ── Step 4: Patient → Yes (auto-advances) ─────────────────────────────
+        await test.step('Confirm patient status', async () => {
+          await this.optionTiles('Yes').first().click();
+        });
+
+        // ── Step 5: Reason for choosing BlueChew — checkboxes ─────────────────
+        await test.step('Select reason for choosing BlueChew', async () => {
+          await this.selectSafeCheckboxOption();
+        });
+
+        // ── Steps 6+: remaining health questions ──────────────────────────────
+        await test.step('Complete remaining health questions', async () => {
+          await this.completeRemainingMedicalSteps();
+        });
+
+        await this.page.waitForLoadState('load');
+        await this.verify.waitForLoaderToDisappear();
+        await this.verify.waitForProcessingLoaderToDisappear();
+        await this.visualHelper?.captureCheckpoint('Medical flow', 'Medical profile - completed questionnaire', 'BlueChew Medical');
       });
-
-      // ── Step 2: Date of birth ──────────────────────────────────────────────
-      await test.step('Enter date of birth', async () => {
-        await this.actions.click(this.locators.birthdayInput);
-        // Type digits only — the field auto-formats to MM/DD/YYYY
-        await this.locators.birthdayInput.locator.pressSequentially(details.birthday.replace(/\//g, ''), { delay: 50 });
-        await this.clickContinue();
-      });
-
-      // ── Step 3: Sex → Male (auto-advances) ────────────────────────────────
-      await test.step('Select biological sex', async () => {
-        await this.optionTiles('Male').first().click();
-      });
-
-      // ── Step 4: Patient → Yes (auto-advances) ─────────────────────────────
-      await test.step('Confirm patient status', async () => {
-        await this.optionTiles('Yes').first().click();
-      });
-
-      // ── Step 5: Reason for choosing BlueChew — checkboxes ─────────────────
-      await test.step('Select reason for choosing BlueChew', async () => {
-        await this.selectSafeCheckboxOption();
-      });
-
-      // ── Steps 6+: remaining health questions ──────────────────────────────
-      await test.step('Complete remaining health questions', async () => {
-        await this.completeRemainingMedicalSteps();
-      });
-
-      await this.actions.waitForDomLoad();
-      await this.verify.waitForLoaderToDisappear();
-      await this.verify.waitForProcessingLoaderToDisappear();
     });
   }
 

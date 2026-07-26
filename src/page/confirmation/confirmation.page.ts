@@ -3,6 +3,7 @@ import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import * as path from 'path';
+import { ApplitoolsVisualHelper } from '@utilities/applitools.utils';
 
 const SAMPLE_ID_PATH = path.resolve(__dirname, '../../../tests/fixtures/sampleID.jpg');
 
@@ -14,12 +15,14 @@ export class ConfirmationPage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
   private readonly verify: PlaywrightVerificationFactory;
+  private readonly visualHelper?: ApplitoolsVisualHelper;
   private readonly locators: { [key: string]: LocatorInfo };
 
-  constructor(page: Page, testInfo: TestInfo) {
+  constructor(page: Page, testInfo: TestInfo, visualHelper?: ApplitoolsVisualHelper) {
     this.page = page;
     this.actions = new PlaywrightActionFactory(page, testInfo);
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
+    this.visualHelper = visualHelper;
 
     this.locators = {
       uploadPhotoButton: {
@@ -57,7 +60,7 @@ export class ConfirmationPage {
 
   async uploadIdPhoto(): Promise<void> {
     await test.step('Upload ID photo on confirmation page', async () => {
-      await this.actions.waitForDomLoad();
+      await this.page.waitForLoadState('load');
       await this.verify.waitForLoaderToDisappear();
 
       // Intercept the native file chooser opened by the Upload button
@@ -74,7 +77,9 @@ export class ConfirmationPage {
 
   async verifyConnectingToProvider(): Promise<void> {
     await test.step('Verify "Connecting you to a licensed provider" message', async () => {
+      await this.page.waitForLoadState('load');
       await this.verify.waitForVisibility(this.locators.connectingMessage);
+      await this.visualHelper?.captureCheckpoint('Confirmation flow', 'Confirmation - provider queue', 'BlueChew Confirmation');
     });
   }
 
@@ -120,6 +125,7 @@ export class ConfirmationPage {
       // and varies by which provider approved.)
       await expect(this.locators.orderProcessingBanner.locator).toBeVisible({ timeout: 30_000 });
       await expect(this.locators.goldPlanLabel.locator).toBeVisible();
+      await this.visualHelper?.captureCheckpoint('Confirmation flow', 'Confirmation - post-approval plan', 'BlueChew Confirmation');
     });
   }
 }

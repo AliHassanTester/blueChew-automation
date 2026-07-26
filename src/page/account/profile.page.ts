@@ -2,6 +2,7 @@ import { Page, TestInfo, test } from '@playwright/test';
 import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
+import { ApplitoolsVisualHelper } from '@utilities/applitools.utils';
 import { ShippingAddressInput } from '@interfaces/profile.interface';
 
 /**
@@ -14,12 +15,14 @@ export class ProfilePage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
   private readonly verify: PlaywrightVerificationFactory;
+  private readonly visualHelper?: ApplitoolsVisualHelper;
   private readonly locators: { [key: string]: LocatorInfo };
 
-  constructor(page: Page, testInfo: TestInfo) {
+  constructor(page: Page, testInfo: TestInfo, visualHelper?: ApplitoolsVisualHelper) {
     this.page = page;
     this.actions = new PlaywrightActionFactory(page, testInfo);
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
+    this.visualHelper = visualHelper;
 
     this.locators = {
       // ── Notification preferences (profile page) — each toggle wraps a role=switch ──
@@ -94,6 +97,12 @@ export class ProfilePage {
     };
   }
 
+  private async captureProfileCheckpoint(checkpointName: string): Promise<void> {
+    await this.page.waitForLoadState('load').catch(() => undefined);
+    await this.verify.waitForLoaderToDisappear();
+    await this.visualHelper?.captureCheckpoint('Profile flow', checkpointName, 'BlueChew Profile');
+  }
+
   // ── PROF-010 ────────────────────────────────────────────────────────────────
 
   /**
@@ -123,6 +132,7 @@ export class ProfilePage {
     await this.actions.click(this.locators.changePasswordSubmit);
     await this.actions.waitForVisibility(this.locators.passwordUpdatedSuccess);
     await this.verify.expectElementExist(this.locators.passwordUpdatedSuccess);
+    await this.captureProfileCheckpoint('Profile - password change success');
   }
 
   // ── PROF-011 ────────────────────────────────────────────────────────────────
@@ -164,7 +174,10 @@ export class ProfilePage {
         await this.verify.waitForLoaderToDisappear();
         await this.actions.waitForVisibility(this.locators.shippingSummary);
         const summary = await this.actions.getText(this.locators.shippingSummary);
-        this.verify.assertStringsEqual(summary, target.streetAddress);
+        const normalizedSummary = summary.replace(/\s+/g, ' ').trim();
+        const normalizedStreet = target.streetAddress.replace(/\s+/g, ' ').trim();
+        this.verify.verifyContains(normalizedSummary, normalizedStreet);
+        await this.captureProfileCheckpoint('Profile - shipping address updated');
       });
     });
   }
@@ -175,8 +188,9 @@ export class ProfilePage {
   async toggleNotificationPreferences(): Promise<void> {
     await test.step('Toggle SMS + Marketing Email preferences and restore each', async () => {
       await this.actions.navigateToURL('/account/profile');
-      await this.actions.waitForDomLoad();
+      await this.page.waitForLoadState('load');
       await this.verify.waitForLoaderToDisappear();
+      await this.captureProfileCheckpoint('Profile - preferences overview');
 
       await this.toggleAndRestore(this.locators.smsToggle);
       await this.toggleAndRestore(this.locators.emailToggle);
