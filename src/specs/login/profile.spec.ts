@@ -31,7 +31,7 @@ test.describe('Feature: Account Profile', () => {
     },
   );
 
-  test.only(
+  test(
     `
     Test case: '${updateShipping.testCaseData.testCase}'
     Description: '${updateShipping.testCaseData.testDescription}'
