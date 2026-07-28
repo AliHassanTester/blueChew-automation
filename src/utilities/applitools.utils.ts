@@ -33,6 +33,7 @@ class ApplitoolsVisualHelperImpl implements ApplitoolsVisualHelper {
     eyes.setBatch(this.getBatchName(), this.getBatchId());
     eyes.setAppName(appName || this.getAppName());
     eyes.setTestName(this.buildTestName(flowName));
+    eyes.setBaselineName(this.getBaselineName());
 
     await eyes.open(this.page);
     this.eyes = eyes;
@@ -101,11 +102,23 @@ class ApplitoolsVisualHelperImpl implements ApplitoolsVisualHelper {
     return process.env.APPLITOOLS_BATCH_NAME || `BlueChew ${process.env.ENV_TYPE || 'dev'}`;
   }
 
+  private getTestNameConfig(): string {
+    return process.env.APPLITOOLS_TEST_NAME?.trim() || '';
+  }
+
+  private getBaselineName(): string {
+    return process.env.APPLITOOLS_BASELINE_NAME?.trim() || 'Figma';
+  }
+
   private getBatchId(): string {
     return `${process.env.ENV_TYPE || 'dev'}-${Date.now()}`;
   }
 
   private buildTestName(flowName: string): string {
+    if (this.getTestNameConfig()) {
+      return this.getTestNameConfig();
+    }
+
     const suiteName = this.testInfo.titlePath?.slice(0, -1).join(' > ') || this.testInfo.title;
     return `${suiteName} - ${flowName}`;
   }

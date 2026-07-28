@@ -154,7 +154,7 @@ export class LoginPage {
   async navigateToPage(loginPageDetails: LoginPageDetails): Promise<void> {
     await this.navigateToLoginPage(loginPageDetails.loginURL);
     await this.verifyLoginPageLoaded();
-    await this.visualHelper?.captureCheckpoint('Login flow', 'Login - initial form', 'BlueChew Login');
+    await this.visualHelper?.captureCheckpoint('Login flow', 'Log in/Default');
   }
 
   async loginWithCredentials(loginDetails: LoginDetails): Promise<void> {
@@ -164,6 +164,6 @@ export class LoginPage {
 
   async verifySuccessfulLogin(): Promise<void> {
     await this.verifyLoginSuccess();
-    await this.visualHelper?.captureCheckpoint('Login flow', 'Login - authenticated account overview', 'BlueChew Login');
+    await this.visualHelper?.captureCheckpoint('Login flow', 'Log in/Default_1440');
   }
 }
