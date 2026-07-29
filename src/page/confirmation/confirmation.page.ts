@@ -3,7 +3,6 @@ import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import * as path from 'path';
-import { ApplitoolsVisualHelper } from '@utilities/applitools.utils';
 
 const SAMPLE_ID_PATH = path.resolve(__dirname, '../../../tests/fixtures/sampleID.jpg');
 
@@ -15,14 +14,12 @@ export class ConfirmationPage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
   private readonly verify: PlaywrightVerificationFactory;
-  private readonly visualHelper?: ApplitoolsVisualHelper;
   private readonly locators: { [key: string]: LocatorInfo };
 
-  constructor(page: Page, testInfo: TestInfo, visualHelper?: ApplitoolsVisualHelper) {
+  constructor(page: Page, testInfo: TestInfo) {
     this.page = page;
     this.actions = new PlaywrightActionFactory(page, testInfo);
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
-    this.visualHelper = visualHelper;
 
     this.locators = {
       uploadPhotoButton: {
@@ -79,7 +76,6 @@ export class ConfirmationPage {
     await test.step('Verify "Connecting you to a licensed provider" message', async () => {
       await this.page.waitForLoadState('load');
       await this.verify.waitForVisibility(this.locators.connectingMessage);
-      await this.visualHelper?.captureCheckpoint('Confirmation flow', 'Confirmation - provider queue', 'BlueChew Confirmation');
     });
   }
 
@@ -125,7 +121,6 @@ export class ConfirmationPage {
       // and varies by which provider approved.)
       await expect(this.locators.orderProcessingBanner.locator).toBeVisible({ timeout: 30_000 });
       await expect(this.locators.goldPlanLabel.locator).toBeVisible();
-      await this.visualHelper?.captureCheckpoint('Confirmation flow', 'Confirmation - post-approval plan', 'BlueChew Confirmation');
     });
   }
 }

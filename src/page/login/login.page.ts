@@ -4,19 +4,16 @@ import { PlaywrightVerificationFactory } from '@utilities/playwright.verificatio
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { LoginDetails } from '@interfaces/login.interface';
 import { LoginPageDetails } from '@interfaces/login.page.interface';
-import { ApplitoolsVisualHelper } from '@utilities/applitools.utils';
 
 export class LoginPage {
   public readonly page: Page;
   private readonly playwrightActionsFactory: PlaywrightActionFactory;
-  private readonly visualHelper?: ApplitoolsVisualHelper;
   private readonly playwrightVerificationsFactory: PlaywrightVerificationFactory;
   private readonly locators: { [key: string]: LocatorInfo };
 
-  constructor(page: Page, testInfo: TestInfo, visualHelper?: ApplitoolsVisualHelper) {
+  constructor(page: Page, testInfo: TestInfo) {
     this.page = page;
     this.playwrightActionsFactory = new PlaywrightActionFactory(page, testInfo);
-    this.visualHelper = visualHelper;
     this.playwrightVerificationsFactory = new PlaywrightVerificationFactory(page, testInfo);
 
     // Locators are XPath, anchored on stable attributes (data-test-id) and semantic
@@ -154,7 +151,6 @@ export class LoginPage {
   async navigateToPage(loginPageDetails: LoginPageDetails): Promise<void> {
     await this.navigateToLoginPage(loginPageDetails.loginURL);
     await this.verifyLoginPageLoaded();
-    await this.visualHelper?.captureCheckpoint('Login flow', 'Log in/Default');
   }
 
   async loginWithCredentials(loginDetails: LoginDetails): Promise<void> {
@@ -164,6 +160,5 @@ export class LoginPage {
 
   async verifySuccessfulLogin(): Promise<void> {
     await this.verifyLoginSuccess();
-    await this.visualHelper?.captureCheckpoint('Login flow', 'Log in/Default_1440');
   }
 }

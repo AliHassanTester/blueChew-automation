@@ -15,7 +15,6 @@ const desktopViewport = { width: 1440, height: 900 };
 const mobileViewport = { width: 393, height: 852 };
 
 const reporters: Array<readonly [string] | readonly [string, Record<string, unknown>]> = [
-  ['@applitools/eyes-playwright/reporter', { outputFolder: 'playwright-report', open: 'never' }],
   ['junit', { outputFile: 'test-results/junit.xml' }],
   ['allure-playwright', {
     resultsDir: 'allure-results',
@@ -108,5 +107,5 @@ export default defineConfig({
       },
     },
   ],
-  grep: process.env.APPLITOOLS_ENABLED === 'true' ? /@visual/ : undefined,
+  grep: undefined,
 });

@@ -8,7 +8,6 @@ import { CheckoutPage } from '@page/checkout/checkout.page';
 import { ConfirmationPage } from '@page/confirmation/confirmation.page';
 import { AdminPage } from '@page/admin/admin.page';
 import { ProfilePage } from '@page/account/profile.page';
-import { createApplitoolsVisualHelper, ApplitoolsVisualHelper } from '@utilities/applitools.utils';
 
 type TestFixtures = {
   loginPage: LoginPage;
@@ -20,7 +19,6 @@ type TestFixtures = {
   confirmationPage: ConfirmationPage;
   adminPage: AdminPage;
   profilePage: ProfilePage;
-  visual: ApplitoolsVisualHelper;
 };
 
 export const test = base.extend<TestFixtures>({
@@ -32,40 +30,35 @@ export const test = base.extend<TestFixtures>({
     await context.close();
   },
 
-  loginPage: async ({ page, visual }, use) => {
-    await use(new LoginPage(page, base.info(), visual));
+  loginPage: async ({ page }, use) => {
+    await use(new LoginPage(page, base.info()));
   },
-  registrationPage: async ({ page, visual }, use) => {
-    await use(new RegistrationPage(page, base.info(), visual));
+  registrationPage: async ({ page }, use) => {
+    await use(new RegistrationPage(page, base.info()));
   },
-  quizPage: async ({ page, visual }, use) => {
-    await use(new QuizPage(page, base.info(), visual));
+  quizPage: async ({ page }, use) => {
+    await use(new QuizPage(page, base.info()));
   },
-  resultsPage: async ({ page, visual }, use) => {
-    await use(new ResultsPage(page, base.info(), visual));
+  resultsPage: async ({ page }, use) => {
+    await use(new ResultsPage(page, base.info()));
   },
-  medicalPage: async ({ page, visual }, use) => {
-    await use(new MedicalPage(page, base.info(), visual));
+  medicalPage: async ({ page }, use) => {
+    await use(new MedicalPage(page, base.info()));
   },
-  checkoutPage: async ({ page, visual }, use) => {
-    await use(new CheckoutPage(page, base.info(), visual));
+  checkoutPage: async ({ page }, use) => {
+    await use(new CheckoutPage(page, base.info()));
   },
-  confirmationPage: async ({ page, visual }, use) => {
-    await use(new ConfirmationPage(page, base.info(), visual));
+  confirmationPage: async ({ page }, use) => {
+    await use(new ConfirmationPage(page, base.info()));
   },
   // Admin tab is created lazily — no tab opens until navigateAndLogin() is called
-  adminPage: async ({ context, visual }, use) => {
-    const adminPage = new AdminPage(context, visual, base.info());
+  adminPage: async ({ context }, use) => {
+    const adminPage = new AdminPage(context, base.info());
     await use(adminPage);
     await adminPage.close();
   },
-  profilePage: async ({ page, visual }, use) => {
-    await use(new ProfilePage(page, base.info(), visual));
-  },
-  visual: async ({ page }, use, testInfo) => {
-    const helper = createApplitoolsVisualHelper(page, testInfo);
-    await use(helper);
-    await helper.closeEyes();
+  profilePage: async ({ page }, use) => {
+    await use(new ProfilePage(page, base.info()));
   },
 });
 

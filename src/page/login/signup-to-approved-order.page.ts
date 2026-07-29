@@ -4,19 +4,16 @@ import { PlaywrightVerificationFactory } from '@utilities/playwright.verificatio
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { RegistrationDetails } from '@interfaces/signup-to-approved-order.interface';
 import { RegistrationValidationDetails } from '@interfaces/registration-validation.interface';
-import { ApplitoolsVisualHelper } from '@utilities/applitools.utils';
 
 export class RegistrationPage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
-  private readonly visualHelper?: ApplitoolsVisualHelper;
   private readonly verify: PlaywrightVerificationFactory;
   private readonly locators: { [key: string]: LocatorInfo };
 
-  constructor(page: Page, testInfo: TestInfo, visualHelper?: ApplitoolsVisualHelper) {
+  constructor(page: Page, testInfo: TestInfo) {
     this.page = page;
     this.actions = new PlaywrightActionFactory(page, testInfo);
-    this.visualHelper = visualHelper;
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
 
     this.locators = {
@@ -188,7 +185,6 @@ export class RegistrationPage {
       await this.actions.waitForVisibility(this.locators.duplicateEmailError);
       await this.verify.expectElementExist(this.locators.duplicateEmailError);
       await this.verify.verifyUserHasAccess('/quiz', false);
-      await this.visualHelper?.captureCheckpoint('Registration validation', 'Registration - duplicate email error', 'BlueChew Registration');
     });
   }
 }

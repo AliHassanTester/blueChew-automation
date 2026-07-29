@@ -2,7 +2,6 @@ import { Page, TestInfo, test } from '@playwright/test';
 import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
-import { ApplitoolsVisualHelper } from '@utilities/applitools.utils';
 
 /**
  * Quiz wizard (dev.bluechew.com/quiz). Stable elements live in the LocatorInfo map;
@@ -12,14 +11,12 @@ export class QuizPage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
   private readonly verify: PlaywrightVerificationFactory;
-  private readonly visualHelper?: ApplitoolsVisualHelper;
   private readonly locators: { [key: string]: LocatorInfo };
 
-  constructor(page: Page, testInfo: TestInfo, visualHelper?: ApplitoolsVisualHelper) {
+  constructor(page: Page, testInfo: TestInfo) {
     this.page = page;
     this.actions = new PlaywrightActionFactory(page, testInfo);
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
-    this.visualHelper = visualHelper;
 
     this.locators = {
       // ── Quiz ───────────────────────────────────────────────────────────────
@@ -83,7 +80,6 @@ export class QuizPage {
     await test.step('Verify quiz complete — results page loaded', async () => {
       await this.page.waitForLoadState('load');
       await this.verify.waitForVisibility(this.locators.resultsPageRoot);
-      await this.visualHelper?.captureCheckpoint('Quiz flow', 'Quiz - completed results overview', 'BlueChew Quiz');
     });
   }
 

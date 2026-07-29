@@ -1,6 +1,5 @@
 import { Page, test, expect, BrowserContext, TestInfo } from '@playwright/test';
 import { RegistrationDetails } from '@interfaces/signup-to-approved-order.interface';
-import { ApplitoolsVisualHelper } from '@utilities/applitools.utils';
 
 export class AdminPage {
   private _page: Page | null = null;
@@ -8,7 +7,6 @@ export class AdminPage {
 
   constructor(
     private readonly context: BrowserContext,
-    private readonly visualHelper?: ApplitoolsVisualHelper,
     private readonly testInfo?: TestInfo,
   ) {}
 
@@ -27,11 +25,6 @@ export class AdminPage {
       await this._page.close();
       this._page = null;
     }
-  }
-
-  private async captureAdminCheckpoint(checkpointName: string): Promise<void> {
-    await this._page?.waitForLoadState('load').catch(() => undefined);
-    await this.visualHelper?.captureCheckpoint('Admin flow', checkpointName, 'BlueChew Admin');
   }
 
   private isMobileProject(): boolean {
@@ -80,7 +73,6 @@ export class AdminPage {
 
         // Wait until login completes and we leave the /auth/* pages
         await page.waitForURL((u) => !u.toString().includes('/auth'));
-        await this.captureAdminCheckpoint('Admin - portal dashboard');
       });
     });
   }
@@ -89,7 +81,7 @@ export class AdminPage {
     await test.step('Navigate to Users section', async () => {
       const page = await this.getPage();
       await page.goto(`${this._origin}/users`, { waitUntil: 'domcontentloaded' });
-      await this.captureAdminCheckpoint('Admin - users list');
+      
     });
   }
 
@@ -112,7 +104,7 @@ export class AdminPage {
       await page.waitForURL(/\/users\/\d+/);
       // Status block confirms the detail page rendered
       await page.locator("xpath=//strong[text()='Status:']").waitFor({ state: 'visible' });
-      await this.captureAdminCheckpoint('Admin - user detail');
+      
     });
   }
 
@@ -172,7 +164,7 @@ export class AdminPage {
         "xpath=//strong[text()='Status:']/../..//span[text()=' Approved, Provider Review ']",
       );
       await expect(status).toBeVisible();
-      await this.captureAdminCheckpoint('Admin - approval state');
+      
     });
   }
 

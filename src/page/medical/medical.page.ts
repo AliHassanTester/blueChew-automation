@@ -3,7 +3,6 @@ import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { MedicalDetails } from '@interfaces/signup-to-approved-order.interface';
-import { ApplitoolsVisualHelper } from '@utilities/applitools.utils';
 
 /**
  * Medical-profile wizard (/medical). Stable fields expose aria-labels / formcontrolname,
@@ -15,16 +14,14 @@ export class MedicalPage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
   private readonly verify: PlaywrightVerificationFactory;
-  private readonly visualHelper?: ApplitoolsVisualHelper;
   private readonly locators: { [key: string]: LocatorInfo };
   private readonly testInfo: TestInfo;
 
-  constructor(page: Page, testInfo: TestInfo, visualHelper?: ApplitoolsVisualHelper) {
+  constructor(page: Page, testInfo: TestInfo) {
     this.page = page;
     this.testInfo = testInfo;
     this.actions = new PlaywrightActionFactory(page, testInfo);
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
-    this.visualHelper = visualHelper;
 
     this.locators = {
       // ── Step 1: legal name ─────────────────────────────────────────────────
@@ -325,7 +322,6 @@ export class MedicalPage {
         await this.page.waitForLoadState('load');
         await this.verify.waitForLoaderToDisappear();
         await this.verify.waitForProcessingLoaderToDisappear();
-        await this.visualHelper?.captureCheckpoint('Medical flow', 'Medical profile - completed questionnaire', 'BlueChew Medical');
       });
     });
   }
