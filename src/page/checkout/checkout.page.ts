@@ -119,7 +119,7 @@ export class CheckoutPage {
 
     // PROCEED TO PAYMENT enables once the address is valid.
     await this.actions.click(this.locators.proceedToPaymentButton);
-
+      // percy captureCheckpoint() 
     // "Confirm your delivery address" modal — appears when the address is not an exact
     // USPS match (as with the automation test address). Click CONFIRM to accept it.
     await this.locators.addressConfirmButton.locator
@@ -199,11 +199,12 @@ export class CheckoutPage {
       }
     });
   }
-
+  
   async completePurchase(): Promise<void> {
     await test.step('Click BUY NOW', async () => {
       // clickFirstActionable auto-waits for BUY NOW to be visible AND enabled (it stays
       // disabled until the card details are valid).
+      // percy  captureCheckpoint() 
       await this.actions.clickFirstActionable("//button[normalize-space()='BUY NOW']");
     });
   }

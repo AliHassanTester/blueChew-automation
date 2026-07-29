@@ -40,7 +40,7 @@ export class QuizPage {
       locator: this.page.locator(`[data-test-id="quiz-answer-${index}"]`),
     };
   }
-
+    // percy captureCheckpoint() 
   private async waitForAnswerButtons(): Promise<void> {
     await this.verify.waitForVisibility(this.answerButton(0));
   }

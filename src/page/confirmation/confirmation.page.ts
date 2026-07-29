@@ -58,6 +58,7 @@ export class ConfirmationPage {
   async uploadIdPhoto(): Promise<void> {
     await test.step('Upload ID photo on confirmation page', async () => {
       await this.page.waitForLoadState('load');
+      // percy captureCheckpoint() 
       await this.verify.waitForLoaderToDisappear();
 
       // Intercept the native file chooser opened by the Upload button

@@ -105,6 +105,7 @@ export class LoginPage {
   async verifyLoginPageLoaded(): Promise<void> {
     await test.step('Verify login page is loaded', async () => {
       await this.page.waitForLoadState('load');
+      // percy  captureCheckpoint() 
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.loginPageContainer);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.emailInput);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.passwordInput);
