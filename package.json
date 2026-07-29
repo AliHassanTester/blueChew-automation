@@ -18,6 +18,8 @@
     "allure:report": "npm run allure:generate && npm run allure:open"
   },
   "devDependencies": {
+    "@percy/cli": "^1.32.5",
+    "@percy/playwright": "^1.1.1",
     "@playwright/test": "^1.44.0",
     "@types/node": "^20.12.0",
     "allure": "^3.9.0",

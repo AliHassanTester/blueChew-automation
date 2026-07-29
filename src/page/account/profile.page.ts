@@ -1,6 +1,7 @@
 import { Page, TestInfo, test } from '@playwright/test';
 import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
+import { VisualHelper } from '@utilities/visual.helper';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { ShippingAddressInput } from '@interfaces/profile.interface';
 
@@ -14,12 +15,14 @@ export class ProfilePage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
   private readonly verify: PlaywrightVerificationFactory;
+  private readonly visual: VisualHelper;
   private readonly locators: { [key: string]: LocatorInfo };
 
-  constructor(page: Page, testInfo: TestInfo) {
+  constructor(page: Page, testInfo: TestInfo, visualHelper?: VisualHelper) {
     this.page = page;
     this.actions = new PlaywrightActionFactory(page, testInfo);
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
+    this.visual = visualHelper ?? new VisualHelper(page, testInfo);
 
     this.locators = {
       // ── Notification preferences (profile page) — each toggle wraps a role=switch ──
@@ -94,9 +97,17 @@ export class ProfilePage {
     };
   }
 
-  private async captureProfileCheckpoint(checkpointName: string): Promise<void> {
+  private async captureProfileCheckpoint(
+    checkpointName: string,
+    elementXpath?: string,
+    elementCSS?: string,
+  ): Promise<void> {
     await this.page.waitForLoadState('load').catch(() => undefined);
     await this.verify.waitForLoaderToDisappear();
+    await this.visual.captureCheckpoint(checkpointName, {
+      elementXpath,
+      elementCSS,
+    });
   }
 
   // ── PROF-010 ────────────────────────────────────────────────────────────────
@@ -110,25 +121,40 @@ export class ProfilePage {
   async changePasswordAndRestore(currentPassword: string, tempPassword: string): Promise<void> {
     await test.step('Change password with valid current + new password, then restore', async () => {
       await test.step('Change current → temporary password (expect success)', async () => {
-        await this.submitPasswordChange(currentPassword, tempPassword);
+        await this.submitPasswordChange(currentPassword, tempPassword, 'Profile - password change success');
       });
       await test.step('Change temporary → original password (restore + proves first change stuck)', async () => {
-        await this.submitPasswordChange(tempPassword, currentPassword);
+        await this.submitPasswordChange(tempPassword, currentPassword, 'Profile - password restore success');
       });
     });
   }
 
   /** Opens the change-password card, submits old/new/confirm, and asserts the success message. */
-  private async submitPasswordChange(oldPassword: string, newPassword: string): Promise<void> {
+  private async submitPasswordChange(
+    oldPassword: string,
+    newPassword: string,
+    checkpointName = 'Profile - password change success',
+  ): Promise<void> {
     await this.actions.navigateToURL('/account/profile/change-password');
     await this.actions.waitForVisibility(this.locators.currentPasswordInput);
+    await this.captureProfileCheckpoint(
+      'Profile - change password page loaded',
+      "//ds-input[@formcontrolname='oldpass']",
+    );
     await this.actions.sendKeys(this.locators.currentPasswordInput, oldPassword);
     await this.actions.sendKeys(this.locators.newPasswordInput, newPassword);
     await this.actions.sendKeys(this.locators.confirmPasswordInput, newPassword);
+    await this.captureProfileCheckpoint(
+      'Profile - change password form filled',
+      "//ds-input[@formcontrolname='oldpass']",
+    );
     await this.actions.click(this.locators.changePasswordSubmit);
     await this.actions.waitForVisibility(this.locators.passwordUpdatedSuccess);
     await this.verify.expectElementExist(this.locators.passwordUpdatedSuccess);
-    await this.captureProfileCheckpoint('Profile - password change success');
+    await this.captureProfileCheckpoint(
+      checkpointName,
+      "//p[contains(@class,'profile-edit-modal-wrapper__success-text')]",
+    );
   }
 
   // ── PROF-011 ────────────────────────────────────────────────────────────────
@@ -144,6 +170,7 @@ export class ProfilePage {
       await test.step('Fill the form with an address different from the current one, and save', async () => {
         await this.actions.navigateToURL('/account/profile/update-shipping-address');
         await this.actions.waitForVisibility(this.locators.shippingStreetInput);
+        await this.captureProfileCheckpoint('Profile - update shipping address page loaded');
         const currentStreet = (await this.actions.getInputValue(this.locators.shippingStreetInput)).trim();
         target = currentStreet === primary.streetAddress ? alternate : primary;
 
@@ -152,6 +179,10 @@ export class ProfilePage {
         await this.actions.sendKeys(this.locators.shippingCityInput, target.city);
         await this.actions.sendKeys(this.locators.shippingZipInput, target.zip);
         await this.actions.click(this.locators.saveShippingButton);
+        await this.captureProfileCheckpoint(
+          'Profile - update shipping address form submitted',
+          "//button[normalize-space()='Save changes']",
+        );
       });
 
       await test.step('Confirm the delivery-address modal (shown on USPS non-exact match)', async () => {
@@ -173,7 +204,10 @@ export class ProfilePage {
         const normalizedSummary = summary.replace(/\s+/g, ' ').trim();
         const normalizedStreet = target.streetAddress.replace(/\s+/g, ' ').trim();
         this.verify.verifyContains(normalizedSummary, normalizedStreet);
-        await this.captureProfileCheckpoint('Profile - shipping address updated');
+        await this.captureProfileCheckpoint(
+          'Profile - shipping address updated',
+          "//button[contains(normalize-space(.),'Shipping Address')]",
+        );
       });
     });
   }
@@ -186,10 +220,21 @@ export class ProfilePage {
       await this.actions.navigateToURL('/account/profile');
       await this.page.waitForLoadState('load');
       await this.verify.waitForLoaderToDisappear();
-      await this.captureProfileCheckpoint('Profile - preferences overview');
+      await this.captureProfileCheckpoint(
+        'Profile - preferences overview',
+        "//ds-toggle[@formcontrolname='sms']",
+      );
 
+      await this.captureProfileCheckpoint(
+        'Profile - notification preferences ready',
+        "//ds-toggle[@formcontrolname='sms']",
+      );
       await this.toggleAndRestore(this.locators.smsToggle);
       await this.toggleAndRestore(this.locators.emailToggle);
+      await this.captureProfileCheckpoint(
+        'Profile - notification preferences restored',
+        "//ds-toggle[@formcontrolname='sms']",
+      );
     });
   }
 

@@ -8,6 +8,7 @@ import { CheckoutPage } from '@page/checkout/checkout.page';
 import { ConfirmationPage } from '@page/confirmation/confirmation.page';
 import { AdminPage } from '@page/admin/admin.page';
 import { ProfilePage } from '@page/account/profile.page';
+import { VisualHelper } from '@utilities/visual.helper';
 
 type TestFixtures = {
   loginPage: LoginPage;
@@ -19,6 +20,7 @@ type TestFixtures = {
   confirmationPage: ConfirmationPage;
   adminPage: AdminPage;
   profilePage: ProfilePage;
+  visual: VisualHelper;
 };
 
 export const test = base.extend<TestFixtures>({
@@ -59,6 +61,10 @@ export const test = base.extend<TestFixtures>({
   },
   profilePage: async ({ page }, use) => {
     await use(new ProfilePage(page, base.info()));
+  },
+
+  visual: async ({ page }, use) => {
+    await use(new VisualHelper(page, base.info()));
   },
 });
 
