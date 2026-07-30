@@ -4,17 +4,20 @@ import { PlaywrightVerificationFactory } from '@utilities/playwright.verificatio
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { LoginDetails } from '@interfaces/login.interface';
 import { LoginPageDetails } from '@interfaces/login.page.interface';
+import { VisualHelper } from '@utilities/visual.helper';
 
 export class LoginPage {
   public readonly page: Page;
   private readonly playwrightActionsFactory: PlaywrightActionFactory;
   private readonly playwrightVerificationsFactory: PlaywrightVerificationFactory;
+  private readonly visual: VisualHelper;
   private readonly locators: { [key: string]: LocatorInfo };
 
-  constructor(page: Page, testInfo: TestInfo) {
+  constructor(page: Page, testInfo: TestInfo, visual: VisualHelper) {
     this.page = page;
     this.playwrightActionsFactory = new PlaywrightActionFactory(page, testInfo);
     this.playwrightVerificationsFactory = new PlaywrightVerificationFactory(page, testInfo);
+    this.visual = visual;
 
     // Locators are XPath, anchored on stable attributes (data-test-id) and semantic
     // text, and were derived from a live DOM capture of /log-in.
@@ -105,7 +108,7 @@ export class LoginPage {
   async verifyLoginPageLoaded(): Promise<void> {
     await test.step('Verify login page is loaded', async () => {
       await this.page.waitForLoadState('load');
-      // percy  captureCheckpoint() 
+      await this.visual.captureCheckpoint('Login page loaded');
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.loginPageContainer);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.emailInput);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.passwordInput);
@@ -135,6 +138,7 @@ export class LoginPage {
       // whole page rendered without over-coupling to any single element.
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.accountTabMyPlan);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.accountMembershipPage);
+      await this.visual.captureCheckpoint('Login success — account page rendered');
     });
   }
 

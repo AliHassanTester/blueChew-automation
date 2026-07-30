@@ -3,6 +3,7 @@ import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { ShippingAddressInput } from '@interfaces/profile.interface';
+import { VisualHelper } from '@utilities/visual.helper';
 
 /**
  * Account → Profile area (/account/profile and its edit sub-pages). Locators are XPath
@@ -14,12 +15,14 @@ export class ProfilePage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
   private readonly verify: PlaywrightVerificationFactory;
+  private readonly visual: VisualHelper;
   private readonly locators: { [key: string]: LocatorInfo };
 
-  constructor(page: Page, testInfo: TestInfo) {
+  constructor(page: Page, testInfo: TestInfo, visual: VisualHelper) {
     this.page = page;
     this.actions = new PlaywrightActionFactory(page, testInfo);
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
+    this.visual = visual;
 
     this.locators = {
       // ── Notification preferences (profile page) — each toggle wraps a role=switch ──
@@ -97,6 +100,7 @@ export class ProfilePage {
   private async captureProfileCheckpoint(checkpointName: string): Promise<void> {
     await this.page.waitForLoadState('load').catch(() => undefined);
     await this.verify.waitForLoaderToDisappear();
+    await this.visual.captureCheckpoint(checkpointName);
   }
 
   // ── PROF-010 ────────────────────────────────────────────────────────────────

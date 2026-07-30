@@ -32,8 +32,8 @@ export const test = base.extend<TestFixtures>({
     await context.close();
   },
 
-  loginPage: async ({ page }, use) => {
-    await use(new LoginPage(page, base.info()));
+  loginPage: async ({ page, visual }, use) => {
+    await use(new LoginPage(page, base.info(), visual));
   },
   registrationPage: async ({ page }, use) => {
     await use(new RegistrationPage(page, base.info()));
@@ -59,8 +59,8 @@ export const test = base.extend<TestFixtures>({
     await use(adminPage);
     await adminPage.close();
   },
-  profilePage: async ({ page }, use) => {
-    await use(new ProfilePage(page, base.info()));
+  profilePage: async ({ page, visual }, use) => {
+    await use(new ProfilePage(page, base.info(), visual));
   },
 
   visual: async ({ page }, use) => {
