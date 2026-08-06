@@ -15,7 +15,7 @@ export interface EyesFigmaConfig {
   ignoreDisplacement?: boolean;
 }
 
-export const loginPageFigmaConfig: EyesFigmaConfig = {
+export const loginPageDesktopFigmaConfig: EyesFigmaConfig = {
   appName: 'Login Default',
   testName: 'Log in/Default',
   viewport: {
@@ -26,41 +26,73 @@ export const loginPageFigmaConfig: EyesFigmaConfig = {
   ignoreDisplacement: true,
 };
 
+export const loginPageMobileFigmaConfig: EyesFigmaConfig = {
+  appName: 'Login Default',
+  testName: 'Log in/Default',
+  viewport: {
+    width: 390,
+    height: 844,
+  },
+  baselineEnvName: 'Log in/Default_390',
+  ignoreDisplacement: true,
+};
+
 /**
- * Helper function to take a screenshot when the login page loads
- * and upload it to the Applitools Eyes dashboard matching Figma baseline details.
+ * Helper function to take screenshots when the login page loads
+ * and upload them to the Applitools Eyes dashboard matching Figma baseline details.
+ *
+ * Automatically detects whether the test is running under mobile or desktop project/viewport context.
  *
  * @param page - Playwright Page object
- * @param config - Figma Eyes configuration details matching Figma frame/app definitions
+ * @param customConfigs - Optional explicit Figma Eyes configuration(s) to override auto-detection
  */
 export async function uploadLoginPageScreenshotToApplitools(
   page: Page,
-  configDetails: EyesFigmaConfig = loginPageFigmaConfig,
+  customConfigs?: EyesFigmaConfig | EyesFigmaConfig[],
 ): Promise<void> {
-  const eyes = new Eyes();
-  const config = new Configuration();
+  const initialViewport = page.viewportSize();
+  const projectName = test.info().project.name.toLowerCase();
+  const isMobile = projectName.includes('mobile') || (initialViewport ? initialViewport.width < 768 : false);
 
-  config.setAppName(configDetails.appName);
-  config.setTestName(configDetails.testName);
-  config.setViewportSize(configDetails.viewport);
+  const configsToRun: EyesFigmaConfig[] = customConfigs
+    ? Array.isArray(customConfigs)
+      ? customConfigs
+      : [customConfigs]
+    : [isMobile ? loginPageMobileFigmaConfig : loginPageDesktopFigmaConfig];
 
-  if (configDetails.baselineEnvName) {
-    config.setBaselineEnvName(configDetails.baselineEnvName);
+  for (const configDetails of configsToRun) {
+    const eyes = new Eyes();
+    const config = new Configuration();
+
+    config.setAppName(configDetails.appName);
+    config.setTestName(configDetails.testName);
+    config.setViewportSize(configDetails.viewport);
+
+    if (configDetails.baselineEnvName) {
+      config.setBaselineEnvName(configDetails.baselineEnvName);
+    }
+    if (configDetails.ignoreDisplacement !== undefined) {
+      config.setIgnoreDisplacements(configDetails.ignoreDisplacement);
+    }
+
+    eyes.setConfiguration(config);
+
+    try {
+      await eyes.open(page);
+      await eyes.check(configDetails.testName, Target.window().fully());
+      await eyes.close(false);
+    } catch (error) {
+      await eyes.abort();
+      console.warn(
+        `Applitools visual comparison note (${configDetails.viewport.width}x${configDetails.viewport.height}):`,
+        error,
+      );
+    }
   }
-  if (configDetails.ignoreDisplacement !== undefined) {
-    config.setIgnoreDisplacements(configDetails.ignoreDisplacement);
-  }
 
-  eyes.setConfiguration(config);
-
-  try {
-    await eyes.open(page);
-    await eyes.check(configDetails.testName, Target.window().fully());
-    await eyes.close(false);
-  } catch (error) {
-    await eyes.abort();
-    // Log visual diff error instead of halting functional flow if desired, or rethrow if critical
-    console.warn('Applitools visual comparison note:', error);
+  // Restore appropriate viewport for active project execution (mobile vs desktop)
+  if (initialViewport) {
+    await page.setViewportSize(initialViewport);
   }
 }
 
@@ -95,4 +127,3 @@ test.describe('Feature: User Login', () => {
     },
   );
 });
-
