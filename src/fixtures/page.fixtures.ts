@@ -1,4 +1,4 @@
-import { test as base } from '@playwright/test';
+import { test as base } from '@applitools/eyes-playwright/fixture';
 import { LoginPage } from '@page/login/login.page';
 import { RegistrationPage } from '@page/login/signup-to-approved-order.page';
 import { QuizPage } from '@page/quiz/quiz.page';
@@ -8,6 +8,7 @@ import { CheckoutPage } from '@page/checkout/checkout.page';
 import { ConfirmationPage } from '@page/confirmation/confirmation.page';
 import { AdminPage } from '@page/admin/admin.page';
 import { ProfilePage } from '@page/account/profile.page';
+import { ProductPage } from '@page/product/product.page';
 import { VisualHelper } from '@utilities/visual.helper';
 
 type TestFixtures = {
@@ -20,6 +21,7 @@ type TestFixtures = {
   confirmationPage: ConfirmationPage;
   adminPage: AdminPage;
   profilePage: ProfilePage;
+  productPage: ProductPage;
   visual: VisualHelper;
 };
 
@@ -59,12 +61,19 @@ export const test = base.extend<TestFixtures>({
     await use(adminPage);
     await adminPage.close();
   },
-  profilePage: async ({ page, visual }, use) => {
-    await use(new ProfilePage(page, base.info(), visual));
+  profilePage: async ({ page }, use) => {
+    await use(new ProfilePage(page, base.info()));
+  },
+  productPage: async ({ page, visual }, use) => {
+    await use(new ProductPage(page, base.info(), visual));
   },
 
   visual: async ({ page }, use) => {
-    await use(new VisualHelper(page, base.info()));
+    const visual = new VisualHelper(page, base.info());
+    // initialize configured providers (lazy init occurs in captureCheckpoint, but
+    // provide an explicit hook if providers need setup)
+    await use(visual);
+    await visual.close();
   },
 });
 

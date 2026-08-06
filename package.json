@@ -12,6 +12,13 @@
     "test:login": "cross-env ENV_TYPE=dev npx playwright test src/specs/login/login.spec.ts",
     "test:e2e": "cross-env ENV_TYPE=dev npx playwright test src/specs/login/signup-to-approved-order.spec.ts",
     "test:visual": "node ./scripts/test-visual.js",
+    "test:visual:login": "node ./scripts/test-visual.js --providers=percy src/specs/login/login.spec.ts",
+    "test:applitools": "node ./scripts/run-visual.js applitools",
+    "test:percy": "node ./scripts/run-visual.js percy",
+    "test:visual:both": "node ./scripts/run-visual.js percy,applitools",
+    "visual": "node ./scripts/test-visual.js",
+    "visual:applitools": "node ./scripts/run-visual.js applitools",
+    "visual:all": "node ./scripts/run-visual.js percy,applitools",
     "allure:clean": "node -e \"const fs=require('fs');for(const d of ['allure-results','allure-report'])fs.rmSync(d,{recursive:true,force:true})\"",
     "allure:generate": "allure generate allure-results --output allure-report",
     "allure:open": "allure open allure-report",
@@ -19,6 +26,7 @@
     "allure:report": "npm run allure:generate && npm run allure:open"
   },
   "devDependencies": {
+    "@applitools/eyes-playwright": "^1.48.0",
     "@percy/cli": "^1.32.5",
     "@percy/playwright": "^1.1.1",
     "@playwright/test": "^1.44.0",

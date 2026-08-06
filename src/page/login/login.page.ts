@@ -148,6 +148,7 @@ export class LoginPage {
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.myPlanLink);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.profileNavLink);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.logoutLink);
+      await this.visual.captureCheckpoint('member page slide menu  — account page rendered');
     });
   }
 

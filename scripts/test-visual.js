@@ -17,17 +17,37 @@ if (typeof process.env.PERCY_ENABLED === 'undefined') {
   process.env.PERCY_ENABLED = 'true';
 }
 
-// Provide a helpful error if token is missing
-if (!process.env.PERCY_TOKEN || process.env.PERCY_TOKEN === '') {
-  console.error('[percy-runner] ERROR: PERCY_TOKEN not found in environment.');
-  console.error(`Loaded env file: ${envFile}`);
-  process.exitCode = 2;
-  process.exit();
+// Allow explicit provider selection via CLI: --providers=percy,applitools
+const providerArg = process.argv.find((a) => a.startsWith('--providers='));
+if (providerArg) {
+  process.env.VISUAL_PROVIDERS = providerArg.split('=')[1];
 }
 
-const cmd = 'npx percy exec -- npx playwright test --grep @visual';
+// If Percy is enabled as a provider, require PERCY_TOKEN.
+const providers = (process.env.VISUAL_PROVIDERS || 'percy').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+const wantsPercy = providers.includes('percy');
 
-console.log('[percy-runner] Running:', cmd);
+if (wantsPercy) {
+  if (!process.env.PERCY_TOKEN || process.env.PERCY_TOKEN === '') {
+    console.error('[percy-runner] ERROR: PERCY_TOKEN not found in environment.');
+    console.error(`Loaded env file: ${envFile}`);
+    process.exitCode = 2;
+    process.exit();
+  }
+}
+
+const extraArgs = process.argv.filter((a) => !a.startsWith('--providers=')).slice(2).join(' ');
+
+// If Percy is requested, run via the percy exec wrapper. Otherwise run playwright directly.
+let cmd;
+if (wantsPercy) {
+  cmd = `npx percy exec -- npx playwright test --grep @visual ${extraArgs}`.trim();
+} else {
+  cmd = `npx playwright test --grep @visual ${extraArgs}`.trim();
+}
+
+console.log('[visual-runner] Providers:', providers.join(','));
+console.log('[visual-runner] Running:', cmd);
 
 const child = spawn(cmd, { shell: true, stdio: 'inherit', env: process.env });
 

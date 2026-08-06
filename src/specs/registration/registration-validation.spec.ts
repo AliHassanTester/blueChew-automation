@@ -9,7 +9,7 @@ test.describe('Feature: Registration Validation', () => {
     `
     Test case: '${scenario.testCaseData.testCase}'
     Description: '${scenario.testCaseData.testDescription}'
-    Tags: '${scenario.testCaseData.tags} @visual'
+    Tags: '${scenario.testCaseData.tags}'
   `,
     async ({ registrationPage }) => {
       await logTestCaseData(test.info(), scenario.testCaseData, {

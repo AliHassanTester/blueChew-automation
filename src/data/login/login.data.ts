@@ -29,7 +29,7 @@ const loginTestData: { [key: string]: LoginTestCaseData } = {
       postLoginURL: env.POST_LOGIN_URL,
     },
     testCaseData: {
-      tags: '@regression @smoke @login',
+      tags: '@regression @smoke @login @percy',
       testCase: 'AQ-02-User-Login',
       testDescription: 'Registered user can log in with valid credentials',
       testSummary:

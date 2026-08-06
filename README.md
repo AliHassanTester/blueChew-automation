@@ -149,8 +149,13 @@ cross-env ENV_TYPE=dev npx playwright test --project=chromium-desktop
 
 - Alternative (run Percy only for the command using the CLI `exec` wrapper):
 ```bash
-npx percy exec -- npx playwright test --grep @visual
+npx percy exec -- npx playwright test --grep @percy
 ```
+
+- `npm run test:visual` — runs Percy for all specs tagged `@percy`.
+- `npm run test:visual:login` — runs Percy for the login page only.
+
+> Use `npm run test:visual` or `npm run visual` for Percy-only runs. Do not use `npm run test visual`.
 
 ### CI notes
 

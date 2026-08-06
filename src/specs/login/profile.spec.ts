@@ -22,7 +22,7 @@ test.describe('Feature: Account Profile', () => {
     `
     Test case: '${changePassword.testCaseData.testCase}'
     Description: '${changePassword.testCaseData.testDescription}'
-    Tags: '${changePassword.testCaseData.tags} @visual'
+    Tags: '${changePassword.testCaseData.tags}'
   `,
     async ({ profilePage }) => {
       await logTestCaseData(test.info(), changePassword.testCaseData, allureMeta);
@@ -31,11 +31,11 @@ test.describe('Feature: Account Profile', () => {
     },
   );
 
-  test.only(
+  test(
     `
     Test case: '${updateShipping.testCaseData.testCase}'
     Description: '${updateShipping.testCaseData.testDescription}'
-    Tags: '${updateShipping.testCaseData.tags} @visual'
+    Tags: '${updateShipping.testCaseData.tags}'
   `,
     async ({ profilePage }) => {
       await logTestCaseData(test.info(), updateShipping.testCaseData, allureMeta);
@@ -44,11 +44,11 @@ test.describe('Feature: Account Profile', () => {
     },
   );
 
-  test.only(
+  test(
     `
     Test case: '${togglePrefs.testCaseData.testCase}'
     Description: '${togglePrefs.testCaseData.testDescription}'
-    Tags: '${togglePrefs.testCaseData.tags} @visual'
+    Tags: '${togglePrefs.testCaseData.tags}'
   `,
     async ({ profilePage }) => {
       await logTestCaseData(test.info(), togglePrefs.testCaseData, allureMeta);

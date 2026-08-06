@@ -3,7 +3,6 @@ import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { ShippingAddressInput } from '@interfaces/profile.interface';
-import { VisualHelper } from '@utilities/visual.helper';
 
 /**
  * Account → Profile area (/account/profile and its edit sub-pages). Locators are XPath
@@ -15,14 +14,12 @@ export class ProfilePage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
   private readonly verify: PlaywrightVerificationFactory;
-  private readonly visual: VisualHelper;
   private readonly locators: { [key: string]: LocatorInfo };
 
-  constructor(page: Page, testInfo: TestInfo, visual: VisualHelper) {
+  constructor(page: Page, testInfo: TestInfo) {
     this.page = page;
     this.actions = new PlaywrightActionFactory(page, testInfo);
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
-    this.visual = visual;
 
     this.locators = {
       // ── Notification preferences (profile page) — each toggle wraps a role=switch ──
@@ -97,10 +94,9 @@ export class ProfilePage {
     };
   }
 
-  private async captureProfileCheckpoint(checkpointName: string): Promise<void> {
+  private async waitForProfileReady(): Promise<void> {
     await this.page.waitForLoadState('load').catch(() => undefined);
     await this.verify.waitForLoaderToDisappear();
-    await this.visual.captureCheckpoint(checkpointName);
   }
 
   // ── PROF-010 ────────────────────────────────────────────────────────────────
@@ -132,7 +128,7 @@ export class ProfilePage {
     await this.actions.click(this.locators.changePasswordSubmit);
     await this.actions.waitForVisibility(this.locators.passwordUpdatedSuccess);
     await this.verify.expectElementExist(this.locators.passwordUpdatedSuccess);
-    await this.captureProfileCheckpoint('Profile - password change success');
+    await this.waitForProfileReady();
   }
 
   // ── PROF-011 ────────────────────────────────────────────────────────────────
@@ -178,7 +174,7 @@ export class ProfilePage {
         const normalizedSummary = summary.replace(/\s+/g, ' ').trim();
         const normalizedStreet = target.streetAddress.replace(/\s+/g, ' ').trim();
         this.verify.verifyContains(normalizedSummary, normalizedStreet);
-        await this.captureProfileCheckpoint('Profile - shipping address updated');
+        await this.waitForProfileReady();
       });
     });
   }
@@ -191,7 +187,6 @@ export class ProfilePage {
       await this.actions.navigateToURL('/account/profile');
       await this.page.waitForLoadState('load');
       await this.verify.waitForLoaderToDisappear();
-      await this.captureProfileCheckpoint('Profile - preferences overview');
 
       await this.toggleAndRestore(this.locators.smsToggle);
       await this.toggleAndRestore(this.locators.emailToggle);

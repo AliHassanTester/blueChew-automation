@@ -26,7 +26,7 @@ const profileDetails: ProfileDetails = {
   currentPassword: env.password,
   tempPassword:    env.PROFILE_TEMP_PASSWORD,
   shipping:    { streetAddress: '123 Main St', aptSuite: 'Apt 4B', city: 'Atlanta', zip: '30301' },
-  shippingAlt: { streetAddress: '456 Peachtree St NE', aptSuite: 'Apt 2', city: 'Atlanta', zip: '30308' },
+  shippingAlt: { streetAddress: '456 Modesto CA', aptSuite: 'Apt 2', city: 'Atlanta', zip: '30308' },
 };
 
 const profileTestData: { [key: string]: ProfileTestCaseData } = {

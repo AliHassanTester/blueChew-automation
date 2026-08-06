@@ -7,7 +7,7 @@ test.describe('Feature: User Login', () => {
   test(
     `Test case: '${scenario.testCaseData.testCase}'
     Description: '${scenario.testCaseData.testDescription}'
-    Tags: '${scenario.testCaseData.tags} @visual'
+    Tags: '${scenario.testCaseData.tags}'
   `,
     async ({ loginPage }) => {
       await logTestCaseData(test.info(), scenario.testCaseData, {

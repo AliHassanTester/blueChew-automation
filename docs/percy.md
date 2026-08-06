@@ -1,38 +1,71 @@
 # Percy Visual Testing
 
-This project integrates Percy for visual testing with minimal changes to the existing Playwright + Page Object architecture.
+This project integrates Percy for visual testing through `@percy/playwright` and a small `VisualHelper` wrapper, so the existing Playwright Page Object architecture can record snapshots without large refactors.
+
+## Current flow
+
+1. `scripts/test-visual.js` loads the chosen `.env.<ENV_TYPE>` file.
+2. It validates `PERCY_TOKEN` is present.
+3. It runs `npx percy exec -- npx playwright test --grep @percy`.
+4. Page objects take snapshots via `VisualHelper.captureCheckpoint(...)`.
 
 ## Key files
 
-- `src/utilities/visual.helper.ts` — wrapper used by page objects to call Percy snapshots.
-- `src/fixtures/percy.global.setup.ts` — Playwright global setup that starts the Percy CLI agent when `PERCY_TOKEN` is present.
-- `src/fixtures/percy.global.teardown.ts` — Playwright global teardown that stops the Percy agent started during setup.
-- `playwright.config.ts` — wired to the global setup/teardown; dotenv is used to load `.env.*`.
+- `scripts/test-visual.js` — entrypoint for visual test runs. Loads env variables and starts Percy.
+- `src/utilities/visual.helper.ts` — encapsulates Percy `percySnapshot` usage.
+- `src/fixtures/page.fixtures.ts` — provides the shared `visual` fixture and passes it into page objects.
+- `src/page/login/login.page.ts` and `src/page/account/profile.page.ts` — example page objects that call `captureCheckpoint(...)`.
+- `playwright.config.ts` — loads `.env.*` based on `ENV_TYPE` for consistency across environments.
 
-## Environment
+## Environment variables
 
-- `PERCY_TOKEN` — required API token for Percy. Store in CI secrets and/or local `.env.dev` for development.
-- `PERCY_ENABLED` — optional switch; set to `false` or `0` to disable visual snapshots at runtime.
+- `PERCY_TOKEN` — required Percy API token.
+- `PERCY_ENABLED` — set to `false` or `0` to skip snapshot calls at runtime.
+- `ENV_TYPE` — selects `.env.<ENV_TYPE>` (default: `dev`).
 
-Do NOT commit production tokens to the repository. Keep secrets in your CI provider's secure storage.
+> Do not commit Percy tokens to source control. Store secrets in CI securely.
 
-## NPM script
+## Run visual tests
 
-- `npm run test:visual` — runs Percy-wrapped Playwright tests for specs tagged `@visual`.
+Use one of the dedicated Percy commands. Do not use `npm run test visual` — that runs the normal `test` script with an argument.
 
 ```bash
 npm run test:visual
+# or
+npm run visual
 ```
 
-This expands to:
+Both commands run the project-specific runner:
 
 ```bash
-cross-env ENV_TYPE=dev npx percy exec -- npx playwright test --grep @visual
+node ./scripts/test-visual.js
 ```
 
-## GitHub Actions example
+If you need a different environment:
 
-Create a workflow that sets `PERCY_TOKEN` as a secret (Settings → Secrets) and uses it during the job.
+```bash
+ENV_TYPE=prod npm run test:visual
+```
+
+To run the login page Percy coverage only:
+
+```bash
+npm run test:visual:login
+```
+
+## How snapshots are taken
+
+Visual snapshots are created inside the page object flow, not as separate test-only commands. Example checkpoints include:
+
+- `Login page loaded`
+- `Login success — account page rendered`
+- `Profile - password change success`
+- `Profile - shipping address updated`
+- `Profile - preferences overview`
+
+These map into Percy snapshots via `VisualHelper.captureCheckpoint(...)`.
+
+## CI example (GitHub Actions)
 
 ```yaml
 name: Visual tests
@@ -51,11 +84,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-      - name: Install deps
+      - name: Install dependencies
         run: |
           npm ci
           npx playwright install chromium
-      - name: Run visual tests (Percy)
+      - name: Run visual tests
         env:
           PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
           ENV_TYPE: dev
@@ -63,9 +96,19 @@ jobs:
           npm run test:visual
 ```
 
-## Troubleshooting
+## Debugging no snapshots
 
-- If snapshots are not uploaded, confirm the job has `PERCY_TOKEN` available and check Percy CLI output in the runner logs.
-- Use `npx percy --version` to verify the CLI is installed.
+If Percy runs but you see no snapshots in the dashboard:
 
-If you want additional CI snippets (GitLab, Azure Pipelines) or an npm script that starts Percy via the global setup instead of `percy exec`, tell me which CI runner you use and I will add it.
+- Confirm `PERCY_TOKEN` is available to the process.
+- Confirm `ENV_TYPE` is set correctly so the right `.env.<ENV_TYPE>` file is loaded.
+- Confirm the failing spec includes `@visual` in its tag string.
+- Confirm the page object actually calls `VisualHelper.captureCheckpoint(...)` in the execution path.
+- Check the Percy CLI output for `percySnapshot` calls or any errors.
+
+## Notes
+
+- `PERCY_ENABLED=false` disables visual snapshots while keeping the functional flow intact.
+- The implementation no longer uses global setup/teardown for Percy; it relies on `percy exec` instead.
+
+If you want, I can also add a short “Percy smoke test” example that hits a single baseline snapshot first. 
