@@ -10,6 +10,7 @@ export class ApplitoolsProvider implements IVisualProvider {
   private Target: any;
 
   async initialize(page: Page, testInfo?: TestInfo): Promise<void> {
+    if (this.eyes) return;
     try {
       const applitoolsApiKey = process.env.APPLITOOLS_API_KEY || process.env.APPLI_API_KEY;
       if (applitoolsApiKey && !process.env.APPLITOOLS_API_KEY) {
@@ -22,13 +23,11 @@ export class ApplitoolsProvider implements IVisualProvider {
 
       try {
         const applitools = await import('@applitools/eyes-playwright');
-        const { Eyes, VisualGridRunner, Target } = applitools;
+        const { Eyes, ClassicRunner, Target } = applitools;
         this.Target = Target;
-        const concurrency = Number(process.env.APPLITOOLS_CONCURRENCY) || 5;
-        this.runner = new VisualGridRunner({ testConcurrency: concurrency });
-        this.eyes = new Eyes(this.runner, {
-          apiKey: process.env.APPLITOOLS_API_KEY || process.env.APPLI_API_KEY,
-        });
+        this.runner = new ClassicRunner();
+        this.eyes = new Eyes(this.runner);
+        this.eyes.setApiKey(applitoolsApiKey);
 
         await this.eyes.open(page, {
           appName: process.env.APPLITOOLS_APP || 'App',
@@ -52,18 +51,23 @@ export class ApplitoolsProvider implements IVisualProvider {
         testName?: string;
         viewport?: { width: number; height: number };
         baselineEnvName?: string;
+        ignoreDisplacements?: boolean;
         ignoreDisplacement?: boolean;
         checkpointName?: string;
       } | undefined;
 
-      if (visualConfig?.appName || visualConfig?.testName || visualConfig?.viewport || visualConfig?.baselineEnvName || typeof visualConfig?.ignoreDisplacement === 'boolean') {
-        this.eyes.setConfiguration?.({
-          appName: visualConfig.appName,
-          testName: visualConfig.testName,
-          viewport: visualConfig.viewport,
-          baselineEnvName: visualConfig.baselineEnvName,
-          ignoreDisplacement: visualConfig.ignoreDisplacement,
-        });
+      if (visualConfig?.appName || visualConfig?.testName || visualConfig?.viewport || visualConfig?.baselineEnvName) {
+        const config = this.eyes.getConfiguration();
+        if (visualConfig.appName) config.setAppName(visualConfig.appName);
+        if (visualConfig.testName) config.setTestName(visualConfig.testName);
+        if (visualConfig.viewport) config.setViewportSize(visualConfig.viewport);
+        if (visualConfig.baselineEnvName) config.setBaselineEnvName(visualConfig.baselineEnvName);
+        if (typeof visualConfig.ignoreDisplacements === 'boolean') {
+          config.setIgnoreDisplacements(visualConfig.ignoreDisplacements);
+        } else if (typeof visualConfig.ignoreDisplacement === 'boolean') {
+          config.setIgnoreDisplacements(visualConfig.ignoreDisplacement);
+        }
+        this.eyes.setConfiguration(config);
       }
 
       const checkName = visualConfig?.checkpointName || snapshotName;
@@ -94,13 +98,23 @@ export class ApplitoolsProvider implements IVisualProvider {
   async close(): Promise<void> {
     if (!this.eyes) return;
     try {
-      await this.eyes.close();
+      await this.eyes.close(false);
     } catch {
       try {
         await this.eyes.abortIfNotClosed?.();
       } catch {
         // ignore
       }
+    } finally {
+      if (this.runner) {
+        try {
+          await this.runner.getAllTestResults(false);
+        } catch {
+          // ignore
+        }
+      }
+      this.eyes = undefined;
     }
   }
 }
+

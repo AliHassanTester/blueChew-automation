@@ -1,4 +1,4 @@
-import { Eyes, Target, VisualGridRunner } from '@applitools/eyes-playwright';
+import { Eyes, Target, ClassicRunner, Configuration } from '@applitools/eyes-playwright';
 import { logTestCaseData } from '@utilities/test.helper.utils';
 import { getProductMaxData } from '@data/product/product-max.data';
 import { test } from '@fixtures/page.fixtures';
@@ -23,33 +23,39 @@ test.describe('Feature: Product Max', () => {
         throw new Error('Applitools API key is not configured');
       }
 
-      const eyes = new Eyes(new VisualGridRunner({ testConcurrency: 1 }), { apiKey });
-      const eyesAny = eyes as any;
+      const runner = new ClassicRunner();
+      const eyes = new Eyes(runner);
 
       try {
         await test.step('Open Product Max and capture a visual baseline', async () => {
           await productPage.navigateToProductMax(scenario.url);
-          await productPage.page.waitForLoadState('domcontentloaded', { timeout: 5 }).catch(() => undefined);
-          await productPage.page.waitForTimeout(1000).catch(() => undefined);
+          await productPage.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => undefined);
+          await productPage.page.waitForTimeout(2000).catch(() => undefined);
 
-          await eyes.open(productPage.page, 'BlueChew 4.0 - Dev Handoff - {Login-Default}', 'Desktop - 9');
+          // Configure Applitools Eyes Configuration Object
+          const config = new Configuration();
+          config.setApiKey(apiKey);
+          config.setAppName('Login Default'); // Must match Figma file / baseline app name
+          config.setTestName('Desktop - 9'); // Must match Figma frame / baseline test name
+          config.setViewportSize({ width: 1440, height: 915 });
+          config.setBaselineEnvName('Desktop - 9_1440');
+          config.setIgnoreDisplacements(true);
+          eyes.setConfiguration(config);
 
-          eyesAny.setConfiguration?.({
-            appName: 'BlueChew 4.0 - Dev Handoff - {Login-Default}',
-            testName: 'Desktop - 9',
-            baselineEnvName: 'Desktop - 9_1440',
-            ignoreDisplacement: true,
-          });
+          // Open Eyes session with page
+          await eyes.open(productPage.page);
 
           await eyes.check('Product Max page loaded', Target.window().fully());
+
+          // Synchronously close eyes to ensure snapshot upload is finished before test step completes
+          await eyes.close(false);
         });
       } finally {
-        try {
-          await eyes.close();
-        } catch {
-          await eyes.abortIfNotClosed?.();
-        }
+        await eyes.abortIfNotClosed().catch(() => undefined);
+        await runner.getAllTestResults(false).catch(() => undefined);
       }
     },
   );
 });
+
+
