@@ -14,6 +14,32 @@ type VisualSnapshotOptions = {
   [key: string]: any;
 };
 
+function getVisualDelayMs(): number {
+  const rawValue = process.env.VISUAL_SETTLE_DELAY_MS || process.env.VISUAL_DELAY_MS || '0';
+  const parsed = Number(rawValue);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+async function waitForVisualSettling(page: Page): Promise<void> {
+  const delayMs = getVisualDelayMs();
+  if (delayMs <= 0) {
+    return;
+  }
+
+  await page.waitForTimeout(delayMs);
+}
+
+export type ApplitoolsVisualConfig = {
+  appName: string;
+  testName: string;
+  viewport: {
+    width: number;
+    height: number;
+  };
+  baselineEnvName?: string;
+  ignoreDisplacement?: boolean;
+};
+
 const AVAILABLE_PROVIDERS: { [key: string]: any } = {
   percy: PercyProvider,
   applitools: ApplitoolsProvider,
@@ -68,12 +94,37 @@ export class VisualHelper {
       try {
         console.log(`[visual-helper] invoking provider=${provider.name}`);
         await provider.initialize?.(this.page, this.testInfo);
+        await waitForVisualSettling(this.page);
         await provider.snapshot(this.page, snapshotName, options);
       } catch (err) {
         const message = `${provider.name}: ${String(err)}`;
         this.testInfo.annotations.push({ type: 'visual-provider-error', description: message });
         console.error(`[visual-helper] ${message}`);
       }
+    }
+  }
+
+  async captureApplitoolsCheckpoint(checkpointName: string, visualConfig: ApplitoolsVisualConfig): Promise<void> {
+    if (!this.enabled || this.providers.length === 0) return;
+
+    const snapshotName = this.snapshotName(checkpointName);
+    const applitoolsProvider = this.providers.find((provider) => provider.name === 'applitools');
+
+    if (!applitoolsProvider) {
+      return;
+    }
+
+    try {
+      await applitoolsProvider.initialize?.(this.page, this.testInfo);
+      await waitForVisualSettling(this.page);
+      await applitoolsProvider.snapshot(this.page, snapshotName, {
+        ...visualConfig,
+        checkpointName,
+      });
+    } catch (err) {
+      const message = `applitools: ${String(err)}`;
+      this.testInfo.annotations.push({ type: 'visual-provider-error', description: message });
+      console.error(`[visual-helper] ${message}`);
     }
   }
 

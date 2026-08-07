@@ -28,9 +28,6 @@ export class ApplitoolsProvider implements IVisualProvider {
         this.runner = new VisualGridRunner({ testConcurrency: concurrency });
         this.eyes = new Eyes(this.runner, {
           apiKey: process.env.APPLITOOLS_API_KEY || process.env.APPLI_API_KEY,
-          appName: process.env.APPLITOOLS_APP || 'App',
-          testName: testInfo?.title || 'Playwright Test',
-          browser: [{ width: 1440, height: 900, name: 'chrome' }],
         });
 
         await this.eyes.open(page, {
@@ -50,11 +47,31 @@ export class ApplitoolsProvider implements IVisualProvider {
   async snapshot(page: Page, snapshotName: string, options?: any): Promise<void> {
     if (!this.eyes) return;
     try {
-      // If region selectors are provided, prefer region checks
+      const visualConfig = options as {
+        appName?: string;
+        testName?: string;
+        viewport?: { width: number; height: number };
+        baselineEnvName?: string;
+        ignoreDisplacement?: boolean;
+        checkpointName?: string;
+      } | undefined;
+
+      if (visualConfig?.appName || visualConfig?.testName || visualConfig?.viewport || visualConfig?.baselineEnvName || typeof visualConfig?.ignoreDisplacement === 'boolean') {
+        this.eyes.setConfiguration?.({
+          appName: visualConfig.appName,
+          testName: visualConfig.testName,
+          viewport: visualConfig.viewport,
+          baselineEnvName: visualConfig.baselineEnvName,
+          ignoreDisplacement: visualConfig.ignoreDisplacement,
+        });
+      }
+
+      const checkName = visualConfig?.checkpointName || snapshotName;
+
       if (options?.elementCSS) {
         const selectors = Array.isArray(options.elementCSS) ? options.elementCSS : [options.elementCSS];
         for (const sel of selectors) {
-          await this.eyes.check(snapshotName + ` — ${sel}`, this.Target.region(page.locator(sel)));
+          await this.eyes.check(checkName, this.Target.region(page.locator(sel)));
         }
         return;
       }
@@ -62,13 +79,12 @@ export class ApplitoolsProvider implements IVisualProvider {
       if (options?.elementXpath) {
         const xpaths = Array.isArray(options.elementXpath) ? options.elementXpath : [options.elementXpath];
         for (const xp of xpaths) {
-          await this.eyes.check(snapshotName + ` — ${xp}`, this.Target.region(page.locator(`xpath=${xp}`)));
+          await this.eyes.check(checkName, this.Target.region(page.locator(`xpath=${xp}`)));
         }
         return;
       }
 
-      // Default to full window snapshot
-      await this.eyes.check(snapshotName, this.Target.window().fully());
+      await this.eyes.check(checkName, this.Target.window().fully());
     } catch (err) {
       // do not fail tests — record annotation elsewhere
       throw err;

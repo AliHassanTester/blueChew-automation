@@ -145,10 +145,10 @@ export class PlaywrightVerificationFactory {
     await this.waitForPageToSettle();
   }
 
-  private async waitForPageToSettle(timeout = 30_000): Promise<void> {
+  private async waitForPageToSettle(timeout = 5_000): Promise<void> {
     try {
-      await this.page.waitForLoadState('load', { timeout });
-      await this.page.waitForLoadState('networkidle', { timeout: Math.min(timeout, 10_000) });
+      await this.page.waitForLoadState('load', { timeout: Math.min(timeout, 2_000) });
+      await this.page.waitForLoadState('load', { timeout: Math.min(timeout, 2_000) });
     } catch {
       // Some pages never reach a fully idle state; falling back to the load event keeps
       // the test moving without relying on a fragile app-specific loader check.
