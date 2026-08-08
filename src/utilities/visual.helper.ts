@@ -1,5 +1,6 @@
 import { Page, TestInfo } from '@playwright/test';
-import { captureApplitoolsVisualCheckpoint, ApplitoolsVisualConfig } from './applitools.utils';
+import { captureApplitoolsVisualCheckpoint } from './applitools.utils';
+import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 
 export type { ApplitoolsVisualConfig };
 

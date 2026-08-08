@@ -9,7 +9,7 @@ test.describe('Feature: Product Max', () => {
     `
     Test case: '${scenario.testCaseData.testCase}'
     Description: '${scenario.testCaseData.testDescription}'
-    Tags: '${scenario.testCaseData.tags} @visual'
+    Tags: '${scenario.testCaseData.tags}'
   `,
     async ({ productPage }, testInfo) => {
       await logTestCaseData(testInfo, scenario.testCaseData, {

@@ -5,11 +5,12 @@ import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { LoginDetails } from '@interfaces/login.interface';
 import { LoginPageDetails } from '@interfaces/login.page.interface';
 import { VisualHelper } from '@utilities/visual.helper';
+import { captureApplitoolsVisualCheckpoint } from '@utilities/applitools.utils';
+import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 import {
-  captureApplitoolsVisualCheckpoint,
   LOGIN_DESKTOP_FIGMA_CONFIG,
   LOGIN_MOBILE_FIGMA_CONFIG,
-} from '@utilities/applitools.utils';
+} from '@data/login/login.data';
 
 export class LoginPage {
   public readonly page: Page;
@@ -114,9 +115,12 @@ export class LoginPage {
     });
   }
 
-  async captureLoginPageSnapshot(): Promise<void> {
+  async captureLoginPageSnapshot(configs?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[]): Promise<void> {
     await test.step('Capture Applitools visual baseline for Login Page (Desktop & Mobile)', async () => {
-      await captureApplitoolsVisualCheckpoint(this.page, [LOGIN_DESKTOP_FIGMA_CONFIG, LOGIN_MOBILE_FIGMA_CONFIG]);
+      await captureApplitoolsVisualCheckpoint(
+        this.page,
+        configs || [LOGIN_DESKTOP_FIGMA_CONFIG, LOGIN_MOBILE_FIGMA_CONFIG],
+      );
     });
   }
 

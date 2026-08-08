@@ -1,62 +1,21 @@
 import { Page, test } from '@playwright/test';
 import { Eyes, Target, ClassicRunner, Configuration } from '@applitools/eyes-playwright';
+import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 
-export interface ApplitoolsVisualConfig {
-  appName: string;
-  testName: string;
-  viewport: {
-    width: number;
-    height: number;
-  };
-  baselineEnvName?: string;
-  ignoreDisplacement?: boolean;
-  ignoreDisplacements?: boolean;
-}
-
-export const LOGIN_DESKTOP_FIGMA_CONFIG: ApplitoolsVisualConfig = {
-  appName: 'Login Default',
-  testName: 'Log in/Default',
-  viewport: {
-    width: 1440,
-    height: 915,
-  },
-  baselineEnvName: 'Log in/Default_1440',
-  ignoreDisplacement: true,
-};
-
-export const LOGIN_MOBILE_FIGMA_CONFIG: ApplitoolsVisualConfig = {
-  appName: 'Login Default',
-  testName: 'Log in/Default',
-  viewport: {
-    width: 390,
-    height: 844,
-  },
-  baselineEnvName: 'Log in/Default_390',
-  ignoreDisplacement: true,
-};
-
-export const PRODUCT_MAX_FIGMA_CONFIG: ApplitoolsVisualConfig = {
-  appName: 'Login Default',
-  testName: 'Desktop - 9',
-  viewport: {
-    width: 1440,
-    height: 915,
-  },
-  baselineEnvName: 'Desktop - 9_1440',
-  ignoreDisplacement: true,
-};
+export type { ApplitoolsVisualConfig };
 
 /**
  * Common centralized utility to capture visual checkpoints using Applitools Eyes.
  * Handles configuration, viewport management, session execution, and clean teardown.
+ * Contains only execution logic and function definitions (no hardcoded test data).
  *
  * @param page - Playwright Page object
- * @param customConfigs - Single config or array of configs to capture
+ * @param visualConfigs - Single config or array of configs passed from data files
  * @param checkpointTag - Optional snapshot tag name
  */
 export async function captureApplitoolsVisualCheckpoint(
   page: Page,
-  customConfigs?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[],
+  visualConfigs?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[],
   checkpointTag?: string,
 ): Promise<void> {
   const apiKey = process.env.APPLITOOLS_API_KEY || process.env.APPLI_API_KEY;
@@ -65,18 +24,13 @@ export async function captureApplitoolsVisualCheckpoint(
     return;
   }
 
-  const initialViewport = page.viewportSize();
-  let configsToRun: ApplitoolsVisualConfig[];
-
-  if (customConfigs) {
-    configsToRun = Array.isArray(customConfigs) ? customConfigs : [customConfigs];
-  } else {
-    const testInfo = test.info();
-    const projectName = testInfo?.project?.name?.toLowerCase() || '';
-    const isMobileProject = projectName.includes('mobile') || (initialViewport ? initialViewport.width < 768 : false);
-
-    configsToRun = isMobileProject ? [LOGIN_MOBILE_FIGMA_CONFIG] : [LOGIN_DESKTOP_FIGMA_CONFIG];
+  if (!visualConfigs) {
+    console.warn('[Applitools] No visual configuration provided. Skipping Applitools upload.');
+    return;
   }
+
+  const initialViewport = page.viewportSize();
+  const configsToRun: ApplitoolsVisualConfig[] = Array.isArray(visualConfigs) ? visualConfigs : [visualConfigs];
 
   for (const configDetails of configsToRun) {
     const runner = new ClassicRunner();

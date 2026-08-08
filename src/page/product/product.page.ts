@@ -3,7 +3,9 @@ import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { VisualHelper } from '@utilities/visual.helper';
-import { captureApplitoolsVisualCheckpoint, PRODUCT_MAX_FIGMA_CONFIG } from '@utilities/applitools.utils';
+import { captureApplitoolsVisualCheckpoint } from '@utilities/applitools.utils';
+import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
+import { PRODUCT_MAX_FIGMA_CONFIG } from '@data/product/product-max.data';
 
 export class ProductPage {
   public readonly page: Page;
@@ -37,11 +39,15 @@ export class ProductPage {
     });
   }
 
-  async captureProductMaxSnapshot(): Promise<void> {
+  async captureProductMaxSnapshot(visualConfig?: ApplitoolsVisualConfig): Promise<void> {
     await test.step('Capture the fully loaded product max page state', async () => {
       await this.page.waitForLoadState('load').catch(() => undefined);
       await this.verify.expectElementExist(this.locators.pageContainer);
-      await captureApplitoolsVisualCheckpoint(this.page, PRODUCT_MAX_FIGMA_CONFIG, 'Product Max page loaded');
+      await captureApplitoolsVisualCheckpoint(
+        this.page,
+        visualConfig || PRODUCT_MAX_FIGMA_CONFIG,
+        'Product Max page loaded',
+      );
     });
   }
 }
