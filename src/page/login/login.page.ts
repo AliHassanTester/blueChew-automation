@@ -5,6 +5,11 @@ import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { LoginDetails } from '@interfaces/login.interface';
 import { LoginPageDetails } from '@interfaces/login.page.interface';
 import { VisualHelper } from '@utilities/visual.helper';
+import {
+  captureApplitoolsVisualCheckpoint,
+  LOGIN_DESKTOP_FIGMA_CONFIG,
+  LOGIN_MOBILE_FIGMA_CONFIG,
+} from '@utilities/applitools.utils';
 
 export class LoginPage {
   public readonly page: Page;
@@ -23,9 +28,6 @@ export class LoginPage {
     // text, and were derived from a live DOM capture of /log-in.
     this.locators = {
       // ── Login page (/log-in) ───────────────────────────────────────────────
-      // The form is built from <ds-input> web components; the data-test-id sits on
-      // BOTH the host and the inner <input>, so we anchor on the <input> tag to get
-      // an editable element that fill() accepts.
       loginPageContainer: {
         description: 'Login Page Container',
         locator: this.page.locator("//div[@data-test-id='sign-in-page']"),
@@ -64,10 +66,6 @@ export class LoginPage {
       },
 
       // ── Post-login account shell — verified from live /account DOM ─────────
-      // The three tabs render on every /account tab, so they are the least-fragile
-      // proof that login reached the authenticated area with navigation intact.
-      // One locator per section is enough to prove the whole account page rendered:
-      // a tab header (nav-bar section) + the page content container (content section).
       accountTabMyPlan: {
         description: 'Account Nav Tab — My Plan (nav-bar section marker)',
         locator: this.page.locator("//button[@data-test-id='navbar-sub-menu-tab-membership']"),
@@ -116,6 +114,12 @@ export class LoginPage {
     });
   }
 
+  async captureLoginPageSnapshot(): Promise<void> {
+    await test.step('Capture Applitools visual baseline for Login Page (Desktop & Mobile)', async () => {
+      await captureApplitoolsVisualCheckpoint(this.page, [LOGIN_DESKTOP_FIGMA_CONFIG, LOGIN_MOBILE_FIGMA_CONFIG]);
+    });
+  }
+
   async fillLoginCredentials(loginDetails: LoginDetails): Promise<void> {
     await test.step('Fill login credentials', async () => {
       await this.playwrightActionsFactory.sendKeys(this.locators.emailInput, loginDetails.username);
@@ -132,10 +136,7 @@ export class LoginPage {
   async verifyLoginSuccess(): Promise<void> {
     await test.step('Verify login succeeded — account page rendered', async () => {
       await this.page.waitForLoadState();
-      // Login redirects into /account (default landing tab is /membership).
       await this.playwrightActionsFactory.waitForURL(/\/account\//);
-      // One locator per section — the nav tab bar and the page content — confirms the
-      // whole page rendered without over-coupling to any single element.
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.accountTabMyPlan);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.accountMembershipPage);
       await this.visual.captureCheckpoint('Login success — account page rendered');

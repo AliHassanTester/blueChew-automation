@@ -3,6 +3,7 @@ import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { VisualHelper } from '@utilities/visual.helper';
+import { captureApplitoolsVisualCheckpoint, PRODUCT_MAX_FIGMA_CONFIG } from '@utilities/applitools.utils';
 
 export class ProductPage {
   public readonly page: Page;
@@ -38,18 +39,9 @@ export class ProductPage {
 
   async captureProductMaxSnapshot(): Promise<void> {
     await test.step('Capture the fully loaded product max page state', async () => {
-      await this.page.waitForLoadState('domcontentloaded', { timeout: 5 }).catch(() => undefined);
+      await this.page.waitForLoadState('load').catch(() => undefined);
       await this.verify.expectElementExist(this.locators.pageContainer);
-      await this.visual.captureApplitoolsCheckpoint('Product Max page loaded', {
-        appName: 'BlueChew 4.0 - Dev Handoff - {Login-Default}',
-        testName: 'Desktop - 9',
-        viewport: {
-          width: 1440,
-          height: 7832,
-        },
-        baselineEnvName: 'Desktop - 9_1440',
-        ignoreDisplacement: true,
-      });
+      await captureApplitoolsVisualCheckpoint(this.page, PRODUCT_MAX_FIGMA_CONFIG, 'Product Max page loaded');
     });
   }
 }

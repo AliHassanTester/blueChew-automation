@@ -15,7 +15,11 @@ process.env.VISUAL_PROVIDERS = providers.join(',');
 
 const cliPath = path.join(__dirname, '..', 'node_modules', 'playwright', 'cli.js');
 const extraArgs = process.argv.slice(3);
-const defaultArgs = ['test', 'src/specs/product/product-max.spec.ts', '--project=chromium-desktop'];
+const defaultArgs = [
+  'test',
+  '(login|product-max)\\.spec\\.ts',
+  '--project=chromium-desktop',
+];
 const args = extraArgs.length > 0 ? ['test', ...extraArgs] : defaultArgs;
 
 const child = spawn(process.execPath, [cliPath, ...args], {
