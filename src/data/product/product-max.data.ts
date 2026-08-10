@@ -1,6 +1,5 @@
 import { TestCaseData } from '@interfaces/testcase.data.interface';
 import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
-import { getEnvVars } from '@utilities/env.utils';
 
 export const PRODUCT_MAX_FIGMA_CONFIG: ApplitoolsVisualConfig = {
   appName: 'Login Default',
@@ -10,7 +9,7 @@ export const PRODUCT_MAX_FIGMA_CONFIG: ApplitoolsVisualConfig = {
     height: 915,
   },
   baselineEnvName: 'Desktop - 9_1440',
-  ignoreDisplacement: true,
+  ignoreDisplacements: true,
 };
 
 export interface ProductMaxTestCaseData {
@@ -19,13 +18,9 @@ export interface ProductMaxTestCaseData {
   visualConfig: ApplitoolsVisualConfig;
 }
 
-const env = getEnvVars({
-  LOGIN_URL: 'https://dev.app.bluechew.com/log-in',
-});
-
 const productMaxTestData: { [key: string]: ProductMaxTestCaseData } = {
   'PRODUCT-MAX': {
-    url: 'https://dev.bluechew.com/max',
+    url: '/max',
     visualConfig: PRODUCT_MAX_FIGMA_CONFIG,
     testCaseData: {
       tags: '@regression @product @max @percy @visual',

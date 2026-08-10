@@ -25,7 +25,7 @@ export interface ApplitoolsVisualConfig {
   testName: string;            // Figma Frame Name
   viewport: { width: number; height: number };
   baselineEnvName?: string;    // Baseline Environment Tag
-  ignoreDisplacement?: boolean;
+  ignoreDisplacements?: boolean;
 }
 ```
 
@@ -40,7 +40,7 @@ export const PRODUCT_MAX_FIGMA_CONFIG: ApplitoolsVisualConfig = {
   testName: 'Desktop - 9',
   viewport: { width: 1440, height: 915 },
   baselineEnvName: 'Desktop - 9_1440',
-  ignoreDisplacement: true,
+  ignoreDisplacements: true,
 };
 ```
 

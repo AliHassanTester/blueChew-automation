@@ -10,13 +10,13 @@ export interface RegistrationTestCaseData {
 
 const env = getEnvVars({
   password:           null,   // required — registration + login password
-  LOGIN_URL:          'https://dev.app.bluechew.com/log-in',
-  QUIZ_URL:           'https://dev.app.bluechew.com/quiz',
+  LOGIN_URL:          '/log-in',
+  QUIZ_URL:           '/quiz',
   STRIPE_CARD_NUMBER: '5555555555554444',
   STRIPE_CARD_EXP:    '12/28',
   // 737 is Adyen's test-card CVC; Stripe accepts any CVC in test mode, so it works on both.
   STRIPE_CARD_CVV:    '737',
-  ADMIN_URL:          'https://dev.admin.bluechew.com',
+  ADMIN_URL:          null,   // required — set in .env.dev
   ADMIN_EMAIL:        'ali@meds.com',
   ADMIN_PASSWORD:     null,   // required — set in .env.dev
 });

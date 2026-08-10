@@ -4,6 +4,13 @@ import { TestCaseData } from '@interfaces/testcase.data.interface';
 import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 import { getEnvVars } from '@utilities/env.utils';
 
+export interface LoginTestCaseData {
+  testCaseData: TestCaseData;
+  loginDetails: LoginDetails;
+  loginPageDetails: LoginPageDetails;
+  visualConfigs: ApplitoolsVisualConfig[];
+}
+
 export const LOGIN_DESKTOP_FIGMA_CONFIG: ApplitoolsVisualConfig = {
   appName: 'Login Default',
   testName: 'Log in/Default',
@@ -12,7 +19,7 @@ export const LOGIN_DESKTOP_FIGMA_CONFIG: ApplitoolsVisualConfig = {
     height: 915,
   },
   baselineEnvName: 'Log in/Default_1440',
-  ignoreDisplacement: true,
+  ignoreDisplacements: true,
 };
 
 export const LOGIN_MOBILE_FIGMA_CONFIG: ApplitoolsVisualConfig = {
@@ -23,21 +30,14 @@ export const LOGIN_MOBILE_FIGMA_CONFIG: ApplitoolsVisualConfig = {
     height: 844,
   },
   baselineEnvName: 'Log in/Default_390',
-  ignoreDisplacement: true,
+  ignoreDisplacements: true,
 };
 
-export interface LoginTestCaseData {
-  testCaseData: TestCaseData;
-  loginDetails: LoginDetails;
-  loginPageDetails: LoginPageDetails;
-  visualConfigs: ApplitoolsVisualConfig[];
-}
-
 const env = getEnvVars({
-  user_name:      null,  // required — no fallback, test must not run with empty credentials
-  password:       null,  // required
-  LOGIN_URL:      'https://dev.app.bluechew.com/log-in',
-  POST_LOGIN_URL: 'https://dev.app.bluechew.com/account/membership',
+  user_name: null,
+  password: null,
+  LOGIN_URL: '/log-in',
+  POST_LOGIN_URL: '/account/membership',
 });
 
 const loginTestData: { [key: string]: LoginTestCaseData } = {
@@ -47,7 +47,7 @@ const loginTestData: { [key: string]: LoginTestCaseData } = {
       password: env.password,
     },
     loginPageDetails: {
-      loginURL:     env.LOGIN_URL,
+      loginURL: env.LOGIN_URL,
       postLoginURL: env.POST_LOGIN_URL,
     },
     visualConfigs: [LOGIN_DESKTOP_FIGMA_CONFIG, LOGIN_MOBILE_FIGMA_CONFIG],

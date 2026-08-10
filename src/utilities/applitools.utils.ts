@@ -46,9 +46,8 @@ export async function captureApplitoolsVisualCheckpoint(
       config.setBaselineEnvName(configDetails.baselineEnvName);
     }
     
-    const ignoreDisp = configDetails.ignoreDisplacement ?? configDetails.ignoreDisplacements;
-    if (ignoreDisp !== undefined) {
-      config.setIgnoreDisplacements(ignoreDisp);
+    if (configDetails.ignoreDisplacements !== undefined) {
+      config.setIgnoreDisplacements(configDetails.ignoreDisplacements);
     }
 
     eyes.setConfiguration(config);

@@ -8,7 +8,7 @@ export interface RegistrationValidationTestCaseData {
 }
 
 const env = getEnvVars({
-  LOGIN_URL:             'https://dev.app.bluechew.com/log-in',
+  LOGIN_URL:             '/log-in',
   // The duplicate email must be one that already exists. Reuse the known registered
   // login account (user_name) so the address is guaranteed to be taken.
   user_name:             null,   // required — the already-registered email

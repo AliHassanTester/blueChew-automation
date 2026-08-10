@@ -14,8 +14,8 @@ export interface ProfileTestCaseData {
 const env = getEnvVars({
   user_name:             null,   // required — the account under test
   password:              null,   // required — its current password
-  LOGIN_URL:             'https://dev.app.bluechew.com/log-in',
-  POST_LOGIN_URL:        'https://dev.app.bluechew.com/account/membership',
+  LOGIN_URL:             '/log-in',
+  POST_LOGIN_URL:        '/account/membership',
   PROFILE_TEMP_PASSWORD: 'CertaTemp123!',
 });
 

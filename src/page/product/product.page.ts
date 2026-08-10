@@ -26,28 +26,53 @@ export class ProductPage {
         locator: this.page.locator('body'),
       },
       heroContent: {
-        description: 'Product Max hero content',
+        description: 'Product hero content',
         locator: this.page.locator('main').or(this.page.locator('body')),
+      },
+      selectPlanButton: {
+        description: 'SELECT A PLAN button',
+        locator: this.page.locator("landing-product-hero button:has-text('SELECT A PLAN')").or(this.page.locator("button:has-text('SELECT A PLAN')")),
+      },
+      startNowButton: {
+        description: 'START NOW button (on Plan page)',
+        locator: this.page.locator("button:has-text('START NOW')"),
       },
     };
   }
 
-  async navigateToProductMax(url: string): Promise<void> {
-    await test.step('Navigate to the product max page', async () => {
+  async selectPlanAndProceed(): Promise<void> {
+    await test.step('Select a plan and proceed to checkout funnel', async () => {
+      await this.actions.click(this.locators.selectPlanButton);
+      await this.page.waitForURL(/\/plan/);
+      await this.actions.click(this.locators.startNowButton);
+      await this.page.waitForURL(/\/register/);
+    });
+  }
+
+  async navigateToProductPage(url: string, pageName: string = 'Product'): Promise<void> {
+    await test.step(`Navigate to the ${pageName} page`, async () => {
       await this.actions.navigateToURL(url);
       await this.actions.waitForDomLoad();
     });
   }
 
-  async captureProductMaxSnapshot(visualConfig?: ApplitoolsVisualConfig): Promise<void> {
-    await test.step('Capture the fully loaded product max page state', async () => {
+  async captureProductSnapshot(visualConfig?: ApplitoolsVisualConfig, tag: string = 'Product page loaded'): Promise<void> {
+    await test.step(`Capture the fully loaded ${tag} state`, async () => {
       await this.page.waitForLoadState('load').catch(() => undefined);
       await this.verify.expectElementExist(this.locators.pageContainer);
       await captureApplitoolsVisualCheckpoint(
         this.page,
         visualConfig || PRODUCT_MAX_FIGMA_CONFIG,
-        'Product Max page loaded',
+        tag,
       );
     });
+  }
+
+  async navigateToProductMax(url: string): Promise<void> {
+    await this.navigateToProductPage(url, 'Product Max');
+  }
+
+  async captureProductMaxSnapshot(visualConfig?: ApplitoolsVisualConfig): Promise<void> {
+    await this.captureProductSnapshot(visualConfig || PRODUCT_MAX_FIGMA_CONFIG, 'Product Max page loaded');
   }
 }
