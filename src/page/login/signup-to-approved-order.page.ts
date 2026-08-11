@@ -101,15 +101,15 @@ export class RegistrationPage {
     await this.openRegisterPage(details.loginURL);
   }
 
-  /** Login page → Create Account CTA → /register (state step visible). */
+  /** Open /register page (navigates via login page CTA if not already on /register). */
   private async openRegisterPage(loginURL: string): Promise<void> {
-    await test.step('Open login page → Create Account CTA → /register', async () => {
-      // Land on the login page and click the Create Account CTA to reach /register.
-      await this.actions.navigateToURL(loginURL);
-      await this.page.waitForLoadState('load');
-      await this.actions.click(this.locators.signUpLink);
-
-      await this.page.waitForLoadState('load');
+    await test.step('Ensure on registration page (/register)', async () => {
+      if (!this.page.url().includes('/register')) {
+        await this.actions.navigateToURL(loginURL);
+        await this.page.waitForLoadState('load');
+        await this.actions.click(this.locators.signUpLink);
+        await this.page.waitForLoadState('load');
+      }
       await this.actions.waitForVisibility(this.locators.stateDropdownTrigger);
     });
   }
@@ -138,7 +138,7 @@ export class RegistrationPage {
     await test.step('Verify registration succeeded — redirected to quiz', async () => {
       // Match the quiz PATH on any host — the quiz has moved between the marketing and app
       // domains, so key off the /quiz path rather than a fixed origin.
-      const quizPath = new URL(quizURL).pathname.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const quizPath = new URL(quizURL, this.page.url()).pathname.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       await this.actions.waitForURL(new RegExp(`${quizPath}(?:[/?#]|$)`));
     });
   }

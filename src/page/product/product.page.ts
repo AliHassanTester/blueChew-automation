@@ -31,21 +31,22 @@ export class ProductPage {
       },
       selectPlanButton: {
         description: 'SELECT A PLAN button',
-        locator: this.page.locator("landing-product-hero button:has-text('SELECT A PLAN')").or(this.page.locator("button:has-text('SELECT A PLAN')")),
+        locator: this.page.locator('//div[@class="cta-section"]//button'),
       },
       startNowButton: {
         description: 'START NOW button (on Plan page)',
-        locator: this.page.locator("button:has-text('START NOW')"),
+        locator: this.page.locator("//button[text()='START NOW']").or(this.page.locator("button:has-text('START NOW')")),
       },
     };
   }
 
-  async selectPlanAndProceed(): Promise<void> {
+  async selectPlanAndProceed(visualConfig?: ApplitoolsVisualConfig): Promise<void> {
     await test.step('Select a plan and proceed to checkout funnel', async () => {
       await this.actions.click(this.locators.selectPlanButton);
-      await this.page.waitForURL(/\/plan/);
+      await this.page.waitForLoadState();
+      await this.captureProductSnapshot(visualConfig || PRODUCT_MAX_FIGMA_CONFIG, 'Plans page loaded');
       await this.actions.click(this.locators.startNowButton);
-      await this.page.waitForURL(/\/register/);
+      await this.page.waitForLoadState('domcontentloaded');
     });
   }
 

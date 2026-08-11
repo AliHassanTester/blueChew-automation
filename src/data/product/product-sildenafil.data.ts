@@ -23,6 +23,7 @@ export interface ProductSildenafilTestCaseData {
 }
 
 const env = getEnvVars({
+  user_name:          null,
   password:           null,
   LOGIN_URL:          '/log-in',
   QUIZ_URL:           '/quiz',

@@ -27,11 +27,11 @@ export class MedicalPage {
       // ── Step 1: legal name ─────────────────────────────────────────────────
       firstNameInput: {
         description: 'Legal First Name Input',
-        locator: this.page.locator('input[aria-label="Legal First Name"]'),
+        locator: this.page.locator('//ds-input[@label="Legal First Name"]//input'),
       },
       lastNameInput: {
         description: 'Legal Last Name Input',
-        locator: this.page.locator('input[aria-label="Legal Last Name"]'),
+        locator: this.page.locator('//ds-input[@label="Legal Last Name"]//input'),
       },
 
       // ── Step 2: date of birth ──────────────────────────────────────────────
