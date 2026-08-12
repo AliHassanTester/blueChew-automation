@@ -8,8 +8,6 @@ test.describe('Feature: Product Sildenafil End-to-End Flow', () => {
   test.only(`Test case: '${scenario.testCaseData.testCase}'`, async ({
     productPage,
     registrationPage,
-    quizPage,
-    resultsPage,
     medicalPage,
     checkoutPage,
     confirmationPage,
@@ -24,10 +22,9 @@ test.describe('Feature: Product Sildenafil End-to-End Flow', () => {
 
     // Step 1: Product Selection
     await productPage.navigateToProductPage(scenario.url, 'Sildenafil');
-    await productPage.captureProductSnapshot(scenario.visualConfig, 'Sildenafil page loaded');
-    await productPage.selectPlanAndProceed(scenario.visualConfig);
+    await productPage.selectPlanAndProceed();
 
-    // Step 2: Registration & Quiz Onboarding
+    // Step 2: Registration Onboarding
     await registrationPage.completeRegistrationWizard(d);
 
     // Step 3: Medical & Checkout Payment

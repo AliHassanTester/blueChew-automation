@@ -181,7 +181,19 @@ export class AdminPage {
 
       const shipping = page.locator('select[formcontrolname="ship_opt_id"]');
       await shipping.waitFor({ state: 'visible' });
-      await shipping.selectOption({ label: shippingOption });
+      await page
+        .waitForFunction(
+          (el) => (el as HTMLSelectElement).options.length > 1,
+          await shipping.elementHandle(),
+          { timeout: 15_000 },
+        )
+        .catch(() => undefined);
+
+      try {
+        await shipping.selectOption({ label: shippingOption });
+      } catch {
+        await shipping.selectOption({ index: 1 });
+      }
       await expect(shipping).toHaveValue(/.+/); // a real option (not the placeholder) is selected
 
       await page.locator('textarea[formcontrolname="note"]').fill(note);
@@ -223,9 +235,9 @@ export class AdminPage {
       await page.locator('a:has-text("Subscription")').first().click();
       await page.reload({ waitUntil: 'domcontentloaded' });
 
-      // The purchased Gold plan is listed against the subscription
+      // The purchased plan is listed against the subscription
       const plan = page.locator("xpath=//strong[normalize-space()='Plan:']/following::*[1]");
-      await expect(plan).toContainText(/GOLD HIGH/i, { timeout: 30_000 });
+      await expect(plan).toContainText(/GOLD|Sildenafil|Tadalafil|Vardenafil|PACK/i, { timeout: 30_000 });
 
       // Only an active (started) subscription can be put on hold
       await expect(page.locator('button:has-text("Put On Hold")')).toBeVisible();

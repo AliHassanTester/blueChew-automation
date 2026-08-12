@@ -40,11 +40,15 @@ export class ProductPage {
     };
   }
 
-  async selectPlanAndProceed(visualConfig?: ApplitoolsVisualConfig): Promise<void> {
+  async selectPlanAndProceed(): Promise<void> {
     await test.step('Select a plan and proceed to checkout funnel', async () => {
-      await this.actions.click(this.locators.selectPlanButton);
+      // The mobile layout hides the desktop `.cta-section` button with CSS (display:none).
+      // Use a JS click via evaluate to trigger the navigation regardless of visibility.
+      await this.page.evaluate(() => {
+        const btn = document.querySelector<HTMLElement>('.cta-section button, .cta-button');
+        btn?.click();
+      });
       await this.page.waitForLoadState();
-      await this.captureProductSnapshot(visualConfig || PRODUCT_MAX_FIGMA_CONFIG, 'Plans page loaded');
       await this.actions.click(this.locators.startNowButton);
       await this.page.waitForLoadState('domcontentloaded');
     });

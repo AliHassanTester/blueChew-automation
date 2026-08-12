@@ -1,0 +1,357 @@
+- generic [ref=e7]:
+  - navigation [ref=e8]:
+    - button [ref=e9]
+    - button "menu icon" [ref=e10] [cursor=pointer]:
+      - img "menu icon" [ref=e11]
+  - generic [ref=e13]:
+    - generic [ref=e14]:
+      - generic [ref=e15]:
+        - generic [ref=e16]: ★
+        - generic [ref=e17]: ★
+        - generic [ref=e18]: ★
+        - generic [ref=e19]: ★
+        - generic [ref=e20]: ★
+      - generic [ref=e21]: 5 Million+
+      - text: Men Served
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - generic [ref=e25]: HAVE
+          - generic [ref=e26]:
+            - generic [ref=e27]: BETTER
+            - generic [ref=e28]: SEX!
+        - generic [ref=e30]: Get hard faster and stay hard longer.
+        - link "GET STARTED" [ref=e32] [cursor=pointer]:
+          - /url: /quiz
+        - generic [ref=e33]:
+          - generic [ref=e34]:
+            - img "Delivery" [ref=e35]
+            - text: Fast & Discreet Delivery
+          - generic [ref=e36]:
+            - img "Mobile" [ref=e37]
+            - text: 100% Online
+        - generic [ref=e39]:
+          - img "Prescriptions" [ref=e40]
+          - text: Compounded by licensed pharmacies in the USA
+      - generic:
+        - generic:
+          - img "BlueChew homepage background image"
+  - generic [ref=e42]:
+    - generic [ref=e43]: Featured on
+    - generic [ref=e46]:
+      - img "NBC" [ref=e47]
+      - img "ESPN" [ref=e48]
+      - img "FOX" [ref=e49]
+      - img "GOLF" [ref=e50]
+      - img "ABC" [ref=e51]
+  - generic [ref=e54]:
+    - generic [ref=e55]: The Gold Standard
+    - generic [ref=e56]: BOOST AROUSAL + BLOOD FLOW
+    - generic [ref=e57]: 4-in-1 Sublingual
+    - generic [ref=e58]:
+      - generic [ref=e59]: Dissolves quickly under your tongue
+      - img "The Gold Standard" [ref=e61]
+    - generic [ref=e62]:
+      - generic [ref=e63]:
+        - generic [ref=e64]: 3X
+        - generic [ref=e65]: Up to 3x stronger
+      - generic [ref=e66]:
+        - generic [ref=e67]: 5X
+        - generic [ref=e68]: Up to 5x faster effects
+      - generic [ref=e69]:
+        - generic [ref=e70]: 8X
+        - generic [ref=e71]: Up to 8x longer-lasting
+      - generic [ref=e72]:
+        - generic [ref=e73]:
+          - text: USA
+          - img "USA" [ref=e74]
+        - generic [ref=e75]: Compounded in the USA
+    - link "TRY GOLD" [ref=e76] [cursor=pointer]:
+      - /url: /quiz?product=gold
+      - text: TRY GOLD
+  - generic [ref=e80]:
+    - generic [ref=e81]:
+      - generic [ref=e82]: Real Results
+      - generic [ref=e83]: Real Reviews
+    - generic [ref=e84]:
+      - generic [ref=e85]:
+        - generic [ref=e86]:
+          - paragraph [ref=e88]: Simply put...bluechew made me a believer. Best thing I've ever used and my lady can't get enough
+          - generic [ref=e90]:
+            - img "Customer avatar" [ref=e92]
+            - generic [ref=e93]:
+              - generic [ref=e94]:
+                - generic [ref=e95]: ★
+                - generic [ref=e96]: ★
+                - generic [ref=e97]: ★
+                - generic [ref=e98]: ★
+                - generic [ref=e99]: ★
+              - paragraph [ref=e100]: VERIFIED CUSTOMER
+        - generic [ref=e101]:
+          - paragraph [ref=e103]: Super convenient and actually works. The chewables kicked in fast, no side effects for me, and everything shipped discreetly. Worth it if you want a hassle-free confidence boost.
+          - generic [ref=e105]:
+            - img "Customer avatar" [ref=e107]
+            - generic [ref=e108]:
+              - generic [ref=e109]:
+                - generic [ref=e110]: ★
+                - generic [ref=e111]: ★
+                - generic [ref=e112]: ★
+                - generic [ref=e113]: ★
+                - generic [ref=e114]: ★
+              - paragraph [ref=e115]: VERIFIED CUSTOMER
+        - generic [ref=e116]:
+          - paragraph [ref=e118]: This absolutely is a game changer!! Will continue using
+          - generic [ref=e120]:
+            - img "Customer avatar" [ref=e122]
+            - generic [ref=e123]:
+              - generic [ref=e124]:
+                - generic [ref=e125]: ★
+                - generic [ref=e126]: ★
+                - generic [ref=e127]: ★
+                - generic [ref=e128]: ★
+                - generic [ref=e129]: ★
+              - paragraph [ref=e130]: VERIFIED CUSTOMER
+        - generic [ref=e131]:
+          - paragraph [ref=e133]: This product has been a real game changer. Thank you!
+          - generic [ref=e135]:
+            - img "Customer avatar" [ref=e137]
+            - generic [ref=e138]:
+              - generic [ref=e139]:
+                - generic [ref=e140]: ★
+                - generic [ref=e141]: ★
+                - generic [ref=e142]: ★
+                - generic [ref=e143]: ★
+                - generic [ref=e144]: ★
+              - paragraph [ref=e145]: VERIFIED CUSTOMER
+        - generic [ref=e146]:
+          - paragraph [ref=e148]: It’s a marriage saver! Get it.
+          - generic [ref=e150]:
+            - img "Customer avatar" [ref=e152]
+            - generic [ref=e153]:
+              - generic [ref=e154]:
+                - generic [ref=e155]: ★
+                - generic [ref=e156]: ★
+                - generic [ref=e157]: ★
+                - generic [ref=e158]: ★
+                - generic [ref=e159]: ★
+              - paragraph [ref=e160]: VERIFIED CUSTOMER
+      - link "GET STARTED" [ref=e162] [cursor=pointer]:
+        - /url: /quiz
+  - generic [ref=e165]:
+    - generic [ref=e166]:
+      - generic [ref=e167]: Join the 5M+ men
+      - generic [ref=e168]: who made the switch to better sex
+    - generic [ref=e170]:
+      - img "Join the 5M+ men" [ref=e174]
+      - img "Join the 5M+ men" [ref=e178]
+      - img "Join the 5M+ men" [ref=e182]
+      - img "Join the 5M+ men" [ref=e186]
+      - img "Join the 5M+ men" [ref=e190]
+    - generic [ref=e191]:
+      - generic [ref=e192]: Bluechew is different
+      - generic [ref=e193]: get hard, stay hard.
+      - link "GET BLUECHEW" [ref=e194] [cursor=pointer]:
+        - /url: /quiz
+  - generic [ref=e197]:
+    - heading "How to get BlueChew:" [level=2] [ref=e199]
+    - heading "100% Online, 100% Convenient" [level=3] [ref=e201]:
+      - text: 100% Online,
+      - text: 100% Convenient
+    - generic [ref=e202]:
+      - generic [ref=e206]:
+        - paragraph [ref=e207]: "01"
+        - paragraph [ref=e208]: Choose Your Plan
+        - paragraph [ref=e209]: Pick the option that’s right for you.
+      - generic [ref=e213]:
+        - paragraph [ref=e214]: "02"
+        - paragraph [ref=e215]: Complete Your Medical Profile
+        - paragraph [ref=e216]: Quick, online, complete in minutes.
+      - generic [ref=e220]:
+        - paragraph [ref=e221]: "03"
+        - paragraph [ref=e222]: Provider Review
+        - paragraph [ref=e223]: A licensed doctor reviews your profile, usually within 24 hours.
+      - generic [ref=e227]:
+        - paragraph [ref=e228]: "04"
+        - paragraph [ref=e229]: Shipped Fast and Discreet!
+        - paragraph [ref=e230]: If approved, ships discreetly within 24 hours.
+  - generic [ref=e233]:
+    - generic [ref=e234]:
+      - generic [ref=e235]: Important Safety Information
+      - paragraph [ref=e236]: What you should know before taking BlueChew
+    - generic [ref=e237]:
+      - paragraph [ref=e238]: The featured products include compounded products that have not been approved by the FDA. Compounded products may be prescribed under federal law, but are not the same as, nor are they generic versions of, any FDA-approved medication. The FDA does not verify the safety, effectiveness, or manufacturing quality of compounded products. A prescription will only be written if deemed appropriate after the digital consultation by the licensed medical provider. Individual results may vary.
+      - link "Read important safety information" [ref=e239] [cursor=pointer]:
+        - /url: /safety-info
+  - generic "FAQs" [ref=e241]:
+    - generic [ref=e243]:
+      - heading "FAQs" [level=2] [ref=e244]
+      - generic [ref=e245]:
+        - generic [ref=e246]:
+          - button "What is BlueChew? Expand/Collapse" [ref=e247] [cursor=pointer]:
+            - generic [ref=e248]: What is BlueChew?
+            - img "Expand/Collapse" [ref=e250]
+          - generic [ref=e251]:
+            - text: BlueChew.com is an online telemedicine platform that connects you with licensed medical providers to gain access to prescriptions for erection-enhancing medications.
+            - text: The featured products include compounded products that have not been approved by the FDA. Compounded products may be prescribed under federal law, but are not the same as, nor are they generic versions of, any FDA-approved medication. The FDA does not verify the safety, effectiveness, or manufacturing quality of compounded products.
+            - text: "BlueChew.com serves a variety of patients, including those who:"
+            - list [ref=e252]:
+              - listitem [ref=e253]:
+                - text: Have a hard time swallowing pills (up to
+                - link "40% of Americans have difficulty swallowing pills" [ref=e254] [cursor=pointer]:
+                  - /url: https://pmc.ncbi.nlm.nih.gov/articles/PMC6065591/
+                - text: )
+              - listitem [ref=e255]: Are looking for a simpler solution to taking medications.
+              - listitem [ref=e256]: Do not want an in-person doctor's visit.
+              - listitem [ref=e257]: Want to increase their rates of stronger and longer-lasting erections.
+              - listitem [ref=e258]: Are looking to get the potential health benefits of medications like Sildenafil, Tadalafil, and Vardenafil.
+        - generic [ref=e259]:
+          - button "Where are the products featured on Bluechew compounded? Expand/Collapse" [ref=e260] [cursor=pointer]:
+            - generic [ref=e261]: Where are the products featured on Bluechew compounded?
+            - img "Expand/Collapse" [ref=e263]
+          - generic [ref=e264]: BlueChew products are compounded by state-licensed compounding pharmacies in the USA in partnership with BlueChew. Bluechew itself is not a compound pharmacy. These pharmacies prepare and dispense the compounded medications after prescription approval from a licensed healthcare provider.
+        - generic [ref=e265]:
+          - button "Who is BlueChew for? Expand/Collapse" [ref=e266] [cursor=pointer]:
+            - generic [ref=e267]: Who is BlueChew for?
+            - img "Expand/Collapse" [ref=e269]
+          - generic [ref=e270]: BlueChew is for patients who are 18 years or older, are living in the United States, and want stronger and longer-lasting erections.
+        - generic [ref=e271]:
+          - button "Important safety information Expand/Collapse" [ref=e272] [cursor=pointer]:
+            - generic [ref=e273]: Important safety information
+            - img "Expand/Collapse" [ref=e275]
+          - generic [ref=e276]:
+            - paragraph [ref=e277]: Do not take Sildenafil (sildenafil citrate), Tadalafil, or Vardenafil if you take medication containing nitrates or guanylate cyclase stimulators for pulmonary hypertension as this could cause an unsafe drop in blood pressure. If you are allergic to Sildenafil, Tadalafil, or Vardenafil or any ingredients contained in these medications, do not consume BLUECHEW. Discuss your health with your provider to ensure that you are healthy enough for sex. If you experience chest pain, dizziness, or nausea during sex, seek immediate medical help. Sildenafil, Tadalafil, and Vardenafil can cause serious side effects.
+            - paragraph [ref=e278]: "Some side effects include:"
+            - list [ref=e279]:
+              - listitem [ref=e280]: An erection lasting more than 4 hours. If you experience a prolonged erection, seek immediate medical attention as this can cause permanent damage if left untreated.
+              - listitem [ref=e281]: Sudden vision loss in one or both eyes. This can be a sign of a serious eye problem. Stop taking the medication and call your healthcare provider right away if you experience these symptoms.
+              - listitem [ref=e282]: Sudden hearing decrease, hearing loss, ringing in their ears (tinnitus) or dizziness. If you experience these symptoms, stop taking the medication and contact a healthcare provider right away.
+            - text: Before taking BlueChew
+            - superscript [ref=e283]:
+              - superscript [ref=e284]: ®
+            - text: "inform your healthcare provider if you:"
+            - list [ref=e285]:
+              - listitem [ref=e286]: Have or have had heart problems such as a heart attack, irregular heartbeat, angina, chest pain, narrowing of the aortic valve, or heart failure
+              - listitem [ref=e287]: Have had heart surgery within the last 12 months
+              - listitem [ref=e288]: Have pulmonary hypertension
+              - listitem [ref=e289]: Have had a stroke
+              - listitem [ref=e290]: Have low blood pressure or high blood pressure that is not controlled
+              - listitem [ref=e291]: Have a deformed penis shape
+              - listitem [ref=e292]: Have had an erection that lasted for more than 4 hours
+              - listitem [ref=e293]: Have problems with your blood cells such as sickle cell anemia, multiple myeloma, or leukemia
+              - listitem [ref=e294]: Have retinitis pigmentosa, a rare genetic (runs in families) eye disease
+              - listitem [ref=e295]: Have ever had severe vision loss, including an eye problem called NAION
+              - listitem [ref=e296]: Have bleeding problems
+              - listitem [ref=e297]: Have or have had stomach ulcers
+              - listitem [ref=e298]: Have liver problems
+              - listitem [ref=e299]: Have kidney problems or currently undergoing dialysis treatment
+              - listitem [ref=e300]: Have any other medical conditions
+            - paragraph [ref=e301]: Tell your healthcare provider about all the medicines you take, including prescription and over-the-counter medicines, vitamins, and herbal supplements.
+            - paragraph [ref=e302]: "Sildenafil, Tadalafil, and Vardenafil may affect how other medicines work, and other medicines may affect how these medications work, causing side effects. Please inform your healthcare provider if you take any of the following:"
+            - list [ref=e303]:
+              - listitem [ref=e304]: Nitrates- Guanylate cyclase stimulators such as Adempas (riociguat)
+              - listitem [ref=e305]: Alpha-blockers such as Hytrin (terazosin HCl), Flomax (tamsulosin HCl), Cardura (doxazosin mesylate), Minipress (prazosin HCl), Uroxatral (alfuzosin HCl), Jalyn (dutasteride and tamsulosin HCl), or Rapaflo (silodosin HCl).
+              - listitem [ref=e306]: HIV protease inhibitors, such as ritonavir (Norvir), indinavir sulfate (Crixivan), saquinavir (Fortovase or Invirase), or atazanavir sulfate (Reyataz)
+              - listitem [ref=e307]: Some types of oral antifungal medicines, such as ketoconazole (Nizoral) and itraconazole (Sporanox)
+              - listitem [ref=e308]: Some types of antibiotics, such as clarithromycin (Biaxin), telithromycin (Ketek), or erythromycin
+              - listitem [ref=e309]: Other medicines that treat high blood pressure
+              - listitem [ref=e310]: Other medicines or treatments for ED
+            - paragraph [ref=e311]: Sildenafil, tadalafil, and vardenafil should not be used with REVATIO or with other PAH treatments containing sildenafil, tadalafil, vardenafil, or any other PDE5 inhibitors (such as Adcirca tadalafil)
+            - paragraph [ref=e312]: Sildenafil, tadalafil, and vardenafil do not protect against sexually transmitted diseases, including HIV.
+            - paragraph [ref=e313]: The most common side effects of sildenafil, tadalafil, and vardenafil include headache, flushing, runny nose, congestion, throat or nose irritation, back pain, muscle pain, upset stomach, and heartburn.
+            - paragraph [ref=e314]: INDICATION
+            - paragraph [ref=e315]: Sildenafil, Tadalafil, and Vardenafil are FDA-approved prescription medications for erectile dysfunction (ED) and are also prescribed off-label for other conditions.
+            - link "Read More" [ref=e316] [cursor=pointer]:
+              - /url: https://bluechew.com/safety-info
+      - paragraph [ref=e317]:
+        - text: Want to learn more? Read our full list of
+        - link "FAQs" [ref=e318] [cursor=pointer]:
+          - /url: /faq/general
+  - contentinfo [ref=e320]:
+    - generic [ref=e321]:
+      - generic [ref=e323]:
+        - generic [ref=e324]:
+          - generic [ref=e325]:
+            - heading "HELP" [level=3] [ref=e326]
+            - list [ref=e327]:
+              - listitem [ref=e328]:
+                - link "Account Login" [ref=e329] [cursor=pointer]:
+                  - /url: /log-in
+                  - generic [ref=e330]: Account Login
+              - listitem [ref=e331]:
+                - link "FAQs" [ref=e332] [cursor=pointer]:
+                  - /url: /faq/general
+                  - generic [ref=e333]: FAQs
+              - listitem [ref=e334]:
+                - link "Reviews" [ref=e335] [cursor=pointer]:
+                  - /url: /reviews
+                  - generic [ref=e336]: Reviews
+              - listitem [ref=e337]:
+                - link "Returns & Refunds" [ref=e338] [cursor=pointer]:
+                  - /url: /return-and-refund
+                  - generic [ref=e339]: Returns & Refunds
+              - listitem [ref=e340]:
+                - link "American Heroes Program" [ref=e341] [cursor=pointer]:
+                  - /url: /heroes
+                  - generic [ref=e342]: American Heroes Program
+              - listitem [ref=e343]:
+                - link "Contact Us" [ref=e344] [cursor=pointer]:
+                  - /url: /contact
+                  - generic [ref=e345]: Contact Us
+          - generic [ref=e346]:
+            - heading "LEARN" [level=3] [ref=e347]
+            - list [ref=e348]:
+              - listitem [ref=e349]:
+                - link "About US" [ref=e350] [cursor=pointer]:
+                  - /url: /about
+                  - generic [ref=e351]: About US
+              - listitem [ref=e352]:
+                - link "Blog" [ref=e353] [cursor=pointer]:
+                  - /url: /our-stories
+                  - generic [ref=e354]: Blog
+              - listitem [ref=e355]:
+                - link "Swag" [ref=e356] [cursor=pointer]:
+                  - /url: https://blueswag.com/
+                  - generic [ref=e357]: Swag
+        - generic [ref=e359]:
+          - link "facebook" [ref=e360] [cursor=pointer]:
+            - /url: https://www.facebook.com/GetBlueChew/
+            - img "facebook" [ref=e361]
+          - link "twitter" [ref=e362] [cursor=pointer]:
+            - /url: https://x.com/BlueChew
+            - img "twitter" [ref=e363]
+          - link "instagram" [ref=e364] [cursor=pointer]:
+            - /url: https://www.instagram.com/bluechew/
+            - img "instagram" [ref=e365]
+          - link "tiktok" [ref=e366] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@bluechew
+            - img "tiktok" [ref=e367]
+      - generic [ref=e368]:
+        - generic [ref=e369]:
+          - link "American Heroes Program" [ref=e370] [cursor=pointer]:
+            - /url: /heroes
+            - img "American Heroes Program" [ref=e371]
+          - link "LegitScript certified" [ref=e372] [cursor=pointer]:
+            - /url: https://www.legitscript.com/websites/bluechew.com
+            - img "LegitScript certified" [ref=e373]
+        - generic [ref=e374]:
+          - generic [ref=e375]:
+            - link "Privacy Policy" [ref=e376] [cursor=pointer]:
+              - /url: /privacy-and-security
+              - generic [ref=e377]: Privacy Policy
+            - link "Terms + Conditions" [ref=e378] [cursor=pointer]:
+              - /url: /terms-and-conditions
+              - generic [ref=e379]: Terms + Conditions
+            - link "Accessibility" [ref=e380] [cursor=pointer]:
+              - /url: /accessibility-statement
+              - generic [ref=e381]: Accessibility
+            - link "Consumer Health Data Privacy" [ref=e382] [cursor=pointer]:
+              - /url: /health-data-privacy-policy
+              - generic [ref=e383]: Consumer Health Data Privacy
+            - link "Your Privacy Choices" [ref=e384] [cursor=pointer]:
+              - /url: /your-privacy-choices
+              - generic [ref=e385]: Your Privacy Choices
+          - paragraph [ref=e386]: ©2026 All rights reserved
+      - img "BlueChew" [ref=e388]
+  - generic [ref=e390]:
+    - generic [ref=e393]: 4-in-1 combo|#1 Best Seller
+    - button "TRY NOW" [ref=e394] [cursor=pointer]

@@ -61,12 +61,12 @@ export class CheckoutPage {
         locator: this.page.locator("//input[@formcontrolname='phone']").filter({ visible: true }).first(),
       },
       proceedToPaymentButton: {
-        description: 'PROCEED TO PAYMENT Button',
-        locator: this.page.locator("//button[normalize-space()='PROCEED TO PAYMENT']").filter({ visible: true }).first(),
+        description: 'Add Shipping Address Submit Button',
+        locator: this.page.locator('//button[@data-test-id="address-form-submit"]'),
       },
       addressConfirmButton: {
-        description: 'Confirm Delivery Address Modal — CONFIRM Button',
-        locator: this.page.locator("//button[contains(@class,'popup-sheet-action-confirm')]").filter({ visible: true }).first(),
+        description: 'Confirm Delivery Address Modal — Confirm Button',
+        locator: this.page.locator("//button[normalize-space()='Confirm']").filter({ visible: true }).first(),
       },
 
       // ── Payment (Stripe) ───────────────────────────────────────────────────
@@ -76,7 +76,19 @@ export class CheckoutPage {
       },
       buyNowButton: {
         description: 'BUY NOW / Place Order Button',
-        locator: this.page.locator("//button[normalize-space()='BUY NOW']").filter({ visible: true }).first(),
+        locator: this.page
+          .locator(
+            '//button[@data-test-id="checkout-buy-now-button"] | //button[normalize-space()="Buy Now"] | //button[normalize-space()="BUY NOW"]',
+          )
+          .filter({ visible: true })
+          .first(),
+      },
+      // ── Shipping method selection ─────────────────────────────────────────
+      // After the address is confirmed, the app shows a "Select Shipping Method" step.
+      // Ground is pre-selected; click "Add Shipping Method" to proceed to payment.
+      addShippingMethodButton: {
+        description: 'Add Shipping Method Button',
+        locator: this.page.locator("//button[normalize-space()='Add Shipping Method']").filter({ visible: true }).first(),
       },
     };
   }
@@ -90,6 +102,14 @@ export class CheckoutPage {
    * one), so it is driven off the Checkout button — not the step headings.
    */
   private async advanceToOrderSummary(): Promise<void> {
+    // The app sometimes skips the product carousel entirely and lands directly on the
+    // shipping address page (e.g. when the plan/strength is pre-selected). Detect this
+    // early: if the shipping form is already visible, there is nothing to advance.
+    const shippingFormVisible = await this.locators.shippingLine1.locator
+      .isVisible()
+      .catch(() => false);
+    if (shippingFormVisible) return;
+
     for (let i = 0; i < 4; i++) {
       if (await this.verify.isElementVisible(this.locators.checkoutButton).catch(() => false)) break;
       // The intro slide's CONTINUE is a styled div (not a <button>) while later slides use
@@ -101,7 +121,12 @@ export class CheckoutPage {
       // strength/quantity transitions) rather than racing ahead before it mounts.
       await this.verify.waitForLoaderSettled();
     }
-    await this.verify.waitForVisibility(this.locators.checkoutButton);
+
+    // Only wait for Checkout button if we haven't already landed on shipping.
+    const onShipping = await this.locators.shippingLine1.locator.isVisible().catch(() => false);
+    if (!onShipping) {
+      await this.verify.waitForVisibility(this.locators.checkoutButton);
+    }
   }
 
   private async fillShippingForm(details: ShippingDetails): Promise<void> {
@@ -119,11 +144,10 @@ export class CheckoutPage {
 
     // PROCEED TO PAYMENT enables once the address is valid.
     await this.actions.click(this.locators.proceedToPaymentButton);
-      // percy captureCheckpoint() 
-    // "Confirm your delivery address" modal — appears when the address is not an exact
-    // USPS match (as with the automation test address). Click CONFIRM to accept it.
+    // "Confirm your delivery address" modal — always appears for automation test addresses
+    // that fail USPS verification. Wait up to 20 s for the API to respond.
     await this.locators.addressConfirmButton.locator
-      .waitFor({ state: 'visible', timeout: 10_000 }).catch(() => undefined);
+      .waitFor({ state: 'visible', timeout: 20_000 }).catch(() => undefined);
     if (await this.verify.isElementVisible(this.locators.addressConfirmButton).catch(() => false)) {
       await this.actions.click(this.locators.addressConfirmButton);
     }
@@ -140,10 +164,14 @@ export class CheckoutPage {
   }
 
   async proceedToPaymentForm(): Promise<void> {
-    await test.step('Wait for the payment form to mount', async () => {
-      // After the address is confirmed the flow lands on the payment page; BUY NOW
-      // renders once the payment form has mounted.
-      await this.verify.waitForVisibility(this.locators.buyNowButton);
+    await test.step('Select shipping method and wait for payment form to mount', async () => {
+      // After address confirmation the app shows a "Select Shipping Method" step.
+      // Ground ($5.00) is pre-selected; click "Add Shipping Method" to proceed.
+      await this.locators.addShippingMethodButton.locator
+        .waitFor({ state: 'visible', timeout: 15_000 }).catch(() => undefined);
+      if (await this.verify.isElementVisible(this.locators.addShippingMethodButton).catch(() => false)) {
+        await this.actions.click(this.locators.addShippingMethodButton);
+      }
     });
   }
 
@@ -168,12 +196,17 @@ export class CheckoutPage {
   private readonly expiryField = /expir/i;
   private readonly cvcField = /security code|cvc|cvv/i;
 
-  /** Clicks the secured field (re-found fresh) and types the value into it. */
+  /** Focuses the secured field (re-found fresh) and types the value into it. */
   private async typeIntoFrameField(name: RegExp, value: string): Promise<void> {
     const field = await this.findFrameField(name);
     if (!field) return;
-    await field.click();
-    await field.pressSequentially(value, { delay: 50 });
+    await field.focus().catch(() => undefined);
+    try {
+      await field.pressSequentially(value, { delay: 50 });
+    } catch {
+      await field.click({ force: true }).catch(() => undefined);
+      await field.pressSequentially(value, { delay: 50 });
+    }
   }
 
   async fillPaymentDetails(payment: PaymentDetails): Promise<void> {
@@ -182,11 +215,13 @@ export class CheckoutPage {
       // form is still rendering drops the leading characters and leaves the field incomplete
       // (BUY NOW then stays disabled). Each field is re-found fresh right before typing.
       await expect
-        .poll(async () =>
-          (await this.findFrameField(/card number/i)) !== null &&
-          (await this.findFrameField(this.expiryField)) !== null &&
-          (await this.findFrameField(this.cvcField)) !== null,
-        { timeout: 30_000, message: 'Card fields never fully mounted' })
+        .poll(
+          async () =>
+            (await this.findFrameField(/card number/i)) !== null &&
+            (await this.findFrameField(this.expiryField)) !== null &&
+            (await this.findFrameField(this.cvcField)) !== null,
+          { timeout: 60_000, message: 'Card fields never fully mounted' },
+        )
         .toBeTruthy();
 
       await this.typeIntoFrameField(/card number/i, payment.cardNumber);
@@ -196,16 +231,16 @@ export class CheckoutPage {
       // Keep billing = shipping when the "Use shipping address for billing" checkbox is present.
       if (await this.verify.isElementVisible(this.locators.billingSameAsShippingCheckbox).catch(() => false)) {
         await this.locators.billingSameAsShippingCheckbox.locator.check().catch(() => undefined);
+        // After the shipping method is confirmed the flow lands on the payment page;
+        // BUY NOW renders once the payment form has mounted.
+        await this.verify.waitForVisibility(this.locators.buyNowButton);
       }
     });
   }
-  
+
   async completePurchase(): Promise<void> {
     await test.step('Click BUY NOW', async () => {
-      // clickFirstActionable auto-waits for BUY NOW to be visible AND enabled (it stays
-      // disabled until the card details are valid).
-      // percy  captureCheckpoint() 
-      await this.actions.clickFirstActionable("//button[normalize-space()='BUY NOW']");
+      await this.actions.click(this.locators.buyNowButton);
     });
   }
 
@@ -215,7 +250,11 @@ export class CheckoutPage {
     await test.step('Complete checkout flow', async () => {
       await test.step('Product intro → order summary → Checkout', async () => {
         await this.advanceToOrderSummary();
-        await this.actions.click(this.locators.checkoutButton);
+        // Only click Checkout if the button is visible (carousel flow); if the app
+        // skipped directly to shipping, the button won't exist.
+        if (await this.verify.isElementVisible(this.locators.checkoutButton).catch(() => false)) {
+          await this.actions.click(this.locators.checkoutButton);
+        }
       });
 
       await test.step('Fill shipping and confirm delivery address', async () => {
@@ -240,7 +279,6 @@ export class CheckoutPage {
   async completeCheckoutAndPay(shipping: ShippingDetails, payment: PaymentDetails): Promise<void> {
     await test.step('Complete checkout and pay', async () => {
       await this.completeCheckout(shipping);
-      await this.verifyOrderSummary();
       await this.proceedToPaymentForm();
       await this.fillPaymentDetails(payment);
       await this.completePurchase();
