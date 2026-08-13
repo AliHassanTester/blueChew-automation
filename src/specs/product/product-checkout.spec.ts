@@ -6,7 +6,7 @@ const scenarios = getAllProductCheckoutScenarios();
 
 test.describe('Feature: Unified Product Checkout Flows', () => {
   for (const scenario of scenarios) {
-    test.only(`Product Checkout Flow - ${scenario.productName} ('${scenario.testCaseData.testCase}')`, async ({
+    test(`Product Checkout Flow - ${scenario.productName} ('${scenario.testCaseData.testCase}')`, async ({
       productPage,
       registrationPage,
       medicalPage,

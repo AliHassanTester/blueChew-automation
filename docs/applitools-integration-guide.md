@@ -9,11 +9,12 @@ Quick reference for Applitools Eyes implementation in the BlueChew Automation Fr
 | Directory / File | Role |
 | :--- | :--- |
 | `src/interfaces/applitools.interface.ts` | Defines `ApplitoolsVisualConfig` contract. |
-| `@data/login/login.data.ts` | Defines and exports login baseline configs (`LOGIN_DESKTOP_FIGMA_CONFIG`, `LOGIN_MOBILE_FIGMA_CONFIG`). |
-| `@data/product/product-checkout.data.ts` | Unified test data source & Applitools configs (`Sildenafil`, `Tadalafil`, `Max`). |
+| `src/data/visual/figma.visual.data.ts` | **Centralized source of truth** for all Figma baseline visual configurations (`Login Desktop/Mobile`, `Sildenafil`, `Tadalafil`, `Max`). |
+| `@data/login/login.data.ts` | Login test data provider (re-exports Figma configs from `figma.visual.data`). |
+| `@data/product/product-checkout.data.ts` | Unified product checkout test data provider (re-exports Figma configs from `figma.visual.data`). |
 | `src/utilities/applitools.utils.ts` | Pure execution engine for Eyes lifecycle, viewport handling, and snapshot uploading. |
 | Page Objects (`login.page.ts`, `product.page.ts`) | Encapsulate DOM readiness (`waitForLoadState('load')`) and invoke visual checkpoints. |
-| Specs (`login.spec.ts`, `product-checkout.spec.ts`) | Declarative data-driven test specs passing scenario configs to page objects. |
+| Specs (`login.spec.ts`, `product-checkout.spec.ts`) | Declarative test specs passing scenario configs to page objects. |
 
 ---
 
@@ -32,30 +33,17 @@ export interface ApplitoolsVisualConfig {
 
 ---
 
-## Usage Example
+## Centralized Configurations (`src/data/visual/figma.visual.data.ts`)
 
-### 1. Unified Data File (`src/data/product/product-checkout.data.ts`)
 ```typescript
-export const PRODUCT_TADALAFIL_FIGMA_CONFIG: ApplitoolsVisualConfig = {
-  appName: 'Tadalafil Default',
-  testName: 'Tadalafil - Desktop',
-  viewport: { width: 1440, height: 915 },
-  baselineEnvName: 'Tadalafil_1440',
-  ignoreDisplacements: true,
-};
-```
+import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 
-### 2. Unified Spec File (`src/specs/product/product-checkout.spec.ts`)
-```typescript
-const scenarios = getAllProductCheckoutScenarios();
+export const LOGIN_DESKTOP_FIGMA_CONFIG: ApplitoolsVisualConfig = { ... };
+export const LOGIN_MOBILE_FIGMA_CONFIG: ApplitoolsVisualConfig = { ... };
 
-for (const scenario of scenarios) {
-  test(`Product Checkout Flow - ${scenario.productName}`, async ({ productPage }) => {
-    await productPage.navigateToProductPage(scenario.url, scenario.productName);
-    await productPage.captureProductSnapshot(scenario.visualConfig, `${scenario.productName} page loaded`);
-    await productPage.selectPlanAndProceed();
-  });
-}
+export const PRODUCT_SILDENAFIL_FIGMA_CONFIG: ApplitoolsVisualConfig = { ... };
+export const PRODUCT_TADALAFIL_FIGMA_CONFIG: ApplitoolsVisualConfig = { ... };
+export const PRODUCT_MAX_FIGMA_CONFIG: ApplitoolsVisualConfig = { ... };
 ```
 
 ---
@@ -66,6 +54,6 @@ for (const scenario of scenarios) {
 # Run all Applitools visual tests
 npm run visual:applitools
 
-# Run product checkout spec
+# Run product checkout visual tests
 npm run test:product
 ```

@@ -1,5 +1,9 @@
 import { logTestCaseData } from '@utilities/test.helper.utils';
-import { getLoginData, LOGIN_DESKTOP_FIGMA_CONFIG, LOGIN_MOBILE_FIGMA_CONFIG } from '@data/login/login.data';
+import { getLoginData } from '@data/login/login.data';
+import {
+  LOGIN_DESKTOP_FIGMA_CONFIG,
+  LOGIN_MOBILE_FIGMA_CONFIG,
+} from '@data/visual/figma.visual.data';
 import { test } from '@fixtures/page.fixtures';
 import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 

@@ -3,6 +3,10 @@ import { LoginPageDetails } from '@interfaces/login.page.interface';
 import { TestCaseData } from '@interfaces/testcase.data.interface';
 import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 import { getEnvVars } from '@utilities/env.utils';
+import {
+  LOGIN_DESKTOP_FIGMA_CONFIG,
+  LOGIN_MOBILE_FIGMA_CONFIG,
+} from '@data/visual/figma.visual.data';
 
 export interface LoginTestCaseData {
   testCaseData: TestCaseData;
@@ -10,28 +14,6 @@ export interface LoginTestCaseData {
   loginPageDetails: LoginPageDetails;
   visualConfigs: ApplitoolsVisualConfig[];
 }
-
-export const LOGIN_DESKTOP_FIGMA_CONFIG: ApplitoolsVisualConfig = {
-  appName: 'Login Default',
-  testName: 'Log in/Default',
-  viewport: {
-    width: 1440,
-    height: 915,
-  },
-  baselineEnvName: 'Log in/Default_1440',
-  ignoreDisplacements: true,
-};
-
-export const LOGIN_MOBILE_FIGMA_CONFIG: ApplitoolsVisualConfig = {
-  appName: 'Login Default',
-  testName: 'Log in/Default',
-  viewport: {
-    width: 390,
-    height: 844,
-  },
-  baselineEnvName: 'Log in/Default_390',
-  ignoreDisplacements: true,
-};
 
 const env = getEnvVars({
   user_name: null,

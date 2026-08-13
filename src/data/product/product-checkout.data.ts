@@ -3,42 +3,15 @@ import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 import { RegistrationDetails } from '@interfaces/signup-to-approved-order.interface';
 import { getEnvVars } from '@utilities/env.utils';
 import { generateRandomAlphanumeric } from '@utilities/random.utils';
-
-export const PRODUCT_SILDENAFIL_FIGMA_CONFIG: ApplitoolsVisualConfig = {
-  appName: 'Sildenafil Default',
-  testName: 'Sildenafil - Desktop',
-  viewport: {
-    width: 1440,
-    height: 915,
-  },
-  baselineEnvName: 'Sildenafil_1440',
-  ignoreDisplacements: true,
-};
-
-export const PRODUCT_TADALAFIL_FIGMA_CONFIG: ApplitoolsVisualConfig = {
-  appName: 'Tadalafil Default',
-  testName: 'Tadalafil - Desktop',
-  viewport: {
-    width: 1440,
-    height: 915,
-  },
-  baselineEnvName: 'Tadalafil_1440',
-  ignoreDisplacements: true,
-};
-
-export const PRODUCT_MAX_FIGMA_CONFIG: ApplitoolsVisualConfig = {
-  appName: 'Login Default',
-  testName: 'Desktop - 9',
-  viewport: {
-    width: 1440,
-    height: 915,
-  },
-  baselineEnvName: 'Desktop - 9_1440',
-  ignoreDisplacement: true,
-};
+import {
+  PRODUCT_SILDENAFIL_FIGMA_CONFIG,
+  PRODUCT_TADALAFIL_FIGMA_CONFIG,
+  PRODUCT_VARDENAFIL_FIGMA_CONFIG,
+  PRODUCT_MAX_FIGMA_CONFIG,
+} from '@data/visual/figma.visual.data';
 
 export interface ProductCheckoutTestCaseData {
-  productName: 'Sildenafil' | 'Tadalafil' | 'Max';
+  productName: 'Sildenafil' | 'Tadalafil' | 'Vardenafil' | 'Max';
   url: string;
   visualConfig: ApplitoolsVisualConfig;
   registrationDetails: RegistrationDetails;
@@ -86,6 +59,7 @@ function buildTestAccount(suffix: string) {
 
 const sildenafilAccount = buildTestAccount('sildenafil');
 const tadalafilAccount = buildTestAccount('tadalafil');
+const vardenafilAccount = buildTestAccount('vardenafil');
 const maxAccount = buildTestAccount('max');
 
 const productCheckoutTestData: { [key: string]: ProductCheckoutTestCaseData } = {
@@ -165,6 +139,45 @@ const productCheckoutTestData: { [key: string]: ProductCheckoutTestCaseData } = 
       testCase: 'PRODUCT-TADALAFIL',
       testDescription: 'User can select Tadalafil product plan and complete checkout flow',
       testSummary: 'Navigate to Tadalafil landing page, capture visual baseline, select plan, complete registration, quiz, medical, checkout and order approval.',
+    },
+  },
+  'PRODUCT-VARDENAFIL': {
+    productName: 'Vardenafil',
+    url: 'https://dev.bluechew.com/vardenafil',
+    visualConfig: PRODUCT_VARDENAFIL_FIGMA_CONFIG,
+    registrationDetails: {
+      loginURL:        env.LOGIN_URL,
+      quizURL:         env.QUIZ_URL,
+      adminURL:        env.ADMIN_URL,
+      adminEmail:      env.ADMIN_EMAIL,
+      adminPassword:   env.ADMIN_PASSWORD,
+      state:           'New York',
+      email:           vardenafilAccount.email,
+      password:        env.password,
+      quizAnswers:     [2, 0, 1],
+      medical: {
+        firstName: vardenafilAccount.firstName,
+        lastName:  vardenafilAccount.lastName,
+        birthday:  vardenafilAccount.birthday,
+      },
+      shipping: {
+        streetAddress: vardenafilAccount.streetAddress,
+        city:          'New York',
+        state:         'New York',
+        zip:           '10001',
+        phone:         '2125550100',
+      },
+      payment: {
+        cardNumber: env.STRIPE_CARD_NUMBER,
+        expiry:     env.STRIPE_CARD_EXP,
+        cvv:        env.STRIPE_CARD_CVV,
+      },
+    },
+    testCaseData: {
+      tags: '@regression @product @vardenafil @e2e @visual',
+      testCase: 'PRODUCT-VARDENAFIL',
+      testDescription: 'User can select Vardenafil product plan and complete checkout flow',
+      testSummary: 'Navigate to Vardenafil landing page, capture visual baseline, select plan, complete registration, quiz, medical, checkout and order approval.',
     },
   },
   'PRODUCT-MAX': {

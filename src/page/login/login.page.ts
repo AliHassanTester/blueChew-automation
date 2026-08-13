@@ -10,7 +10,7 @@ import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 import {
   LOGIN_DESKTOP_FIGMA_CONFIG,
   LOGIN_MOBILE_FIGMA_CONFIG,
-} from '@data/login/login.data';
+} from '@data/visual/figma.visual.data';
 
 export class LoginPage {
   public readonly page: Page;

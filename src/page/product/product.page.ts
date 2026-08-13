@@ -29,8 +29,12 @@ export class ProductPage {
         locator: this.page.locator('//div[@class="cta-section"]//button'),
       },
       startNowButton: {
-        description: 'START NOW button (on Plan page)',
-        locator: this.page.locator("//button[text()='START NOW']").or(this.page.locator("button:has-text('START NOW')")),
+        description: 'START NOW / CONTINUE button (on Plan page)',
+        locator: this.page
+          .locator("//button[text()='START NOW']")
+          .or(this.page.locator("button:has-text('START NOW')"))
+          .or(this.page.locator("//button[text()='CONTINUE']"))
+          .or(this.page.locator("button:has-text('CONTINUE')")),
       },
     };
   }
