@@ -14,7 +14,7 @@
     "test:smoke": "cross-env ENV_TYPE=dev npx playwright test src/specs --grep @smoke",
     "test:regression": "cross-env ENV_TYPE=dev npx playwright test src/specs --grep @regression",
     "test:login": "cross-env ENV_TYPE=dev npx playwright test src/specs/login/login.spec.ts",
-    "test:sildenafil": "cross-env ENV_TYPE=dev npx playwright test src/specs/product/product-sildenafil.spec.ts",
+    "test:product": "cross-env ENV_TYPE=dev npx playwright test src/specs/product/product-checkout.spec.ts",
     "test:e2e": "cross-env ENV_TYPE=dev npx playwright test src/specs/login/signup-to-approved-order.spec.ts",
     "test:report": "npx playwright show-report",
     "codegen": "npx playwright codegen",

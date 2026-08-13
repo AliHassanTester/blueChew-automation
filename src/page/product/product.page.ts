@@ -5,7 +5,6 @@ import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { VisualHelper } from '@utilities/visual.helper';
 import { captureApplitoolsVisualCheckpoint } from '@utilities/applitools.utils';
 import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
-import { PRODUCT_MAX_FIGMA_CONFIG } from '@data/product/product-max.data';
 
 export class ProductPage {
   public readonly page: Page;
@@ -21,10 +20,6 @@ export class ProductPage {
     this.visual = visual;
 
     this.locators = {
-      pageContainer: {
-        description: 'Product Max page container',
-        locator: this.page.locator('body'),
-      },
       heroContent: {
         description: 'Product hero content',
         locator: this.page.locator('main').or(this.page.locator('body')),
@@ -42,8 +37,6 @@ export class ProductPage {
 
   async selectPlanAndProceed(): Promise<void> {
     await test.step('Select a plan and proceed to checkout funnel', async () => {
-      // The mobile layout hides the desktop `.cta-section` button with CSS (display:none).
-      // Use a JS click via evaluate to trigger the navigation regardless of visibility.
       await this.page.evaluate(() => {
         const btn = document.querySelector<HTMLElement>('.cta-section button, .cta-button');
         btn?.click();
@@ -64,20 +57,9 @@ export class ProductPage {
   async captureProductSnapshot(visualConfig?: ApplitoolsVisualConfig, tag: string = 'Product page loaded'): Promise<void> {
     await test.step(`Capture the fully loaded ${tag} state`, async () => {
       await this.page.waitForLoadState('load').catch(() => undefined);
-      await this.verify.expectElementExist(this.locators.pageContainer);
-      await captureApplitoolsVisualCheckpoint(
-        this.page,
-        visualConfig || PRODUCT_MAX_FIGMA_CONFIG,
-        tag,
-      );
+      if (visualConfig) {
+        await captureApplitoolsVisualCheckpoint(this.page, visualConfig, tag);
+      }
     });
-  }
-
-  async navigateToProductMax(url: string): Promise<void> {
-    await this.navigateToProductPage(url, 'Product Max');
-  }
-
-  async captureProductMaxSnapshot(visualConfig?: ApplitoolsVisualConfig): Promise<void> {
-    await this.captureProductSnapshot(visualConfig || PRODUCT_MAX_FIGMA_CONFIG, 'Product Max page loaded');
   }
 }

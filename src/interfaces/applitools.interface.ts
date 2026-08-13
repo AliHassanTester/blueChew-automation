@@ -6,5 +6,6 @@ export interface ApplitoolsVisualConfig {
     height: number;
   };
   baselineEnvName?: string;
+  ignoreDisplacement?: boolean;
   ignoreDisplacements?: boolean;
 }

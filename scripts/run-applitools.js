@@ -9,7 +9,7 @@ const cliPath = path.join(__dirname, '..', 'node_modules', 'playwright', 'cli.js
 const extraArgs = process.argv.slice(2);
 const defaultArgs = [
   'test',
-  '(login|product-max)\\.spec\\.ts',
+  '(login|product-checkout)\\.spec\\.ts',
   '--project=chromium-desktop',
 ];
 const args = extraArgs.length > 0 ? ['test', ...extraArgs] : defaultArgs;
