@@ -3,6 +3,8 @@ import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { ShippingDetails, PaymentDetails } from '@interfaces/signup-to-approved-order.interface';
+import { captureApplitoolsVisualCheckpoint } from '@utilities/applitools.utils';
+import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 
 /**
  * Checkout wizard (/checkout): product intro → Select strength → Select quantity → order
@@ -91,6 +93,17 @@ export class CheckoutPage {
         locator: this.page.locator("//button[normalize-space()='Add Shipping Method']").filter({ visible: true }).first(),
       },
     };
+  }
+
+  // ── Visual Checkpoints ───────────────────────────────────────────────────
+
+  async captureCheckoutSnapshot(visualConfig?: ApplitoolsVisualConfig, tag: string = 'Checkout page loaded'): Promise<void> {
+    await test.step(`Capture the fully loaded ${tag} state`, async () => {
+      await this.page.waitForLoadState('load').catch(() => undefined);
+      if (visualConfig) {
+        await captureApplitoolsVisualCheckpoint(this.page, visualConfig, tag);
+      }
+    });
   }
 
   // ── Wizard steps ──────────────────────────────────────────────────────────

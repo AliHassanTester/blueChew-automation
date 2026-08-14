@@ -7,11 +7,12 @@ import {
   PRODUCT_SILDENAFIL_FIGMA_CONFIG,
   PRODUCT_TADALAFIL_FIGMA_CONFIG,
   PRODUCT_VARDENAFIL_FIGMA_CONFIG,
+  PRODUCT_DAILYTAD_FIGMA_CONFIG,
   PRODUCT_MAX_FIGMA_CONFIG,
 } from '@data/visual/figma.visual.data';
 
 export interface ProductCheckoutTestCaseData {
-  productName: 'Sildenafil' | 'Tadalafil' | 'Vardenafil' | 'Max';
+  productName: 'Sildenafil' | 'Tadalafil' | 'Vardenafil' | 'DailyTad' | 'Max';
   url: string;
   visualConfig: ApplitoolsVisualConfig;
   registrationDetails: RegistrationDetails;
@@ -57,168 +58,61 @@ function buildTestAccount(suffix: string) {
   };
 }
 
-const sildenafilAccount = buildTestAccount('sildenafil');
-const tadalafilAccount = buildTestAccount('tadalafil');
-const vardenafilAccount = buildTestAccount('vardenafil');
-const maxAccount = buildTestAccount('max');
+function createProductScenario(
+  productName: 'Sildenafil' | 'Tadalafil' | 'Vardenafil' | 'DailyTad' | 'Max',
+  testCase: string,
+  url: string,
+  visualConfig: ApplitoolsVisualConfig,
+): ProductCheckoutTestCaseData {
+  const account = buildTestAccount(productName.toLowerCase());
+  const tag = productName.toLowerCase();
+  return {
+    productName,
+    url,
+    visualConfig,
+    registrationDetails: {
+      loginURL:        env.LOGIN_URL,
+      quizURL:         env.QUIZ_URL,
+      adminURL:        env.ADMIN_URL,
+      adminEmail:      env.ADMIN_EMAIL,
+      adminPassword:   env.ADMIN_PASSWORD,
+      state:           'New York',
+      email:           account.email,
+      password:        env.password,
+      quizAnswers:     [2, 0, 1],
+      medical: {
+        firstName: account.firstName,
+        lastName:  account.lastName,
+        birthday:  account.birthday,
+      },
+      shipping: {
+        streetAddress: account.streetAddress,
+        city:          'New York',
+        state:         'New York',
+        zip:           '10001',
+        phone:         '2125550100',
+      },
+      payment: {
+        cardNumber: env.STRIPE_CARD_NUMBER,
+        expiry:     env.STRIPE_CARD_EXP,
+        cvv:        env.STRIPE_CARD_CVV,
+      },
+    },
+    testCaseData: {
+      tags: `@regression @product @${tag} @e2e @visual`,
+      testCase,
+      testDescription: `User can select ${productName} product plan and complete checkout flow`,
+      testSummary: `Navigate to ${productName} landing page, capture visual baseline, select plan, complete registration, quiz, medical, checkout and order approval.`,
+    },
+  };
+}
 
 const productCheckoutTestData: { [key: string]: ProductCheckoutTestCaseData } = {
-  'PRODUCT-SILDENAFIL': {
-    productName: 'Sildenafil',
-    url: '/sildenafil',
-    visualConfig: PRODUCT_SILDENAFIL_FIGMA_CONFIG,
-    registrationDetails: {
-      loginURL:        env.LOGIN_URL,
-      quizURL:         env.QUIZ_URL,
-      adminURL:        env.ADMIN_URL,
-      adminEmail:      env.ADMIN_EMAIL,
-      adminPassword:   env.ADMIN_PASSWORD,
-      state:           'New York',
-      email:           sildenafilAccount.email,
-      password:        env.password,
-      quizAnswers:     [2, 0, 1],
-      medical: {
-        firstName: sildenafilAccount.firstName,
-        lastName:  sildenafilAccount.lastName,
-        birthday:  sildenafilAccount.birthday,
-      },
-      shipping: {
-        streetAddress: sildenafilAccount.streetAddress,
-        city:          'New York',
-        state:         'New York',
-        zip:           '10001',
-        phone:         '2125550100',
-      },
-      payment: {
-        cardNumber: env.STRIPE_CARD_NUMBER,
-        expiry:     env.STRIPE_CARD_EXP,
-        cvv:        env.STRIPE_CARD_CVV,
-      },
-    },
-    testCaseData: {
-      tags: '@regression @product @sildenafil @e2e @visual',
-      testCase: 'PRODUCT-SILDENAFIL',
-      testDescription: 'User can select Sildenafil product plan and complete checkout flow',
-      testSummary: 'Navigate to Sildenafil landing page, capture visual baseline, select plan, complete registration, quiz, medical, checkout and order approval.',
-    },
-  },
-  'PRODUCT-TADALAFIL': {
-    productName: 'Tadalafil',
-    url: '/tadalafil',
-    visualConfig: PRODUCT_TADALAFIL_FIGMA_CONFIG,
-    registrationDetails: {
-      loginURL:        env.LOGIN_URL,
-      quizURL:         env.QUIZ_URL,
-      adminURL:        env.ADMIN_URL,
-      adminEmail:      env.ADMIN_EMAIL,
-      adminPassword:   env.ADMIN_PASSWORD,
-      state:           'New York',
-      email:           tadalafilAccount.email,
-      password:        env.password,
-      quizAnswers:     [2, 0, 1],
-      medical: {
-        firstName: tadalafilAccount.firstName,
-        lastName:  tadalafilAccount.lastName,
-        birthday:  tadalafilAccount.birthday,
-      },
-      shipping: {
-        streetAddress: tadalafilAccount.streetAddress,
-        city:          'New York',
-        state:         'New York',
-        zip:           '10001',
-        phone:         '2125550100',
-      },
-      payment: {
-        cardNumber: env.STRIPE_CARD_NUMBER,
-        expiry:     env.STRIPE_CARD_EXP,
-        cvv:        env.STRIPE_CARD_CVV,
-      },
-    },
-    testCaseData: {
-      tags: '@regression @product @tadalafil @e2e @visual',
-      testCase: 'PRODUCT-TADALAFIL',
-      testDescription: 'User can select Tadalafil product plan and complete checkout flow',
-      testSummary: 'Navigate to Tadalafil landing page, capture visual baseline, select plan, complete registration, quiz, medical, checkout and order approval.',
-    },
-  },
-  'PRODUCT-VARDENAFIL': {
-    productName: 'Vardenafil',
-    url: 'https://dev.bluechew.com/vardenafil',
-    visualConfig: PRODUCT_VARDENAFIL_FIGMA_CONFIG,
-    registrationDetails: {
-      loginURL:        env.LOGIN_URL,
-      quizURL:         env.QUIZ_URL,
-      adminURL:        env.ADMIN_URL,
-      adminEmail:      env.ADMIN_EMAIL,
-      adminPassword:   env.ADMIN_PASSWORD,
-      state:           'New York',
-      email:           vardenafilAccount.email,
-      password:        env.password,
-      quizAnswers:     [2, 0, 1],
-      medical: {
-        firstName: vardenafilAccount.firstName,
-        lastName:  vardenafilAccount.lastName,
-        birthday:  vardenafilAccount.birthday,
-      },
-      shipping: {
-        streetAddress: vardenafilAccount.streetAddress,
-        city:          'New York',
-        state:         'New York',
-        zip:           '10001',
-        phone:         '2125550100',
-      },
-      payment: {
-        cardNumber: env.STRIPE_CARD_NUMBER,
-        expiry:     env.STRIPE_CARD_EXP,
-        cvv:        env.STRIPE_CARD_CVV,
-      },
-    },
-    testCaseData: {
-      tags: '@regression @product @vardenafil @e2e @visual',
-      testCase: 'PRODUCT-VARDENAFIL',
-      testDescription: 'User can select Vardenafil product plan and complete checkout flow',
-      testSummary: 'Navigate to Vardenafil landing page, capture visual baseline, select plan, complete registration, quiz, medical, checkout and order approval.',
-    },
-  },
-  'PRODUCT-MAX': {
-    productName: 'Max',
-    url: 'https://dev.bluechew.com/max',
-    visualConfig: PRODUCT_MAX_FIGMA_CONFIG,
-    registrationDetails: {
-      loginURL:        env.LOGIN_URL,
-      quizURL:         env.QUIZ_URL,
-      adminURL:        env.ADMIN_URL,
-      adminEmail:      env.ADMIN_EMAIL,
-      adminPassword:   env.ADMIN_PASSWORD,
-      state:           'New York',
-      email:           maxAccount.email,
-      password:        env.password,
-      quizAnswers:     [2, 0, 1],
-      medical: {
-        firstName: maxAccount.firstName,
-        lastName:  maxAccount.lastName,
-        birthday:  maxAccount.birthday,
-      },
-      shipping: {
-        streetAddress: maxAccount.streetAddress,
-        city:          'New York',
-        state:         'New York',
-        zip:           '10001',
-        phone:         '2125550100',
-      },
-      payment: {
-        cardNumber: env.STRIPE_CARD_NUMBER,
-        expiry:     env.STRIPE_CARD_EXP,
-        cvv:        env.STRIPE_CARD_CVV,
-      },
-    },
-    testCaseData: {
-      tags: '@regression @product @max @visual',
-      testCase: 'PRODUCT-MAX',
-      testDescription: 'Product Max page loads correctly and is captured visually',
-      testSummary: 'Navigate to Product Max page, capture visual baseline, and complete checkout flow.',
-    },
-  },
+  'PRODUCT-SILDENAFIL': createProductScenario('Sildenafil', 'PRODUCT-SILDENAFIL', '/sildenafil', PRODUCT_SILDENAFIL_FIGMA_CONFIG),
+  'PRODUCT-TADALAFIL':   createProductScenario('Tadalafil',  'PRODUCT-TADALAFIL',   '/tadalafil',  PRODUCT_TADALAFIL_FIGMA_CONFIG),
+  'PRODUCT-VARDENAFIL':  createProductScenario('Vardenafil', 'PRODUCT-VARDENAFIL',  'https://dev.bluechew.com/vardenafil', PRODUCT_VARDENAFIL_FIGMA_CONFIG),
+  'PRODUCT-DAILYTAD':   createProductScenario('DailyTad',   'PRODUCT-DAILYTAD',   'https://dev.bluechew.com/dailytad',  PRODUCT_DAILYTAD_FIGMA_CONFIG),
+  'PRODUCT-MAX':        createProductScenario('Max',        'PRODUCT-MAX',        'https://dev.bluechew.com/max',       PRODUCT_MAX_FIGMA_CONFIG),
 };
 
 export function getProductCheckoutData(testCase: string): ProductCheckoutTestCaseData {

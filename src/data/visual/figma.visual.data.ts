@@ -57,13 +57,24 @@ export const PRODUCT_VARDENAFIL_FIGMA_CONFIG: ApplitoolsVisualConfig = {
   ignoreDisplacements: true,
 };
 
-export const PRODUCT_MAX_FIGMA_CONFIG: ApplitoolsVisualConfig = {
-  appName: 'Login Default',
-  testName: 'Desktop - 9',
+export const PRODUCT_DAILYTAD_FIGMA_CONFIG: ApplitoolsVisualConfig = {
+  appName: 'DailyTad Default',
+  testName: 'DailyTad - Desktop',
   viewport: {
     width: 1440,
     height: 915,
   },
-  baselineEnvName: 'Desktop - 9_1440',
-  ignoreDisplacement: true,
+  baselineEnvName: 'DailyTad_1440',
+  ignoreDisplacements: true,
+};
+
+export const PRODUCT_MAX_FIGMA_CONFIG: ApplitoolsVisualConfig = {
+  appName: 'Max Default',
+  testName: 'Max - Desktop',
+  viewport: {
+    width: 1440,
+    height: 915,
+  },
+  baselineEnvName: 'Max_1440',
+  ignoreDisplacements: true,
 };

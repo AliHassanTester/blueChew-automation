@@ -25,8 +25,10 @@ export class ProductPage {
         locator: this.page.locator('main').or(this.page.locator('body')),
       },
       selectPlanButton: {
-        description: 'SELECT A PLAN button',
-        locator: this.page.locator('//div[@class="cta-section"]//button'),
+        description: 'SELECT A PLAN / Product Start button',
+        locator: this.page
+          .locator('//div[@class="cta-section"]//button')
+          .or(this.page.locator('//button[@class="product-start-button"]')),
       },
       startNowButton: {
         description: 'START NOW / CONTINUE button (on Plan page)',
@@ -41,12 +43,32 @@ export class ProductPage {
 
   async selectPlanAndProceed(): Promise<void> {
     await test.step('Select a plan and proceed to checkout funnel', async () => {
-      await this.page.evaluate(() => {
-        const btn = document.querySelector<HTMLElement>('.cta-section button, .cta-button');
-        btn?.click();
-      });
+      const productStartBtn = this.page
+        .locator('button.product-start-button')
+        .or(this.page.locator('//button[@class="product-start-button"]'));
+
+      if ((await productStartBtn.count()) > 0 && (await productStartBtn.first().isVisible().catch(() => false))) {
+        await productStartBtn.first().scrollIntoViewIfNeeded().catch(() => undefined);
+        await productStartBtn.first().click({ force: true }).catch(async () => {
+          await this.page.evaluate(() => {
+            (document.querySelector('.product-start-button') as HTMLElement)?.click();
+          });
+        });
+      } else {
+        await this.page.evaluate(() => {
+          const btn = document.querySelector<HTMLElement>('.cta-section button, .cta-button, button.product-start-button, .product-start-button');
+          btn?.click();
+        });
+      }
+
       await this.page.waitForLoadState();
-      await this.actions.click(this.locators.startNowButton);
+      await this.locators.startNowButton.locator.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
+
+      if (await this.locators.startNowButton.locator.isVisible().catch(() => false)) {
+        await this.actions.click(this.locators.startNowButton).catch(async () => {
+          await this.actions.forceClick(this.locators.startNowButton);
+        });
+      }
       await this.page.waitForLoadState('domcontentloaded');
     });
   }

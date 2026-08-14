@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 import * as dotenv from 'dotenv';
 
 // ENV_TYPE is set by the npm script (cross-env ENV_TYPE=dev) before this config
@@ -96,14 +96,17 @@ export default defineConfig({
       use: {
         browserName: 'chromium',
         viewport: desktopViewport,
+        isMobile: false,
       },
     },
     {
       name: 'chromium-mobile',
       testMatch: 'src/specs/**/*.spec.ts',
       use: {
-        browserName: 'chromium',
+        ...devices['Pixel 7'],
         viewport: mobileViewport,
+        isMobile: true,
+        hasTouch: true,
       },
     },
   ],
