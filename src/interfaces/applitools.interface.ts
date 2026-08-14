@@ -8,4 +8,6 @@ export interface ApplitoolsVisualConfig {
   baselineEnvName?: string;
   ignoreDisplacement?: boolean;
   ignoreDisplacements?: boolean;
+  branchName?: string;
+  parentBranchName?: string;
 }

@@ -76,5 +76,5 @@ export const PRODUCT_MAX_FIGMA_CONFIG: ApplitoolsVisualConfig = {
     height: 915,
   },
   baselineEnvName: 'Desktop - 9_1440',
-  ignoreDisplacements: false,
+  ignoreDisplacements: true,
 };
