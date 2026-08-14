@@ -69,12 +69,12 @@ export const PRODUCT_DAILYTAD_FIGMA_CONFIG: ApplitoolsVisualConfig = {
 };
 
 export const PRODUCT_MAX_FIGMA_CONFIG: ApplitoolsVisualConfig = {
-  appName: 'Max Default',
-  testName: 'Max - Desktop',
+  appName: 'Login Default',
+  testName: 'Desktop - 9',
   viewport: {
     width: 1440,
     height: 915,
   },
-  baselineEnvName: 'Max_1440',
-  ignoreDisplacements: true,
+  baselineEnvName: 'Desktop - 9_1440',
+  ignoreDisplacements: false,
 };
