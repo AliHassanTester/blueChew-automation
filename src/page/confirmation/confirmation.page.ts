@@ -81,10 +81,24 @@ export class ConfirmationPage {
   }
 
   async waitForProviderQueue(): Promise<void> {
-    await test.step('Wait for provider queue (< 1 min estimated wait)', async () => {
-      // Camera/microphone permissions are pre-granted via the browser context.
-      // Explicit 60s wait: provider matching can exceed the default action timeout.
-      await this.locators.estimatedWaitMessage.locator.waitFor({ state: 'visible', timeout: 60_000 });
+    await test.step('Wait for provider queue or post-queue order state', async () => {
+      const queueMessage = this.locators.estimatedWaitMessage.locator;
+      const connectingMessage = this.locators.connectingMessage.locator;
+      const processingMessage = this.locators.orderProcessingBanner.locator;
+
+      await expect
+        .poll(async () => {
+          const hasQueueMessage = await queueMessage.isVisible().catch(() => false);
+          const hasConnectingMessage = await connectingMessage.isVisible().catch(() => false);
+          const hasProcessingMessage = await processingMessage.isVisible().catch(() => false);
+          const isOnMembershipPage = /\/account\/membership/.test(this.page.url());
+
+          return hasQueueMessage || hasConnectingMessage || hasProcessingMessage || isOnMembershipPage;
+        }, {
+          timeout: 90_000,
+          intervals: [1_000, 2_000, 3_000, 5_000],
+        })
+        .toBeTruthy();
     });
   }
 

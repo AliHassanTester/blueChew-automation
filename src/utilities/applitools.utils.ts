@@ -12,6 +12,45 @@ dotenv.config({ path: `.env.${envType}` });
 const DEFAULT_BATCH_NAME = 'BlueChew 4.0 - Dev Handoff - Stepped out Medical intake';
 const batch = new BatchInfo({ name: DEFAULT_BATCH_NAME });
 
+function resolveVisualConfigForPage(
+  page: Page,
+  visualConfigs?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[],
+): ApplitoolsVisualConfig | undefined {
+  const configs = Array.isArray(visualConfigs) ? visualConfigs : visualConfigs ? [visualConfigs] : [];
+
+  if (configs.length === 0) {
+    return undefined;
+  }
+
+  const currentViewport = page.viewportSize();
+  if (currentViewport) {
+    const exactMatch = configs.find(
+      (config) =>
+        config.viewport.width === currentViewport.width &&
+        config.viewport.height === currentViewport.height,
+    );
+
+    if (exactMatch) {
+      return exactMatch;
+    }
+
+    const closestMatch = configs
+      .map((config) => ({
+        config,
+        distance:
+          Math.abs(config.viewport.width - currentViewport.width) +
+          Math.abs(config.viewport.height - currentViewport.height),
+      }))
+      .sort((a, b) => a.distance - b.distance)[0];
+
+    if (closestMatch) {
+      return closestMatch.config;
+    }
+  }
+
+  return configs[0];
+}
+
 /**
  * Centralized utility to capture visual checkpoints using Applitools Eyes.
  * Configures Applitools Eyes to match against Figma baselines by aligning:
@@ -33,8 +72,7 @@ export async function captureApplitoolsVisualCheckpoint(
 
   console.log(`[Applitools] Starting visual capture for "${checkpointTag || 'Snapshot'}" with API Key: ${apiKey.substring(0, 6)}...`);
 
-  const configs = Array.isArray(visualConfigs) ? visualConfigs : visualConfigs ? [visualConfigs] : [];
-  const mainConfig = configs[0];
+  const mainConfig = resolveVisualConfigForPage(page, visualConfigs);
 
   const eyes = new Eyes();
   const config = new Configuration();

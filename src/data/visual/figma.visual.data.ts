@@ -25,13 +25,13 @@ export const LOGIN_MOBILE_FIGMA_CONFIG: ApplitoolsVisualConfig = {
 
 // ── Product Checkout Figma Configurations ────────────────────────────────────
 export const PRODUCT_SILDENAFIL_FIGMA_CONFIG: ApplitoolsVisualConfig = {
-  appName: 'Sildenafil Default',
-  testName: 'Sildenafil - Desktop',
+  appName: 'Login Default',
+  testName: 'Desktop - 11',
   viewport: {
     width: 1440,
-    height: 915,
+    height: 7854,
   },
-  baselineEnvName: 'Sildenafil_1440',
+  baselineEnvName: 'Desktop - 11_1440',
   ignoreDisplacements: true,
 };
 
