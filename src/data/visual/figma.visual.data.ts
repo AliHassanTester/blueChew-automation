@@ -36,35 +36,35 @@ export const PRODUCT_SILDENAFIL_FIGMA_CONFIG: ApplitoolsVisualConfig = {
 };
 
 export const PRODUCT_TADALAFIL_FIGMA_CONFIG: ApplitoolsVisualConfig = {
-  appName: 'Tadalafil Default',
-  testName: 'Tadalafil - Desktop',
+  appName: 'Login Default',
+  testName: 'Desktop - 12',
   viewport: {
     width: 1440,
-    height: 915,
+    height: 7809,
   },
-  baselineEnvName: 'Tadalafil_1440',
+  baselineEnvName: 'Desktop - 12_1440',
   ignoreDisplacements: true,
 };
 
 export const PRODUCT_VARDENAFIL_FIGMA_CONFIG: ApplitoolsVisualConfig = {
-  appName: 'Vardenafil Default',
-  testName: 'Vardenafil - Desktop',
+  appName: 'Login Default',
+  testName: 'Desktop - 13',
   viewport: {
     width: 1440,
-    height: 915,
+    height: 7972,
   },
-  baselineEnvName: 'Vardenafil_1440',
+  baselineEnvName: 'Desktop - 13_1440',
   ignoreDisplacements: true,
 };
 
 export const PRODUCT_DAILYTAD_FIGMA_CONFIG: ApplitoolsVisualConfig = {
-  appName: 'DailyTad Default',
-  testName: 'DailyTad - Desktop',
+  appName: 'Login Default',
+  testName: 'Desktop - 14',
   viewport: {
     width: 1440,
-    height: 915,
+    height: 7917,
   },
-  baselineEnvName: 'DailyTad_1440',
+  baselineEnvName: 'Desktop - 14_1440',
   ignoreDisplacements: true,
 };
 
@@ -73,7 +73,7 @@ export const PRODUCT_MAX_FIGMA_CONFIG: ApplitoolsVisualConfig = {
   testName: 'Desktop - 9',
   viewport: {
     width: 1440,
-    height: 915,
+    height: 7832,
   },
   baselineEnvName: 'Desktop - 9_1440',
   ignoreDisplacements: true,
