@@ -83,7 +83,9 @@ export class ProductPage {
   async captureProductSnapshot(visualConfig?: ApplitoolsVisualConfig, tag: string = 'Product page loaded'): Promise<void> {
     await test.step(`Capture the fully loaded ${tag} state`, async () => {
       await this.page.waitForLoadState('load').catch(() => undefined);
-      if (visualConfig) {
+      if (this.visual) {
+        await this.visual.captureCheckpoint(tag, visualConfig);
+      } else if (visualConfig) {
         await captureApplitoolsVisualCheckpoint(this.page, visualConfig, tag);
       }
     });

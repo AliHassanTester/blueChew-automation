@@ -23,8 +23,12 @@ if (providerArg) {
   process.env.VISUAL_PROVIDERS = providerArg.split('=')[1];
 }
 
-// If Percy is enabled as a provider, require PERCY_TOKEN.
-const providers = (process.env.VISUAL_PROVIDERS || 'percy').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+// If VISUAL_PROVIDERS is not set, default to both percy and applitools
+if (!process.env.VISUAL_PROVIDERS) {
+  process.env.VISUAL_PROVIDERS = 'percy,applitools';
+}
+
+const providers = process.env.VISUAL_PROVIDERS.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
 const wantsPercy = providers.includes('percy');
 
 if (wantsPercy) {
@@ -37,17 +41,18 @@ if (wantsPercy) {
 }
 
 const extraArgs = process.argv.filter((a) => !a.startsWith('--providers=')).slice(2).join(' ');
+const argsToPass = extraArgs ? extraArgs : '--grep @visual';
 
 // If Percy is requested, run via the percy exec wrapper. Otherwise run playwright directly.
 let cmd;
 if (wantsPercy) {
-  cmd = `npx percy exec -- npx playwright test --grep @visual ${extraArgs}`.trim();
+  cmd = `npx percy exec -- npx playwright test ${argsToPass}`.trim();
 } else {
-  cmd = `npx playwright test --grep @visual ${extraArgs}`.trim();
+  cmd = `npx playwright test ${argsToPass}`.trim();
 }
 
-console.log('[visual-runner] Providers:', providers.join(','));
-console.log('[visual-runner] Running:', cmd);
+console.log('[visual-runner] Active Providers:', providers.join(', '));
+console.log('[visual-runner] Executing Command:', cmd);
 
 const child = spawn(cmd, { shell: true, stdio: 'inherit', env: process.env });
 

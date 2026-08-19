@@ -49,8 +49,8 @@ export const test = base.extend<TestFixtures>({
   medicalPage: async ({ page }, use) => {
     await use(new MedicalPage(page, base.info()));
   },
-  checkoutPage: async ({ page }, use) => {
-    await use(new CheckoutPage(page, base.info()));
+  checkoutPage: async ({ page, visual }, use) => {
+    await use(new CheckoutPage(page, base.info(), visual));
   },
   confirmationPage: async ({ page }, use) => {
     await use(new ConfirmationPage(page, base.info()));

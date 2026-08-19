@@ -18,7 +18,7 @@ async function executeProductCheckoutFlow(
     adminPage: any;
   },
   testInfo: TestInfo,
-): Promise<void> {
+): Promise<void> {  
   const { productPage, registrationPage, medicalPage, checkoutPage, confirmationPage, adminPage } = fixtures;
 
   await logTestCaseData(testInfo, scenario.testCaseData, {

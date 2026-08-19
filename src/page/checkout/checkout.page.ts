@@ -5,6 +5,7 @@ import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { ShippingDetails, PaymentDetails } from '@interfaces/signup-to-approved-order.interface';
 import { captureApplitoolsVisualCheckpoint } from '@utilities/applitools.utils';
 import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
+import { VisualHelper } from '@utilities/visual.helper';
 
 /**
  * Checkout wizard (/checkout): product intro → Select strength → Select quantity → order
@@ -19,12 +20,14 @@ export class CheckoutPage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
   private readonly verify: PlaywrightVerificationFactory;
+  private readonly visual?: VisualHelper;
   private readonly locators: { [key: string]: LocatorInfo };
 
-  constructor(page: Page, testInfo: TestInfo) {
+  constructor(page: Page, testInfo: TestInfo, visual?: VisualHelper) {
     this.page = page;
     this.actions = new PlaywrightActionFactory(page, testInfo);
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
+    this.visual = visual;
 
     this.locators = {
       // ── Order summary ──────────────────────────────────────────────────────
@@ -100,7 +103,9 @@ export class CheckoutPage {
   async captureCheckoutSnapshot(visualConfig?: ApplitoolsVisualConfig, tag: string = 'Checkout page loaded'): Promise<void> {
     await test.step(`Capture the fully loaded ${tag} state`, async () => {
       await this.page.waitForLoadState('load').catch(() => undefined);
-      if (visualConfig) {
+      if (this.visual) {
+        await this.visual.captureCheckpoint(tag, visualConfig);
+      } else if (visualConfig) {
         await captureApplitoolsVisualCheckpoint(this.page, visualConfig, tag);
       }
     });
