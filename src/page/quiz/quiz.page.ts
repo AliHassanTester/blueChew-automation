@@ -2,6 +2,8 @@ import { Page, TestInfo, test } from '@playwright/test';
 import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
+import { VisualHelper } from '@utilities/visual.helper';
+import { ApplitoolsVisualConfig, QUIZ_FIGMA_CONFIG } from '@data/visual/figma.visual.data';
 
 /**
  * Quiz wizard (dev.bluechew.com/quiz). Stable elements live in the LocatorInfo map;
@@ -11,12 +13,14 @@ export class QuizPage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
   private readonly verify: PlaywrightVerificationFactory;
+  private readonly visual?: VisualHelper;
   private readonly locators: { [key: string]: LocatorInfo };
 
-  constructor(page: Page, testInfo: TestInfo) {
+  constructor(page: Page, testInfo: TestInfo, visual?: VisualHelper) {
     this.page = page;
     this.actions = new PlaywrightActionFactory(page, testInfo);
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
+    this.visual = visual;
 
     this.locators = {
       // ── Quiz ───────────────────────────────────────────────────────────────
@@ -88,6 +92,15 @@ export class QuizPage {
     await test.step('Complete quiz and confirm results page', async () => {
       await this.completeQuiz(answers);
       await this.verifyQuizComplete();
+    });
+  }
+
+  async captureQuizSnapshot(visualConfig: ApplitoolsVisualConfig = QUIZ_FIGMA_CONFIG, tag: string = 'Quiz page loaded'): Promise<void> {
+    await test.step(`Capture the fully loaded ${tag} state`, async () => {
+      await this.page.waitForLoadState('load').catch(() => undefined);
+      if (this.visual) {
+        await this.visual.captureCheckpoint(tag, visualConfig);
+      }
     });
   }
 }

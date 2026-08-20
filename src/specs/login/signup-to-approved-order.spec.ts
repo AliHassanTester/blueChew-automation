@@ -22,6 +22,7 @@ test.describe('Feature: Sign-up to Approved Order (E2E)', () => {
       console.log(`[E2E] test email: ${d.email}`);
 
       // ── Onboarding funnel: register → quiz → results → medical → checkout → pay ──
+      await registrationPage.captureRegistrationSnapshot();
       await registrationPage.completeRegistration(d);
       await quizPage.completeQuizAndVerify(d.quizAnswers);
       await resultsPage.selectGoldPlan();

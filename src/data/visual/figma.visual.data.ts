@@ -1,3 +1,4 @@
+export { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 
 // ── Login Page Figma Configurations ──────────────────────────────────────────
@@ -77,4 +78,64 @@ export const PRODUCT_MAX_FIGMA_CONFIG: ApplitoolsVisualConfig = {
   },
   baselineEnvName: 'Desktop - 9_1440',
   ignoreDisplacements: true,
+};
+
+// ── Profile Figma Configurations ─────────────────────────────────────────────
+export const PROFILE_FIGMA_CONFIG: ApplitoolsVisualConfig = {
+  appName: 'Account Default',
+  testName: 'Profile - Desktop',
+  viewport: {
+    width: 1440,
+    height: 915,
+  },
+  baselineEnvName: 'Profile_1440',
+  ignoreDisplacement: true,
+};
+
+// ── Registration Figma Configurations ──────────────────────────────────────────
+export const REGISTRATION_FIGMA_CONFIG: ApplitoolsVisualConfig = {
+  appName: 'Onboarding Default',
+  testName: 'Registration - Desktop',
+  viewport: {
+    width: 1440,
+    height: 915,
+  },
+  baselineEnvName: 'Registration_1440',
+  ignoreDisplacement: true,
+};
+
+// ── Quiz Figma Configurations ──────────────────────────────────────────
+export const QUIZ_FIGMA_CONFIG: ApplitoolsVisualConfig = {
+  appName: 'Onboarding Default',
+  testName: 'Quiz - Desktop',
+  viewport: {
+    width: 1440,
+    height: 915,
+  },
+  baselineEnvName: 'Quiz_1440',
+  ignoreDisplacement: true,
+};
+
+// ── Medical Intake Figma Configurations ──────────────────────────────────────
+export const MEDICAL_FIGMA_CONFIG: ApplitoolsVisualConfig = {
+  appName: 'Medical Default',
+  testName: 'Medical Intake - Desktop',
+  viewport: {
+    width: 1440,
+    height: 1200,
+  },
+  baselineEnvName: 'Medical_1440',
+  ignoreDisplacement: true,
+};
+
+// ── Confirmation Queue Figma Configurations ─────────────────────────────────
+export const CONFIRMATION_FIGMA_CONFIG: ApplitoolsVisualConfig = {
+  appName: 'Order Confirmation Default',
+  testName: 'Confirmation Queue - Desktop',
+  viewport: {
+    width: 1440,
+    height: 915,
+  },
+  baselineEnvName: 'Confirmation_1440',
+  ignoreDisplacement: true,
 };

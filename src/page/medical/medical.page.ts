@@ -3,6 +3,8 @@ import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { MedicalDetails } from '@interfaces/signup-to-approved-order.interface';
+import { VisualHelper } from '@utilities/visual.helper';
+import { ApplitoolsVisualConfig, MEDICAL_FIGMA_CONFIG } from '@data/visual/figma.visual.data';
 
 /**
  * Medical-profile wizard (/medical). Stable fields expose aria-labels / formcontrolname,
@@ -14,14 +16,16 @@ export class MedicalPage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
   private readonly verify: PlaywrightVerificationFactory;
+  private readonly visual?: VisualHelper;
   private readonly locators: { [key: string]: LocatorInfo };
   private readonly testInfo: TestInfo;
 
-  constructor(page: Page, testInfo: TestInfo) {
+  constructor(page: Page, testInfo: TestInfo, visual?: VisualHelper) {
     this.page = page;
     this.testInfo = testInfo;
     this.actions = new PlaywrightActionFactory(page, testInfo);
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
+    this.visual = visual;
 
     this.locators = {
       // ── Step 1: legal name ─────────────────────────────────────────────────
@@ -313,6 +317,15 @@ export class MedicalPage {
     await test.step('Complete medical profile and reach checkout', async () => {
       await this.completeMedicalProfile(details);
       await this.verifyNavigatedToCheckout();
+    });
+  }
+
+  async captureMedicalSnapshot(visualConfig: ApplitoolsVisualConfig = MEDICAL_FIGMA_CONFIG, tag: string = 'Medical page loaded'): Promise<void> {
+    await test.step(`Capture the fully loaded ${tag} state`, async () => {
+      await this.page.waitForLoadState('load').catch(() => undefined);
+      if (this.visual) {
+        await this.visual.captureCheckpoint(tag, visualConfig);
+      }
     });
   }
 }

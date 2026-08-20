@@ -37,23 +37,23 @@ export const test = base.extend<TestFixtures>({
   loginPage: async ({ page, visual }, use) => {
     await use(new LoginPage(page, base.info(), visual));
   },
-  registrationPage: async ({ page }, use) => {
-    await use(new RegistrationPage(page, base.info()));
+  registrationPage: async ({ page, visual }, use) => {
+    await use(new RegistrationPage(page, base.info(), visual));
   },
-  quizPage: async ({ page }, use) => {
-    await use(new QuizPage(page, base.info()));
+  quizPage: async ({ page, visual }, use) => {
+    await use(new QuizPage(page, base.info(), visual));
   },
   resultsPage: async ({ page }, use) => {
     await use(new ResultsPage(page, base.info()));
   },
-  medicalPage: async ({ page }, use) => {
-    await use(new MedicalPage(page, base.info()));
+  medicalPage: async ({ page, visual }, use) => {
+    await use(new MedicalPage(page, base.info(), visual));
   },
   checkoutPage: async ({ page, visual }, use) => {
     await use(new CheckoutPage(page, base.info(), visual));
   },
-  confirmationPage: async ({ page }, use) => {
-    await use(new ConfirmationPage(page, base.info()));
+  confirmationPage: async ({ page, visual }, use) => {
+    await use(new ConfirmationPage(page, base.info(), visual));
   },
   // Admin tab is created lazily — no tab opens until navigateAndLogin() is called
   adminPage: async ({ context }, use) => {
@@ -61,8 +61,8 @@ export const test = base.extend<TestFixtures>({
     await use(adminPage);
     await adminPage.close();
   },
-  profilePage: async ({ page }, use) => {
-    await use(new ProfilePage(page, base.info()));
+  profilePage: async ({ page, visual }, use) => {
+    await use(new ProfilePage(page, base.info(), visual));
   },
   productPage: async ({ page, visual }, use) => {
     await use(new ProductPage(page, base.info(), visual));

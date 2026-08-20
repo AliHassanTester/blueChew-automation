@@ -3,6 +3,8 @@ import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { ShippingAddressInput } from '@interfaces/profile.interface';
+import { VisualHelper } from '@utilities/visual.helper';
+import { ApplitoolsVisualConfig, PROFILE_FIGMA_CONFIG } from '@data/visual/figma.visual.data';
 
 /**
  * Account → Profile area (/account/profile and its edit sub-pages). Locators are XPath
@@ -14,12 +16,14 @@ export class ProfilePage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
   private readonly verify: PlaywrightVerificationFactory;
+  private readonly visual?: VisualHelper;
   private readonly locators: { [key: string]: LocatorInfo };
 
-  constructor(page: Page, testInfo: TestInfo) {
+  constructor(page: Page, testInfo: TestInfo, visual?: VisualHelper) {
     this.page = page;
     this.actions = new PlaywrightActionFactory(page, testInfo);
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
+    this.visual = visual;
 
     this.locators = {
       // ── Notification preferences (profile page) — each toggle wraps a role=switch ──
@@ -167,7 +171,9 @@ export class ProfilePage {
       await test.step('Reload the profile and assert the new address is shown', async () => {
         await this.actions.navigateToURL('/account/profile');
         await this.actions.waitForDomLoad();
-        // percy  captureCheckpoint()
+        if (this.visual) {
+          await this.visual.captureCheckpoint('Profile - shipping address updated', PROFILE_FIGMA_CONFIG);
+        }
         await this.verify.waitForLoaderToDisappear();
         await this.actions.waitForVisibility(this.locators.shippingSummary);
         const summary = await this.actions.getText(this.locators.shippingSummary);
@@ -208,6 +214,15 @@ export class ProfilePage {
       await this.actions.waitForVisibility(this.locators.preferencesSnackbar);
       this.verify.assertAreEqual(original, await toggle.locator.getAttribute('aria-checked'));
       await this.verify.waitForElementToDisappear(this.locators.preferencesSnackbar);
+    });
+  }
+
+  async captureProfileSnapshot(visualConfig: ApplitoolsVisualConfig = PROFILE_FIGMA_CONFIG, tag: string = 'Profile page loaded'): Promise<void> {
+    await test.step(`Capture the fully loaded ${tag} state`, async () => {
+      await this.page.waitForLoadState('load').catch(() => undefined);
+      if (this.visual) {
+        await this.visual.captureCheckpoint(tag, visualConfig);
+      }
     });
   }
 }

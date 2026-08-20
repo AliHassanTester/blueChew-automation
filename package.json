@@ -45,6 +45,9 @@
     "test:product:vardenafil:visual": "node ./scripts/test-visual.js src/specs/product/product-checkout.spec.ts --grep PRODUCT-VARDENAFIL",
     "test:product:dailytad:visual": "node ./scripts/test-visual.js src/specs/product/product-checkout.spec.ts --grep PRODUCT-DAILYTAD",
     "test:product:max:visual": "node ./scripts/test-visual.js src/specs/product/product-checkout.spec.ts --grep PRODUCT-MAX",
+    "test:profile:visual": "node ./scripts/test-visual.js src/specs/login/profile.spec.ts",
+    "test:registration:visual": "node ./scripts/test-visual.js src/specs/registration/registration-validation.spec.ts",
+    "test:e2e:visual": "node ./scripts/test-visual.js src/specs/login/signup-to-approved-order.spec.ts",
     "test:applitools": "node ./scripts/run-visual.js applitools",
     "test:percy": "node ./scripts/run-visual.js percy",
     "visual": "node ./scripts/test-visual.js",
@@ -57,11 +60,14 @@
     "allure:report": "npm run allure:generate && npm run allure:open"
   },
   "devDependencies": {
-    "@applitools/eyes-playwright": "^1.48.1",
+    "@applitools/eyes-playwright": "^1.48.2",
+    "@applitools/mcp": "^0.5.16",
     "@percy/cli": "^1.32.5",
     "@percy/playwright": "^1.1.1",
     "@playwright/test": "^1.44.0",
     "@types/node": "^20.12.0",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "allure": "^3.9.0",
     "cross-env": "^7.0.3",
     "typescript": "^5.4.5"

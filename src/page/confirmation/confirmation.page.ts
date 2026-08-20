@@ -3,6 +3,8 @@ import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import * as path from 'path';
+import { VisualHelper } from '@utilities/visual.helper';
+import { ApplitoolsVisualConfig, CONFIRMATION_FIGMA_CONFIG } from '@data/visual/figma.visual.data';
 
 const SAMPLE_ID_PATH = path.resolve(__dirname, '../../../tests/fixtures/sampleID.jpg');
 
@@ -14,12 +16,14 @@ export class ConfirmationPage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
   private readonly verify: PlaywrightVerificationFactory;
+  private readonly visual?: VisualHelper;
   private readonly locators: { [key: string]: LocatorInfo };
 
-  constructor(page: Page, testInfo: TestInfo) {
+  constructor(page: Page, testInfo: TestInfo, visual?: VisualHelper) {
     this.page = page;
     this.actions = new PlaywrightActionFactory(page, testInfo);
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
+    this.visual = visual;
 
     this.locators = {
       uploadPhotoButton: {
@@ -58,7 +62,9 @@ export class ConfirmationPage {
   async uploadIdPhoto(): Promise<void> {
     await test.step('Upload ID photo on confirmation page', async () => {
       await this.page.waitForLoadState('load');
-      // percy captureCheckpoint() 
+      if (this.visual) {
+        await this.visual.captureCheckpoint('Confirmation - ID photo upload screen', CONFIRMATION_FIGMA_CONFIG);
+      }
       await this.verify.waitForLoaderToDisappear();
 
       // Intercept the native file chooser opened by the Upload button
@@ -136,6 +142,15 @@ export class ConfirmationPage {
       // and varies by which provider approved.)
       await expect(this.locators.orderProcessingBanner.locator).toBeVisible({ timeout: 30_000 });
       await expect(this.locators.goldPlanLabel.locator).toBeVisible();
+    });
+  }
+
+  async captureConfirmationSnapshot(visualConfig: ApplitoolsVisualConfig = CONFIRMATION_FIGMA_CONFIG, tag: string = 'Confirmation page loaded'): Promise<void> {
+    await test.step(`Capture the fully loaded ${tag} state`, async () => {
+      await this.page.waitForLoadState('load').catch(() => undefined);
+      if (this.visual) {
+        await this.visual.captureCheckpoint(tag, visualConfig);
+      }
     });
   }
 }

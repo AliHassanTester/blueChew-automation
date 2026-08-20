@@ -26,6 +26,7 @@ test.describe('Feature: Account Profile', () => {
   `,
     async ({ profilePage }) => {
       await logTestCaseData(test.info(), changePassword.testCaseData, allureMeta);
+      await profilePage.captureProfileSnapshot();
       const d = changePassword.profileDetails;
       await profilePage.changePasswordAndRestore(d.currentPassword, d.tempPassword);
     },
@@ -39,6 +40,7 @@ test.describe('Feature: Account Profile', () => {
   `,
     async ({ profilePage }) => {
       await logTestCaseData(test.info(), updateShipping.testCaseData, allureMeta);
+      await profilePage.captureProfileSnapshot();
       const s = updateShipping.profileDetails;
       await profilePage.updateShippingAddress(s.shipping, s.shippingAlt);
     },
@@ -52,6 +54,7 @@ test.describe('Feature: Account Profile', () => {
   `,
     async ({ profilePage }) => {
       await logTestCaseData(test.info(), togglePrefs.testCaseData, allureMeta);
+      await profilePage.captureProfileSnapshot();
       await profilePage.toggleNotificationPreferences();
     },
   );

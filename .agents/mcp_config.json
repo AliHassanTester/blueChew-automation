@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "applitools-mcp": {
+      "command": "applitools-mcp"
+    }
+  }
+}

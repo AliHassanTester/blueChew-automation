@@ -20,6 +20,7 @@ test.describe('Feature: Registration Validation', () => {
 
       test.info().annotations.push({ type: 'Duplicate Email', description: d.email });
 
+      await registrationPage.captureRegistrationSnapshot();
       await registrationPage.attemptRegistrationWithDuplicateEmail(d);
       await registrationPage.verifyDuplicateEmailErrorShown();
     },
