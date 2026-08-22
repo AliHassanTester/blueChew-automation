@@ -8,44 +8,20 @@ export type { ApplitoolsVisualConfig };
 export class VisualHelper {
   constructor(private readonly page: Page, private readonly testInfo: TestInfo) {}
 
-  /**
-   * Captures a visual snapshot checkpoint via Applitools.
-   */
-  async captureApplitoolsCheckpoint(
-    checkpointName: string,
-    visualConfig: ApplitoolsVisualConfig,
-  ): Promise<void> {
-    await captureApplitoolsVisualCheckpoint(this.page, visualConfig, checkpointName);
+  async captureApplitoolsCheckpoint(name: string, config?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[]): Promise<void> {
+    await captureApplitoolsVisualCheckpoint(this.page, config, name);
   }
 
-  /**
-   * Captures a visual snapshot checkpoint via Percy.
-   */
-  async capturePercyCheckpoint(
-    checkpointName: string,
-    options?: any,
-  ): Promise<void> {
-    await capturePercyVisualCheckpoint(this.page, checkpointName, this.testInfo, options);
+  async capturePercyCheckpoint(name: string, options?: any): Promise<void> {
+    await capturePercyVisualCheckpoint(this.page, name, this.testInfo, options);
   }
 
-  /**
-   * Dynamic checkpoint capture method. Auto-routes to active providers specified in VISUAL_PROVIDERS env.
-   * Active providers default to: percy, applitools.
-   */
-  async captureCheckpoint(checkpointName: string, visualConfig?: ApplitoolsVisualConfig): Promise<void> {
-    const rawProviders = process.env.VISUAL_PROVIDERS || 'percy,applitools';
-    const providers = rawProviders.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
-
-    if (providers.includes('applitools')) {
-      await captureApplitoolsVisualCheckpoint(this.page, visualConfig, checkpointName);
-    }
-
-    if (providers.includes('percy')) {
-      await capturePercyVisualCheckpoint(this.page, checkpointName, this.testInfo);
-    }
+  /** Dynamic checkpoint capture. Auto-routes to active providers (defaults to percy, applitools). */
+  async captureCheckpoint(name: string, config?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[]): Promise<void> {
+    const providers = (process.env.VISUAL_PROVIDERS || 'percy,applitools').toLowerCase().split(',').map((s) => s.trim());
+    if (providers.includes('applitools')) await captureApplitoolsVisualCheckpoint(this.page, config, name);
+    if (providers.includes('percy')) await capturePercyVisualCheckpoint(this.page, name, this.testInfo);
   }
 
-  async close(): Promise<void> {
-    // Teardown hook
-  }
+  async close(): Promise<void> {}
 }

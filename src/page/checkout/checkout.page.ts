@@ -3,7 +3,6 @@ import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { ShippingDetails, PaymentDetails } from '@interfaces/signup-to-approved-order.interface';
-import { captureApplitoolsVisualCheckpoint } from '@utilities/applitools.utils';
 import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 import { VisualHelper } from '@utilities/visual.helper';
 
@@ -105,8 +104,6 @@ export class CheckoutPage {
       await this.page.waitForLoadState('load').catch(() => undefined);
       if (this.visual) {
         await this.visual.captureCheckpoint(tag, visualConfig);
-      } else if (visualConfig) {
-        await captureApplitoolsVisualCheckpoint(this.page, visualConfig, tag);
       }
     });
   }

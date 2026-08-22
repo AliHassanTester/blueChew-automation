@@ -5,7 +5,6 @@ import * as dotenv from 'dotenv';
 
 export type { ApplitoolsVisualConfig };
 
-// Ensure environment variables from .env.dev are loaded even if process.env wasn't populated yet
 const envType = process.env.ENV_TYPE || 'dev';
 dotenv.config({ path: `.env.${envType}` });
 
@@ -17,101 +16,64 @@ function resolveVisualConfigForPage(
   visualConfigs?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[],
 ): ApplitoolsVisualConfig | undefined {
   const configs = Array.isArray(visualConfigs) ? visualConfigs : visualConfigs ? [visualConfigs] : [];
+  if (!configs.length) return undefined;
+  const vp = page.viewportSize();
+  if (!vp) return configs[0];
 
-  if (configs.length === 0) {
-    return undefined;
-  }
+  // 1. Exact match (width & height)
+  const exact = configs.find((c) => c.viewport.width === vp.width && c.viewport.height === vp.height);
+  if (exact) return exact;
 
-  const currentViewport = page.viewportSize();
-  if (currentViewport) {
-    const exactMatch = configs.find(
-      (config) =>
-        config.viewport.width === currentViewport.width &&
-        config.viewport.height === currentViewport.height,
-    );
+  // 2. Exact width match (height may vary due to browser bars)
+  const exactWidth = configs.find((c) => c.viewport.width === vp.width);
+  if (exactWidth) return exactWidth;
 
-    if (exactMatch) {
-      return exactMatch;
-    }
+  // 3. Mobile (width <= 768) vs Desktop (width > 768) match
+  const isMobileViewport = vp.width <= 768;
+  const categorized = configs.find((c) => (isMobileViewport ? c.viewport.width <= 768 : c.viewport.width > 768));
+  if (categorized) return categorized;
 
-    const closestMatch = configs
-      .map((config) => ({
-        config,
-        distance:
-          Math.abs(config.viewport.width - currentViewport.width) +
-          Math.abs(config.viewport.height - currentViewport.height),
-      }))
-      .sort((a, b) => a.distance - b.distance)[0];
-
-    if (closestMatch) {
-      return closestMatch.config;
-    }
-  }
-
-  return configs[0];
+  // 4. Closest width match fallback
+  return [...configs].sort((a, b) => Math.abs(a.viewport.width - vp.width) - Math.abs(b.viewport.width - vp.width))[0];
 }
 
 /**
  * Centralized utility to capture visual checkpoints using Applitools Eyes.
- * Configures Applitools Eyes to match against Figma baselines by aligning:
- * - App Name & Test Name
- * - Viewport dimensions
- * - Baseline Environment Name
- * - Displacements & Branching
  */
 export async function captureApplitoolsVisualCheckpoint(
   page: Page,
   visualConfigs?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[],
-  checkpointTag?: string,
+  checkpointTag: string = 'Page Snapshot',
 ): Promise<void> {
   const apiKey = process.env.APPLITOOLS_API_KEY || process.env.APPLI_API_KEY;
   if (!apiKey) {
-    console.log(`[Applitools] APPLITOOLS_API_KEY not set in process.env. Skipping visual checkpoint: ${checkpointTag || 'Snapshot'}`);
+    console.log(`[Applitools] APPLITOOLS_API_KEY not set. Skipping: ${checkpointTag}`);
     return;
   }
 
-  console.log(`[Applitools] Starting visual capture for "${checkpointTag || 'Snapshot'}" with API Key: ${apiKey.substring(0, 6)}...`);
-
   const mainConfig = resolveVisualConfigForPage(page, visualConfigs);
-
   const eyes = new Eyes();
-  const config = new Configuration();
-  config.setApiKey(apiKey);
-  config.setBatch(batch);
+  const config = new Configuration().setApiKey(apiKey).setBatch(batch);
 
   if (mainConfig?.appName) config.setAppName(mainConfig.appName);
   if (mainConfig?.testName) config.setTestName(mainConfig.testName);
-  if (mainConfig?.viewport) {
-    config.setViewportSize({ width: mainConfig.viewport.width, height: mainConfig.viewport.height });
-  }
-  if (mainConfig?.baselineEnvName) {
-    config.setBaselineEnvName(mainConfig.baselineEnvName);
-  }
+  if (mainConfig?.viewport) config.setViewportSize(mainConfig.viewport);
+  if (mainConfig?.baselineEnvName) config.setBaselineEnvName(mainConfig.baselineEnvName);
   const ignoreDisp = mainConfig?.ignoreDisplacement ?? mainConfig?.ignoreDisplacements;
-  if (typeof ignoreDisp === 'boolean') {
-    config.setIgnoreDisplacements(ignoreDisp);
-  }
-  if (mainConfig?.branchName) {
-    config.setBranchName(mainConfig.branchName);
-  }
-  if (mainConfig?.parentBranchName) {
-    config.setParentBranchName(mainConfig.parentBranchName);
-  }
+  if (typeof ignoreDisp === 'boolean') config.setIgnoreDisplacements(ignoreDisp);
+  if (mainConfig?.branchName) config.setBranchName(mainConfig.branchName);
+  if (mainConfig?.parentBranchName) config.setParentBranchName(mainConfig.parentBranchName);
 
   eyes.setConfiguration(config);
 
   try {
-    console.log(
-      `[Applitools] Opening Eyes session for app="${mainConfig?.appName}", test="${mainConfig?.testName}", env="${mainConfig?.baselineEnvName || 'default'}"...`,
-    );
-    await eyes.open(page, mainConfig?.appName || 'BlueChew App', mainConfig?.testName || checkpointTag || 'Visual Checkpoint');
-    console.log(`[Applitools] Capturing snapshot "${checkpointTag}"...`);
-    await eyes.check(checkpointTag || 'Page Snapshot', Target.window().fully());
-    console.log(`[Applitools] Snapshot captured successfully! Closing session...`);
+    console.log(`[Applitools] Capturing "${checkpointTag}" (app="${mainConfig?.appName || 'BlueChew App'}", test="${mainConfig?.testName || checkpointTag}")...`);
+    await eyes.open(page, mainConfig?.appName || 'BlueChew App', mainConfig?.testName || checkpointTag);
+    await eyes.check(checkpointTag, Target.window().fully());
     await eyes.close(false);
-    console.log(`[Applitools] Eyes session closed cleanly for "${checkpointTag}".`);
+    console.log(`[Applitools] Snapshot successfully captured for "${checkpointTag}".`);
   } catch (error) {
-    console.error(`[Applitools] Error capturing checkpoint "${checkpointTag}":`, error);
+    console.error(`[Applitools] Error capturing "${checkpointTag}":`, error);
     await eyes.abortIfNotClosed().catch(() => undefined);
   }
 }

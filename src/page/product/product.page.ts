@@ -3,7 +3,6 @@ import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { VisualHelper } from '@utilities/visual.helper';
-import { captureApplitoolsVisualCheckpoint } from '@utilities/applitools.utils';
 import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 
 export class ProductPage {
@@ -83,11 +82,7 @@ export class ProductPage {
   async captureProductSnapshot(visualConfig?: ApplitoolsVisualConfig, tag: string = 'Product page loaded'): Promise<void> {
     await test.step(`Capture the fully loaded ${tag} state`, async () => {
       await this.page.waitForLoadState('load').catch(() => undefined);
-      if (this.visual) {
-        await this.visual.captureCheckpoint(tag, visualConfig);
-      } else if (visualConfig) {
-        await captureApplitoolsVisualCheckpoint(this.page, visualConfig, tag);
-      }
+      await this.visual.captureCheckpoint(tag, visualConfig);
     });
   }
 }

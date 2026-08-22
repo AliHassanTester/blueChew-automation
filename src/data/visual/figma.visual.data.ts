@@ -24,6 +24,94 @@ export const LOGIN_MOBILE_FIGMA_CONFIG: ApplitoolsVisualConfig = {
   ignoreDisplacement: true,
 };
 
+export const LOGIN_CREDENTIALS_ENTERED_FIGMA_CONFIG: ApplitoolsVisualConfig = {
+  appName: 'Login Default',
+  testName: 'Log in/Success',
+  viewport: {
+    width: 1440,
+    height: 915,
+  },
+  baselineEnvName: 'Log in/Success_1440',
+  ignoreDisplacement: true,
+};
+
+export const LOGIN_ERROR_FIGMA_CONFIG: ApplitoolsVisualConfig = {
+  appName: 'Login Default',
+  testName: 'Log in/error',
+  viewport: {
+    width: 1440,
+    height: 915,
+  },
+  baselineEnvName: 'Log in/error_1440',
+  ignoreDisplacement: true,
+};
+
+export const LOGIN_FORGOT_PASSWORD_FIGMA_CONFIG: ApplitoolsVisualConfig = {
+  appName: 'Login Default',
+  testName: 'Forgot Password/ Retrieve Password',
+  viewport: {
+    width: 1440,
+    height: 915,
+  },
+  baselineEnvName: 'Forgot Password/ Retrieve Password_1440',
+  ignoreDisplacement: true,
+};
+
+// ── Mobile Login Figma Configurations ─────────────────────────────────────────
+export const LOGIN_CREDENTIALS_ENTERED_MOBILE_FIGMA_CONFIG: ApplitoolsVisualConfig = {
+  appName: 'Login Default',
+  testName: 'Log in/Success',
+  viewport: {
+    width: 390,
+    height: 844,
+  },
+  baselineEnvName: 'Log in/Success_390',
+  ignoreDisplacement: true,
+};
+
+export const LOGIN_ERROR_MOBILE_FIGMA_CONFIG: ApplitoolsVisualConfig = {
+  appName: 'Login Default',
+  testName: 'Log in/error',
+  viewport: {
+    width: 390,
+    height: 844,
+  },
+  baselineEnvName: 'Log in/error_390',
+  ignoreDisplacement: true,
+};
+
+export const LOGIN_FORGOT_PASSWORD_MOBILE_FIGMA_CONFIG: ApplitoolsVisualConfig = {
+  appName: 'Login Default',
+  testName: 'Forgot Password/ Retrieve Password',
+  viewport: {
+    width: 390,
+    height: 844,
+  },
+  baselineEnvName: 'Forgot Password/ Retrieve Password_390',
+  ignoreDisplacement: true,
+};
+
+// ── Combined Desktop & Mobile Login Configurations ─────────────────────────────
+export const LOGIN_INITIAL_FIGMA_CONFIGS = [
+  LOGIN_DESKTOP_FIGMA_CONFIG,
+  LOGIN_MOBILE_FIGMA_CONFIG,
+];
+
+export const LOGIN_CREDENTIALS_ENTERED_FIGMA_CONFIGS = [
+  LOGIN_CREDENTIALS_ENTERED_FIGMA_CONFIG,
+  LOGIN_CREDENTIALS_ENTERED_MOBILE_FIGMA_CONFIG,
+];
+
+export const LOGIN_ERROR_FIGMA_CONFIGS = [
+  LOGIN_ERROR_FIGMA_CONFIG,
+  LOGIN_ERROR_MOBILE_FIGMA_CONFIG,
+];
+
+export const LOGIN_FORGOT_PASSWORD_FIGMA_CONFIGS = [
+  LOGIN_FORGOT_PASSWORD_FIGMA_CONFIG,
+  LOGIN_FORGOT_PASSWORD_MOBILE_FIGMA_CONFIG,
+];
+
 // ── Product Checkout Figma Configurations ────────────────────────────────────
 export const PRODUCT_SILDENAFIL_FIGMA_CONFIG: ApplitoolsVisualConfig = {
   appName: 'Login Default',

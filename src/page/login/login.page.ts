@@ -65,6 +65,14 @@ export class LoginPage {
         description: 'Continue with Apple Button',
         locator: this.page.locator("//button[contains(normalize-space(),'Continue with apple')]"),
       },
+      forgotPasswordEmailInput: {
+        description: 'Forgot Password Email Input',
+        locator: this.page.getByRole('textbox').first(),
+      },
+      forgotPasswordSubmitButton: {
+        description: 'Forgot Password Submit Button (SEND)',
+        locator: this.page.locator("//button[contains(normalize-space(),'Send') or contains(normalize-space(),'SEND')]"),
+      },
 
       // ── Post-login account shell — verified from live /account DOM ─────────
       accountTabMyPlan: {
@@ -171,5 +179,34 @@ export class LoginPage {
 
   async verifySuccessfulLogin(): Promise<void> {
     await this.verifyLoginSuccess();
+  }
+
+  async clickForgotPasswordLink(): Promise<void> {
+    await test.step('Click Forgot Password link', async () => {
+      await this.playwrightActionsFactory.click(this.locators.forgotPasswordLink);
+      await this.page.waitForLoadState('load');
+    });
+  }
+
+  async fillForgotPasswordEmail(email: string): Promise<void> {
+    await test.step('Fill email on Forgot Password page', async () => {
+      await this.playwrightActionsFactory.sendKeys(this.locators.forgotPasswordEmailInput, email);
+    });
+  }
+
+  async submitForgotPassword(): Promise<void> {
+    await test.step('Submit Forgot Password form', async () => {
+      await this.playwrightActionsFactory.click(this.locators.forgotPasswordSubmitButton).catch(() => undefined);
+      await this.page.waitForLoadState('load').catch(() => undefined);
+    });
+  }
+
+  async captureVisualCheckpoint(tag: string, config?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[]): Promise<void> {
+    await test.step(`Capture visual checkpoint: ${tag}`, async () => {
+      await this.page.waitForLoadState('load').catch(() => undefined);
+      if (this.visual) {
+        await this.visual.captureCheckpoint(tag, config);
+      }
+    });
   }
 }
