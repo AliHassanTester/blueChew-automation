@@ -111,4 +111,13 @@ If Percy runs but you see no snapshots in the dashboard:
 - `PERCY_ENABLED=false` disables visual snapshots while keeping the functional flow intact.
 - The implementation no longer uses global setup/teardown for Percy; it relies on `percy exec` instead.
 
-If you want, I can also add a short “Percy smoke test” example that hits a single baseline snapshot first. 
+## 💡 Productivity Value: Percy vs. Manual QA
+
+A common question is: *If a QA engineer still has to manually approve or reject visual differences in the Percy dashboard, how does this improve productivity?*
+
+The value of automated visual testing lies in delegating **Navigation** and **Visual Scanning (change detection)** to automation, leaving only **Decision Making** to the human:
+
+1. **Zero Navigation Overhead**: Instead of manually logging in, filling forms, and navigating to check a specific state, the Playwright E2E tests automatically capture DOM snapshots at key checkpoints.
+2. **Instant "Spot the Difference"**: Percy renders snapshots in its standardized cloud environments and highlights pixel differences in red. QA doesn't have to scan unchanged pages or play "spot the difference" across dozens of elements.
+3. **The "Butterfly Effect" (Regression Shield)**: In frameworks with shared CSS or shared components, a visual fix on one page (e.g., Profile) can break a layout on another page (e.g., Checkout). A manual QA engineer cannot check every screen on every PR. Percy automatically runs checkpoints across the whole flow and flags side-effects instantly.
+4. **Cross-Browser/Responsive Scaling**: Playwright runs once in headless Chromium, but Percy renders that captured DOM state in parallel across Chrome, Firefox, Safari, and Edge at both desktop and mobile viewports in the cloud, increasing coverage exponentially for no extra execution time.

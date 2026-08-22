@@ -1,6 +1,7 @@
 import { Page, TestInfo } from '@playwright/test';
 import percySnapshot from '@percy/playwright';
 import * as dotenv from 'dotenv';
+import { resolveVisualConfigForPage, ApplitoolsVisualConfig } from './applitools.utils';
 
 const envType = process.env.ENV_TYPE || 'dev';
 dotenv.config({ path: `.env.${envType}` });
@@ -22,7 +23,7 @@ export async function capturePercyVisualCheckpoint(
   page: Page,
   snapshotName: string,
   testInfo?: TestInfo,
-  options?: any,
+  config?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[] | any,
 ): Promise<void> {
   const percyToken = process.env.PERCY_TOKEN;
   const isEnabledFlag = process.env.PERCY_ENABLED !== 'false' && process.env.PERCY_ENABLED !== '0';
@@ -45,11 +46,35 @@ export async function capturePercyVisualCheckpoint(
   const projectName = testInfo?.project?.name ? `[${testInfo.project.name}] ` : '';
   const fullName = `${projectName}${snapshotName}`;
 
+  // Resolve custom width for Percy rendering: strictly 1440 (desktop) or 390 (mobile)
+  let width = 1440;
+  const vp = page.viewportSize();
+
+  if (config) {
+    if (config.widths && Array.isArray(config.widths)) {
+      const firstWidth = config.widths[0];
+      width = firstWidth <= 768 ? 390 : 1440;
+    } else {
+      const activeConfig = resolveVisualConfigForPage(page, config);
+      if (activeConfig?.viewport?.width) {
+        width = activeConfig.viewport.width <= 768 ? 390 : 1440;
+      }
+    }
+  } else if (vp) {
+    width = vp.width <= 768 ? 390 : 1440;
+  }
+
+  const percyOptions = {
+    ...(config && !Array.isArray(config) && !config.viewport ? config : {}), // Keep non-config options if passed
+    widths: [width],
+  };
+
   try {
-    console.log(`[Percy] Capturing visual snapshot "${fullName}"...`);
-    await percySnapshot(page, fullName, options);
+    console.log(`[Percy] Capturing visual snapshot "${fullName}" with width: ${width}...`);
+    await percySnapshot(page, fullName, percyOptions);
     console.log(`[Percy] Visual snapshot captured successfully for "${fullName}".`);
   } catch (error) {
     console.warn(`[Percy] Warning capturing snapshot "${fullName}":`, error);
   }
 }
+

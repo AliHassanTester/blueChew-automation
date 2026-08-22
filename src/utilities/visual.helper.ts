@@ -20,7 +20,7 @@ export class VisualHelper {
   async captureCheckpoint(name: string, config?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[]): Promise<void> {
     const providers = (process.env.VISUAL_PROVIDERS || 'percy,applitools').toLowerCase().split(',').map((s) => s.trim());
     if (providers.includes('applitools')) await captureApplitoolsVisualCheckpoint(this.page, config, name);
-    if (providers.includes('percy')) await capturePercyVisualCheckpoint(this.page, name, this.testInfo);
+    if (providers.includes('percy')) await capturePercyVisualCheckpoint(this.page, name, this.testInfo, config);
   }
 
   async close(): Promise<void> {}

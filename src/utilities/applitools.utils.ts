@@ -11,7 +11,7 @@ dotenv.config({ path: `.env.${envType}` });
 const DEFAULT_BATCH_NAME = 'BlueChew 4.0 - Dev Handoff - Stepped out Medical intake';
 const batch = new BatchInfo({ name: DEFAULT_BATCH_NAME });
 
-function resolveVisualConfigForPage(
+export function resolveVisualConfigForPage(
   page: Page,
   visualConfigs?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[],
 ): ApplitoolsVisualConfig | undefined {

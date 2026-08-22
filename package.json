@@ -40,6 +40,8 @@
     "test:login:visual": "node ./scripts/test-visual.js src/specs/login/login-visual.spec.ts",
     "test:login:visual:desktop": "node ./scripts/test-visual.js src/specs/login/login-visual.spec.ts --project=chromium-desktop",
     "test:dev:login:visual:desktop": "node ./scripts/test-visual.js src/specs/login/login-visual.spec.ts --project=chromium-desktop",
+    "test:login:visual:percy": "node ./scripts/test-visual.js src/specs/login/login-visual.spec.ts --providers=percy",
+    "test:dev:login:visual:percy": "node ./scripts/test-visual.js src/specs/login/login-visual.spec.ts --providers=percy",
     "test:product:visual": "node ./scripts/test-visual.js src/specs/product/product-checkout.spec.ts",
     "test:product:visual:percy": "node ./scripts/test-visual.js --providers=percy src/specs/product/product-checkout.spec.ts",
     "test:product:visual:applitools": "node ./scripts/test-visual.js --providers=applitools src/specs/product/product-checkout.spec.ts",
