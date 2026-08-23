@@ -204,6 +204,7 @@ export class LoginPage {
   async captureVisualCheckpoint(tag: string, config?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[]): Promise<void> {
     await test.step(`Capture visual checkpoint: ${tag}`, async () => {
       await this.page.waitForLoadState('load').catch(() => undefined);
+      await this.playwrightVerificationsFactory.waitForLoaderToDisappear().catch(() => undefined);
       if (this.visual) {
         await this.visual.captureCheckpoint(tag, config);
       }

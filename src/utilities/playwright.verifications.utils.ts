@@ -134,6 +134,8 @@ export class PlaywrightVerificationFactory {
   }
 
   async waitForLoaderToDisappear(): Promise<void> {
+    // Wait for local-loader-com or spinner elements to be hidden
+    await this.page.locator('local-loader-com, .spinner, .loader, mat-spinner, .loading-spinner').waitFor({ state: 'hidden', timeout: 15_000 }).catch(() => undefined);
     await this.waitForPageToSettle();
   }
 
@@ -146,6 +148,10 @@ export class PlaywrightVerificationFactory {
   }
 
   private async waitForPageToSettle(timeout = 5_000): Promise<void> {
+    const settleDelay = process.env.VISUAL_SETTLE_DELAY_MS ? parseInt(process.env.VISUAL_SETTLE_DELAY_MS, 10) : 1000;
+    if (settleDelay > 0) {
+      await this.page.waitForTimeout(settleDelay);
+    }
     try {
       await this.page.waitForLoadState('load', { timeout: Math.min(timeout, 2_000) });
       await this.page.waitForLoadState('load', { timeout: Math.min(timeout, 2_000) });

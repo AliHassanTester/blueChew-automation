@@ -67,19 +67,44 @@ const defaultArgs = hasOnly ? '' : '--grep @visual';
 const argsToPass = extraArgs ? extraArgs : defaultArgs;
 
 // If Percy is requested, run via the percy exec wrapper. Otherwise run playwright directly.
-let cmd;
 if (wantsPercy) {
-  cmd = `npx percy exec -- npx playwright test ${argsToPass}`.trim();
+  if (!argsToPass.includes('--project')) {
+    // Sequentially run desktop and mobile projects to separate the Percy builds/figmas
+    const runProject = (project) => {
+      return new Promise((resolve) => {
+        const splitCmd = `npx percy exec -- npx playwright test --project=${project} ${argsToPass}`.trim();
+        console.log(`[visual-runner] Executing Percy build for project ${project}:`, splitCmd);
+        const child = spawn(splitCmd, { shell: true, stdio: 'inherit', env: process.env });
+        child.on('exit', (code) => {
+          resolve(code || 0);
+        });
+      });
+    };
+
+    (async () => {
+      console.log('[visual-runner] Splitting execution into separate Percy builds for Desktop & Mobile.');
+      const codeDesktop = await runProject('chromium-desktop');
+      const codeMobile = await runProject('chromium-mobile');
+      process.exit(codeDesktop || codeMobile);
+    })();
+    return;
+  } else {
+    const cmd = `npx percy exec -- npx playwright test ${argsToPass}`.trim();
+    console.log('[visual-runner] Active Providers:', providers.join(', '));
+    console.log('[visual-runner] Executing Command:', cmd);
+    const child = spawn(cmd, { shell: true, stdio: 'inherit', env: process.env });
+    child.on('exit', (code, signal) => {
+      if (signal) process.kill(process.pid, signal);
+      process.exit(code);
+    });
+  }
 } else {
-  cmd = `npx playwright test ${argsToPass}`.trim();
+  const cmd = `npx playwright test ${argsToPass}`.trim();
+  console.log('[visual-runner] Active Providers:', providers.join(', '));
+  console.log('[visual-runner] Executing Command:', cmd);
+  const child = spawn(cmd, { shell: true, stdio: 'inherit', env: process.env });
+  child.on('exit', (code, signal) => {
+    if (signal) process.kill(process.pid, signal);
+    process.exit(code);
+  });
 }
-
-console.log('[visual-runner] Active Providers:', providers.join(', '));
-console.log('[visual-runner] Executing Command:', cmd);
-
-const child = spawn(cmd, { shell: true, stdio: 'inherit', env: process.env });
-
-child.on('exit', (code, signal) => {
-  if (signal) process.kill(process.pid, signal);
-  process.exit(code);
-});

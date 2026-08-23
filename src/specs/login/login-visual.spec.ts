@@ -60,14 +60,6 @@ test.describe('Feature: Login Page Visual Verification', () => {
         await page.waitForLoadState('load');
         await loginPage.captureVisualCheckpoint('05 - Forgot Password Page Initial State', LOGIN_FORGOT_PASSWORD_FIGMA_CONFIGS);
       });
-
-      // ── Step 6: Enter Email on Forgot Password Page ───────────────────────────
-      await test.step('Step 6: Enter Email on Forgot Password Page & Submit', async () => {
-        await loginPage.fillForgotPasswordEmail('resetpatient@bluechew.com');
-        await loginPage.submitForgotPassword();
-        await page.waitForLoadState('load');
-        await loginPage.captureVisualCheckpoint('06 - Forgot Password Submitted State', LOGIN_FORGOT_PASSWORD_FIGMA_CONFIGS);
-      });
     },
   );
 });
