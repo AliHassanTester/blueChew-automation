@@ -12,7 +12,7 @@ const allureMeta = { feature: 'Authentication', story: 'Login Page Visual Verifi
 test.describe('Feature: Login Page Visual Verification', () => {
   test.only(
     'Test case: LOG-VISUAL-001 - Login Page Visual Flow (6 Checkpoints)',
-    async ({ loginPage, page }) => {
+    async ({ loginPage }) => {
       await logTestCaseData(
         test.info(),
         {
@@ -26,39 +26,41 @@ test.describe('Feature: Login Page Visual Verification', () => {
 
       // ── Step 1: Initial Login Page Loaded ──────────────────────────────────────
       await test.step('Step 1: Land on Login Page & Capture Initial State', async () => {
-        await page.goto('/log-in');
-        await page.waitForLoadState('load');
+        await loginPage.navigateToLoginPage('/log-in');
         await loginPage.captureVisualCheckpoint('01 - Login Page Initial State', LOGIN_INITIAL_FIGMA_CONFIGS);
       });
 
       // ── Step 2: Enter Username & Password (Continue Enabled) ───────────────────
       await test.step('Step 2: Enter Username & Password (Continue Enabled)', async () => {
         await loginPage.fillLoginCredentials({ username: 'patient@bluechew.com', password: 'Password123!' });
-        await page.waitForLoadState('load');
         await loginPage.captureVisualCheckpoint('02 - Credentials Entered and Submit Enabled', LOGIN_CREDENTIALS_ENTERED_FIGMA_CONFIGS);
       });
 
-      // ── Step 3: Enter Invalid Email Validation Error ───────────────────────────
+      // ── Step 3: Enter Invalid Email & Capture Validation Error ─────────────────
       await test.step('Step 3: Enter Invalid Email & Capture Validation Error', async () => {
         await loginPage.fillLoginCredentials({ username: 'invalid-email-format', password: 'Password123!' });
-        await loginPage.submitLogin().catch(() => undefined);
-        await page.waitForLoadState('load');
+        await loginPage.submitLogin();
         await loginPage.captureVisualCheckpoint('03 - Invalid Email Validation Error', LOGIN_ERROR_FIGMA_CONFIGS);
       });
 
-      // ── Step 4: Enter Invalid Password Authentication Error ────────────────────
+      // ── Step 4: Enter Invalid Password & Capture Authentication Error ──────────
       await test.step('Step 4: Enter Invalid Password & Capture Authentication Error', async () => {
         await loginPage.fillLoginCredentials({ username: 'patient@bluechew.com', password: 'WrongPassword999!' });
-        await loginPage.submitLogin().catch(() => undefined);
-        await page.waitForLoadState('load');
+        await loginPage.submitLogin();
         await loginPage.captureVisualCheckpoint('04 - Invalid Password Authentication Error', LOGIN_ERROR_FIGMA_CONFIGS);
       });
 
-      // ── Step 5: Click Forgot Password & Load Forgot Password Page ─────────────
+      // ── Step 5: Click Forgot Password & Capture Forgot Password Page State ─────
       await test.step('Step 5: Click Forgot Password & Capture Forgot Password Page State', async () => {
         await loginPage.clickForgotPasswordLink();
-        await page.waitForLoadState('load');
         await loginPage.captureVisualCheckpoint('05 - Forgot Password Page Initial State', LOGIN_FORGOT_PASSWORD_FIGMA_CONFIGS);
+      });
+
+      // ── Step 6: Enter Email on Forgot Password Page & Submit ───────────────────
+      await test.step('Step 6: Enter Email on Forgot Password Page & Submit', async () => {
+        await loginPage.fillForgotPasswordEmail('resetpatient@bluechew.com');
+        await loginPage.submitForgotPassword();
+        await loginPage.captureVisualCheckpoint('06 - Forgot Password Submitted State', LOGIN_FORGOT_PASSWORD_FIGMA_CONFIGS);
       });
     },
   );

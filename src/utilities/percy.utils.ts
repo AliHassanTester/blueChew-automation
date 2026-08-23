@@ -1,7 +1,8 @@
 import { Page, TestInfo } from '@playwright/test';
 import percySnapshot from '@percy/playwright';
 import * as dotenv from 'dotenv';
-import { resolveVisualConfigForPage, ApplitoolsVisualConfig } from './applitools.utils';
+import { resolveVisualConfigForPage } from './applitools.utils';
+import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 
 const envType = process.env.ENV_TYPE || 'dev';
 dotenv.config({ path: `.env.${envType}` });

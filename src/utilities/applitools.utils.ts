@@ -8,8 +8,14 @@ export type { ApplitoolsVisualConfig };
 const envType = process.env.ENV_TYPE || 'dev';
 dotenv.config({ path: `.env.${envType}` });
 
-const DEFAULT_BATCH_NAME = 'BlueChew 4.0 - Dev Handoff - Stepped out Medical intake';
-const batch = new BatchInfo({ name: DEFAULT_BATCH_NAME });
+export const DEFAULT_BATCH_NAME = 'BlueChew 4.0 - Dev Handoff - Stepped out Medical intake';
+export const batch = new BatchInfo({ name: DEFAULT_BATCH_NAME });
+
+// Persistent Eyes session state at module level
+let activeEyes: Eyes | undefined = undefined;
+let isEyesOpen = false;
+let currentAppName: string | undefined = undefined;
+let currentTestName: string | undefined = undefined;
 
 export function resolveVisualConfigForPage(
   page: Page,
@@ -38,7 +44,28 @@ export function resolveVisualConfigForPage(
 }
 
 /**
+ * Closes the active Eyes session if open.
+ */
+export async function closeActiveEyes(): Promise<void> {
+  if (activeEyes && isEyesOpen) {
+    try {
+      console.log(`[Applitools] Closing active Eyes session (app="${currentAppName}", test="${currentTestName}")...`);
+      await activeEyes.close(false);
+      console.log('[Applitools] Eyes session closed successfully.');
+    } catch (error) {
+      console.error('[Applitools] Error closing Eyes session:', error);
+      await activeEyes.abortIfNotClosed().catch(() => undefined);
+    } finally {
+      isEyesOpen = false;
+      currentAppName = undefined;
+      currentTestName = undefined;
+    }
+  }
+}
+
+/**
  * Centralized utility to capture visual checkpoints using Applitools Eyes.
+ * Switches session dynamically if appName or testName changes, preserving grouping for same-test steps.
  */
 export async function captureApplitoolsVisualCheckpoint(
   page: Page,
@@ -52,28 +79,43 @@ export async function captureApplitoolsVisualCheckpoint(
   }
 
   const mainConfig = resolveVisualConfigForPage(page, visualConfigs);
-  const eyes = new Eyes();
-  const config = new Configuration().setApiKey(apiKey).setBatch(batch);
+  const targetAppName = mainConfig?.appName || 'BlueChew App';
+  const targetTestName = mainConfig?.testName || checkpointTag;
 
-  if (mainConfig?.appName) config.setAppName(mainConfig.appName);
-  if (mainConfig?.testName) config.setTestName(mainConfig.testName);
-  if (mainConfig?.viewport) config.setViewportSize(mainConfig.viewport);
-  if (mainConfig?.baselineEnvName) config.setBaselineEnvName(mainConfig.baselineEnvName);
-  const ignoreDisp = mainConfig?.ignoreDisplacement ?? mainConfig?.ignoreDisplacements;
-  if (typeof ignoreDisp === 'boolean') config.setIgnoreDisplacements(ignoreDisp);
-  if (mainConfig?.branchName) config.setBranchName(mainConfig.branchName);
-  if (mainConfig?.parentBranchName) config.setParentBranchName(mainConfig.parentBranchName);
+  // If a session is open for a different test name, close it first
+  if (isEyesOpen && (currentAppName !== targetAppName || currentTestName !== targetTestName)) {
+    await closeActiveEyes();
+  }
 
-  eyes.setConfiguration(config);
+  if (!activeEyes) {
+    activeEyes = new Eyes();
+  }
+
+  if (!isEyesOpen) {
+    const config = new Configuration().setApiKey(apiKey).setBatch(batch);
+
+    if (mainConfig?.appName) config.setAppName(mainConfig.appName);
+    if (mainConfig?.testName) config.setTestName(mainConfig.testName);
+    if (mainConfig?.viewport) config.setViewportSize(mainConfig.viewport);
+    if (mainConfig?.baselineEnvName) config.setBaselineEnvName(mainConfig.baselineEnvName);
+    const ignoreDisp = mainConfig?.ignoreDisplacement ?? mainConfig?.ignoreDisplacements;
+    if (typeof ignoreDisp === 'boolean') config.setIgnoreDisplacements(ignoreDisp);
+    if (mainConfig?.branchName) config.setBranchName(mainConfig.branchName);
+    if (mainConfig?.parentBranchName) config.setParentBranchName(mainConfig.parentBranchName);
+
+    activeEyes.setConfiguration(config);
+
+    console.log(`[Applitools] Opening Eyes session (app="${targetAppName}", test="${targetTestName}")...`);
+    await activeEyes.open(page, targetAppName, targetTestName);
+    isEyesOpen = true;
+    currentAppName = targetAppName;
+    currentTestName = targetTestName;
+  }
 
   try {
-    console.log(`[Applitools] Capturing "${checkpointTag}" (app="${mainConfig?.appName || 'BlueChew App'}", test="${mainConfig?.testName || checkpointTag}")...`);
-    await eyes.open(page, mainConfig?.appName || 'BlueChew App', mainConfig?.testName || checkpointTag);
-    await eyes.check(checkpointTag, Target.window().fully());
-    await eyes.close(false);
-    console.log(`[Applitools] Snapshot successfully captured for "${checkpointTag}".`);
+    console.log(`[Applitools] Capturing checkpoint: "${checkpointTag}"`);
+    await activeEyes.check(checkpointTag, Target.window().fully());
   } catch (error) {
-    console.error(`[Applitools] Error capturing "${checkpointTag}":`, error);
-    await eyes.abortIfNotClosed().catch(() => undefined);
+    console.error(`[Applitools] Error capturing checkpoint "${checkpointTag}":`, error);
   }
 }

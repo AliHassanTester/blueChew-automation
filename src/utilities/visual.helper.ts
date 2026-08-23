@@ -1,5 +1,5 @@
 import { Page, TestInfo } from '@playwright/test';
-import { captureApplitoolsVisualCheckpoint } from './applitools.utils';
+import { captureApplitoolsVisualCheckpoint, closeActiveEyes } from './applitools.utils';
 import { capturePercyVisualCheckpoint } from './percy.utils';
 import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 
@@ -23,5 +23,7 @@ export class VisualHelper {
     if (providers.includes('percy')) await capturePercyVisualCheckpoint(this.page, name, this.testInfo, config);
   }
 
-  async close(): Promise<void> {}
+  async close(): Promise<void> {
+    await closeActiveEyes();
+  }
 }

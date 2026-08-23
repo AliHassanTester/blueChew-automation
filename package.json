@@ -40,6 +40,7 @@
     "test:login:visual": "node ./scripts/test-visual.js src/specs/login/login-visual.spec.ts",
     "test:login:visual:desktop": "node ./scripts/test-visual.js src/specs/login/login-visual.spec.ts --project=chromium-desktop",
     "test:dev:login:visual:desktop": "node ./scripts/test-visual.js src/specs/login/login-visual.spec.ts --project=chromium-desktop",
+    "test:dev:login:visual:mobile": "node ./scripts/test-visual.js src/specs/login/login-visual.spec.ts --project=chromium-mobile",
     "test:login:visual:percy": "node ./scripts/test-visual.js src/specs/login/login-visual.spec.ts --providers=percy",
     "test:dev:login:visual:percy": "node ./scripts/test-visual.js src/specs/login/login-visual.spec.ts --providers=percy",
     "test:product:visual": "node ./scripts/test-visual.js src/specs/product/product-checkout.spec.ts",
@@ -65,7 +66,7 @@
     "allure:report": "npm run allure:generate && npm run allure:open"
   },
   "devDependencies": {
-    "@applitools/eyes-playwright": "^1.48.2",
+    "@applitools/eyes-playwright": "^1.48.3",
     "@applitools/mcp": "^0.5.16",
     "@percy/cli": "^1.32.7",
     "@percy/playwright": "^1.1.2",
