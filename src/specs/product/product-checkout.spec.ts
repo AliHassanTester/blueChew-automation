@@ -2,6 +2,11 @@ import { logTestCaseData } from '@utilities/test.helper.utils';
 import { getProductCheckoutData, ProductCheckoutTestCaseData } from '@data/product/product-checkout.data';
 import { test } from '@fixtures/page.fixtures';
 import { TestInfo } from '@playwright/test';
+import {
+  REGISTRATION_FIGMA_CONFIG,
+  MEDICAL_FIGMA_CONFIG,
+  GOLD_TRANSITION_FIGMA_CONFIG
+} from '@data/visual/figma.visual.data';
 
 /**
  * Reusable execution helper for product checkout end-to-end flows.
@@ -37,8 +42,43 @@ async function executeProductCheckoutFlow(
 
   // 2. Select plan, complete registration and medical questionnaire
   await productPage.selectPlanAndProceed();
+
+  const isGold = scenario.productName === 'Gold';
+
+  // Gold-only: Capture registration baseline
+  if (isGold) {
+    await test.step('Capture Gold registration page visual baseline', async () => {
+      await registrationPage.captureRegistrationSnapshot(REGISTRATION_FIGMA_CONFIG, 'Gold Registration Page');
+    });
+  }
+
   await registrationPage.completeRegistrationWizard(d);
-  await medicalPage.completeMedicalAndProceed(d.medical);
+
+  // Gold-only: Capture medical baseline on page load
+  if (isGold) {
+    await test.step('Capture Gold medical page initial visual baseline', async () => {
+      await productPage.page.waitForURL(/\/medical/);
+      await medicalPage.captureMedicalSnapshot(MEDICAL_FIGMA_CONFIG, 'Gold Medical Page');
+    });
+  }
+
+  // Complete medical profile
+  await medicalPage.completeMedicalProfile(d.medical);
+
+  // Gold-only: Capture and handle transition page
+  if (isGold) {
+    await test.step('Handle Gold transition page and capture visual baseline', async () => {
+      // Wait for the transition page to load (which is after medical, but before checkout)
+      await productPage.page.waitForURL((url: URL) => !url.pathname.includes('/medical') && !url.pathname.includes('/checkout'), { timeout: 20_000 }).catch(() => undefined);
+      await medicalPage.captureMedicalSnapshot(GOLD_TRANSITION_FIGMA_CONFIG, 'Gold Transition Page');
+      // Click continue on the transition page to reach checkout
+      const continueBtn = productPage.page.locator('button[class*="ds-button--primary"], :text-is("CONTINUE")').filter({ visible: true }).first();
+      await continueBtn.click();
+    });
+  }
+
+  // Verify navigation to checkout
+  await medicalPage.verifyNavigatedToCheckout();
 
   // 3. Checkout page visual snapshot when arriving at checkout
   await test.step(`Capture ${scenario.productName} checkout page visual baseline`, async () => {
@@ -59,6 +99,7 @@ test.describe('Feature: Unified Product Checkout Flows', () => {
     { key: 'PRODUCT-VARDENAFIL', tag: '@vardenafil' },
     { key: 'PRODUCT-DAILYTAD', tag: '@dailytad' },
     { key: 'PRODUCT-MAX', tag: '@max' },
+    { key: 'PRODUCT-GOLD', tag: '@gold' },
   ];
 
   for (const { key, tag } of products) {

@@ -148,6 +148,7 @@ export class CheckoutPage {
     await this.verify.waitForVisibility(this.locators.shippingLine1);
 
     await this.actions.sendKeys(this.locators.shippingLine1, details.streetAddress);
+    await this.actions.pressKey(this.locators.shippingLine1, 'Escape');
     if (details.aptSuite) {
       await this.actions.sendKeys(this.locators.shippingLine2, details.aptSuite);
     }

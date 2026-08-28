@@ -1,7 +1,11 @@
 {
   "mcpServers": {
     "applitools-mcp": {
-      "command": "applitools-mcp"
+      "command": "applitools-mcp",
+      "cwd": "c:\\Users\\BrainNotFound\\Documents\\GitHub\\blueChew-automation",
+      "env": {
+        "APPLITOOLS_API_KEY": "k3Sw7xPdUE41080Suat99BWqsCWSgnj4tB4Y100aY2IVlO8E110"
+      }
     }
   }
 }

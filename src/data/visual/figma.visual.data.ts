@@ -168,6 +168,28 @@ export const PRODUCT_MAX_FIGMA_CONFIG: ApplitoolsVisualConfig = {
   ignoreDisplacements: true,
 };
 
+export const PRODUCT_GOLD_FIGMA_CONFIG: ApplitoolsVisualConfig = {
+  appName: 'Login Default',
+  testName: 'Desktop - Gold',
+  viewport: {
+    width: 1440,
+    height: 7800,
+  },
+  baselineEnvName: 'Desktop - Gold_1440',
+  ignoreDisplacements: true,
+};
+
+export const GOLD_TRANSITION_FIGMA_CONFIG: ApplitoolsVisualConfig = {
+  appName: 'Onboarding Default',
+  testName: 'Gold Transition - Desktop',
+  viewport: {
+    width: 1440,
+    height: 915,
+  },
+  baselineEnvName: 'Gold_Transition_1440',
+  ignoreDisplacement: true,
+};
+
 // ── Profile Figma Configurations ─────────────────────────────────────────────
 export const PROFILE_FIGMA_CONFIG: ApplitoolsVisualConfig = {
   appName: 'Account Default',

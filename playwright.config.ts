@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { EyesFixture } from '@applitools/eyes-playwright/fixture';
 import * as dotenv from 'dotenv';
 
 // ENV_TYPE is set by the npm script (cross-env ENV_TYPE=dev) before this config
@@ -54,9 +55,10 @@ const reporters: Array<readonly [string] | readonly [string, Record<string, unkn
     ],
   }],
   ['list'],
+  ['@applitools/eyes-playwright/reporter'],
 ];
 
-export default defineConfig({
+export default defineConfig<EyesFixture>({
   testDir: '.',
   testMatch: ['src/specs/**/*.spec.ts'],
   // Per-test ceiling — the maximum wall-clock time any single test may run before
@@ -71,6 +73,16 @@ export default defineConfig({
   reporter: reporters,
   use: {
     baseURL: baseURLs[envType] ?? baseURLs['dev'],
+    eyesConfig: {
+      apiKey: process.env.APPLITOOLS_API_KEY,
+      type: 'ufg',
+      testConcurrency: 10,
+      browsersInfo: [
+        { name: 'chrome', width: 1440, height: 915 },
+        { name: 'firefox', width: 1440, height: 915 },
+        { name: 'safari', width: 1440, height: 915 }
+      ]
+    },
     // The dev app domain is behind HTTP auth; Playwright answers the 401 challenge
     // on every context automatically, so no per-test auth step is needed.
     httpCredentials: {
