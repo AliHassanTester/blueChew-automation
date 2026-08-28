@@ -66,7 +66,7 @@ export class CheckoutPage {
       },
       proceedToPaymentButton: {
         description: 'Add Shipping Address Submit Button',
-        locator: this.page.locator('//button[@data-test-id="address-form-submit"]'),
+        locator: this.page.locator('//button[@data-test-id="address-form-submit"], //button[normalize-space()="PROCEED TO PAYMENT"]').filter({ visible: true }).first(),
       },
       addressConfirmButton: {
         description: 'Confirm Delivery Address Modal — Confirm Button',

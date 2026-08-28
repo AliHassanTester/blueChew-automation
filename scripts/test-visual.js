@@ -12,33 +12,18 @@ if (fs.existsSync(envFile)) {
   require('dotenv').config({ path: envFile });
 }
 
-// Ensure PERCY_ENABLED defaults to true unless explicitly disabled
-if (typeof process.env.PERCY_ENABLED === 'undefined') {
-  process.env.PERCY_ENABLED = 'true';
-}
-
-// Allow explicit provider selection via CLI: --providers=percy,applitools
+// Allow explicit provider selection via CLI: --providers=applitools
 const providerArg = process.argv.find((a) => a.startsWith('--providers='));
 if (providerArg) {
   process.env.VISUAL_PROVIDERS = providerArg.split('=')[1];
 }
 
-// If VISUAL_PROVIDERS is not set, default to both percy and applitools
+// Default to applitools as visual provider
 if (!process.env.VISUAL_PROVIDERS) {
-  process.env.VISUAL_PROVIDERS = 'percy,applitools';
+  process.env.VISUAL_PROVIDERS = 'applitools';
 }
 
 const providers = process.env.VISUAL_PROVIDERS.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
-const wantsPercy = providers.includes('percy');
-
-if (wantsPercy) {
-  if (!process.env.PERCY_TOKEN || process.env.PERCY_TOKEN === '') {
-    console.error('[percy-runner] ERROR: PERCY_TOKEN not found in environment.');
-    console.error(`Loaded env file: ${envFile}`);
-    process.exitCode = 2;
-    process.exit();
-  }
-}
 
 // Helper to check if any test specs contain focused tests (.only)
 // Because Playwright ignores test.only when a global --grep filter is active
@@ -66,45 +51,13 @@ const extraArgs = process.argv.filter((a) => !a.startsWith('--providers=')).slic
 const defaultArgs = hasOnly ? '' : '--grep @visual';
 const argsToPass = extraArgs ? extraArgs : defaultArgs;
 
-// If Percy is requested, run via the percy exec wrapper. Otherwise run playwright directly.
-if (wantsPercy) {
-  if (!argsToPass.includes('--project')) {
-    // Sequentially run desktop and mobile projects to separate the Percy builds/figmas
-    const runProject = (project) => {
-      return new Promise((resolve) => {
-        const splitCmd = `npx percy exec -- npx playwright test --project=${project} ${argsToPass}`.trim();
-        console.log(`[visual-runner] Executing Percy build for project ${project}:`, splitCmd);
-        const child = spawn(splitCmd, { shell: true, stdio: 'inherit', env: process.env });
-        child.on('exit', (code) => {
-          resolve(code || 0);
-        });
-      });
-    };
+// Execute Playwright directly
+const cmd = `npx playwright test ${argsToPass}`.trim();
+console.log('[visual-runner] Active Providers:', providers.join(', '));
+console.log('[visual-runner] Executing Command:', cmd);
 
-    (async () => {
-      console.log('[visual-runner] Splitting execution into separate Percy builds for Desktop & Mobile.');
-      const codeDesktop = await runProject('chromium-desktop');
-      const codeMobile = await runProject('chromium-mobile');
-      process.exit(codeDesktop || codeMobile);
-    })();
-    return;
-  } else {
-    const cmd = `npx percy exec -- npx playwright test ${argsToPass}`.trim();
-    console.log('[visual-runner] Active Providers:', providers.join(', '));
-    console.log('[visual-runner] Executing Command:', cmd);
-    const child = spawn(cmd, { shell: true, stdio: 'inherit', env: process.env });
-    child.on('exit', (code, signal) => {
-      if (signal) process.kill(process.pid, signal);
-      process.exit(code);
-    });
-  }
-} else {
-  const cmd = `npx playwright test ${argsToPass}`.trim();
-  console.log('[visual-runner] Active Providers:', providers.join(', '));
-  console.log('[visual-runner] Executing Command:', cmd);
-  const child = spawn(cmd, { shell: true, stdio: 'inherit', env: process.env });
-  child.on('exit', (code, signal) => {
-    if (signal) process.kill(process.pid, signal);
-    process.exit(code);
-  });
-}
+const child = spawn(cmd, { shell: true, stdio: 'inherit', env: process.env });
+child.on('exit', (code, signal) => {
+  if (signal) process.kill(process.pid, signal);
+  process.exit(code);
+});
