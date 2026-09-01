@@ -4,7 +4,7 @@ import { PlaywrightVerificationFactory } from '@utilities/playwright.verificatio
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { MedicalDetails } from '@interfaces/signup-to-approved-order.interface';
 import { VisualHelper } from '@utilities/visual.helper';
-import { ApplitoolsVisualConfig, MEDICAL_FIGMA_CONFIG } from '@data/visual/figma.visual.data';
+import { ApplitoolsVisualConfig, MEDICAL_FIGMA_CONFIG, GOLD_MEDICAL_STEPS_FIGMA_CONFIGS } from '@data/visual/figma.visual.data';
 
 /**
  * Medical-profile wizard (/medical). Stable fields expose aria-labels / formcontrolname,
@@ -19,6 +19,7 @@ export class MedicalPage {
   private readonly visual?: VisualHelper;
   private readonly locators: { [key: string]: LocatorInfo };
   private readonly testInfo: TestInfo;
+  private checkpointIndex = 0;
 
   constructor(page: Page, testInfo: TestInfo, visual?: VisualHelper) {
     this.page = page;
@@ -235,8 +236,9 @@ export class MedicalPage {
    * progressive pages reveal CONTINUE only after all their groups are answered.
    * Loops until the flow leaves /medical.
    */
-  private async completeRemainingMedicalSteps(): Promise<void> {
+  private async completeRemainingMedicalSteps(captureCheckpoints = false): Promise<void> {
     const stepControl = this.locators.stepControl.locator.first();
+    let walk1MileCount = 0;
 
     for (let step = 0; step < 50; step++) {
       if (!this.page.url().includes('/medical')) break;
@@ -247,6 +249,24 @@ export class MedicalPage {
       const hasCheckbox   = (await this.locators.checkboxes.locator.count()) > 0;
       const hasRadiogroup = (await this.locators.radioGroups.locator.count()) > 0;
       const hasOptions    = (await this.optionTiles().count()) > 0;
+
+      if (captureCheckpoints) {
+        // Extract a clean segment from the bodyText or title for the snapshot tag
+        const titleLine = bodyText.split('\n')[0] || `Step ${step + 6}`;
+        const tag = `Gold Medical - ${titleLine.substring(0, 45)}`;
+
+        let skipCheckpoint = false;
+        if (tag.toLowerCase().includes('walk 1 mile')) {
+          walk1MileCount++;
+          if (walk1MileCount > 2) {
+            skipCheckpoint = true;
+          }
+        }
+
+        if (!skipCheckpoint) {
+          await this.captureGoldMedicalCheckpoint(tag);
+        }
+      }
 
       if (hasCheckbox) {
         await this.selectSafeCheckboxOption();
@@ -263,10 +283,13 @@ export class MedicalPage {
 
   // ── Public API ───────────────────────────────────────────────────────────────
 
-  async completeMedicalProfile(details: MedicalDetails): Promise<void> {
+  async completeMedicalProfile(details: MedicalDetails, captureCheckpoints = false): Promise<void> {
     await test.step('Complete medical profile', async () => {
       // ── Step 1: Legal name ─────────────────────────────────────────────────
       await test.step('Enter legal name', async () => {
+        if (captureCheckpoints) {
+          await this.captureGoldMedicalCheckpoint('Gold Medical - Step 1 Legal Name');
+        }
         await this.actions.sendKeys(this.locators.firstNameInput, details.firstName);
         await this.actions.sendKeys(this.locators.lastNameInput, details.lastName);
         await this.clickContinue();
@@ -282,22 +305,31 @@ export class MedicalPage {
 
       // ── Step 3: Sex → Male (auto-advances) ────────────────────────────────
       await test.step('Select biological sex', async () => {
+        if (captureCheckpoints) {
+          await this.captureGoldMedicalCheckpoint('Gold Medical - Step 3 Sex');
+        }
         await this.optionTiles('Male').first().click();
       });
 
       // ── Step 4: Patient → Yes (auto-advances) ─────────────────────────────
       await test.step('Confirm patient status', async () => {
+        if (captureCheckpoints) {
+          await this.captureGoldMedicalCheckpoint('Gold Medical - Step 4 Patient Status');
+        }
         await this.optionTiles('Yes').first().click();
       });
 
       // ── Step 5: Reason for choosing BlueChew — checkboxes ─────────────────
       await test.step('Select reason for choosing BlueChew', async () => {
+        if (captureCheckpoints) {
+          await this.captureGoldMedicalCheckpoint('Gold Medical - Step 5 Reason');
+        }
         await this.selectSafeCheckboxOption();
       });
 
       // ── Steps 6+: remaining health questions ──────────────────────────────
       await test.step('Complete remaining health questions', async () => {
-        await this.completeRemainingMedicalSteps();
+        await this.completeRemainingMedicalSteps(captureCheckpoints);
       });
 
       await this.page.waitForLoadState('load');
@@ -318,6 +350,12 @@ export class MedicalPage {
       await this.completeMedicalProfile(details);
       await this.verifyNavigatedToCheckout();
     });
+  }
+
+  async captureGoldMedicalCheckpoint(tag: string): Promise<void> {
+    const config = GOLD_MEDICAL_STEPS_FIGMA_CONFIGS[this.checkpointIndex] || GOLD_MEDICAL_STEPS_FIGMA_CONFIGS[GOLD_MEDICAL_STEPS_FIGMA_CONFIGS.length - 1];
+    await this.captureMedicalSnapshot(config, tag);
+    this.checkpointIndex++;
   }
 
   async captureMedicalSnapshot(visualConfig: ApplitoolsVisualConfig = MEDICAL_FIGMA_CONFIG, tag: string = 'Medical page loaded'): Promise<void> {

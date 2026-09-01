@@ -66,11 +66,14 @@ export class CheckoutPage {
       },
       proceedToPaymentButton: {
         description: 'Add Shipping Address Submit Button',
-        locator: this.page.locator('//button[@data-test-id="address-form-submit"], //button[normalize-space()="PROCEED TO PAYMENT"]').filter({ visible: true }).first(),
+        locator: this.page.locator('//button[@data-test-id="address-form-submit"]')
+          .or(this.page.locator('//button[normalize-space()="PROCEED TO PAYMENT"]'))
+          .filter({ visible: true })
+          .first(),
       },
       addressConfirmButton: {
         description: 'Confirm Delivery Address Modal — Confirm Button',
-        locator: this.page.locator("//button[normalize-space()='Confirm']").filter({ visible: true }).first(),
+        locator: this.page.locator("//button[normalize-space()='Confirm' or normalize-space()='CONFIRM']").filter({ visible: true }).first(),
       },
 
       // ── Payment (Stripe) ───────────────────────────────────────────────────

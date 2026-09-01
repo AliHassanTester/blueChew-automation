@@ -170,13 +170,13 @@ export const PRODUCT_MAX_FIGMA_CONFIG: ApplitoolsVisualConfig = {
 
 export const PRODUCT_GOLD_FIGMA_CONFIG: ApplitoolsVisualConfig = {
   appName: 'Login Default',
-  testName: 'Desktop - Gold',
+  testName: 'Desktop - 9',
   viewport: {
     width: 1440,
-    height: 7800,
+    height: 1200,
   },
-  baselineEnvName: 'Desktop - Gold_1440',
-  ignoreDisplacements: true,
+  baselineEnvName: 'Desktop - 9_1440',
+  ignoreDisplacement: true,
 };
 
 export const GOLD_TRANSITION_FIGMA_CONFIG: ApplitoolsVisualConfig = {
@@ -249,3 +249,40 @@ export const CONFIRMATION_FIGMA_CONFIG: ApplitoolsVisualConfig = {
   baselineEnvName: 'Confirmation_1440',
   ignoreDisplacement: true,
 };
+
+export const GOLD_MEDICAL_STEPS_FIGMA_CONFIGS: ApplitoolsVisualConfig[] = [
+  // 1. Initial Page Load
+  { appName: 'Login Default', testName: 'Med Intake_1', viewport: { width: 1440, height: 1200 }, baselineEnvName: 'Med Intake_1_1440', ignoreDisplacement: true },
+  // 2. Legal Name
+  { appName: 'Login Default', testName: 'Med Intake_1', viewport: { width: 1440, height: 1200 }, baselineEnvName: 'Med Intake_1_1440', ignoreDisplacement: true },
+  // 3. Sex
+  { appName: 'Login Default', testName: 'Med Intake_2', viewport: { width: 1440, height: 1200 }, baselineEnvName: 'Med Intake_2_1440', ignoreDisplacement: true },
+  // 4. Patient Status
+  { appName: 'Login Default', testName: 'Med Intake_3_Desktop', viewport: { width: 1440, height: 1200 }, baselineEnvName: 'Med Intake_3_Desktop_1440', ignoreDisplacement: true },
+  // 5. Reason
+  { appName: 'Login Default', testName: 'Med Intake_4_Desktop', viewport: { width: 1440, height: 1200 }, baselineEnvName: 'Med Intake_4_Desktop_1440', ignoreDisplacement: true },
+  // 6. Walk 1 Mile State 1
+  { appName: 'Login Default', testName: 'Med Intake_5_Desktop', viewport: { width: 1440, height: 1200 }, baselineEnvName: 'Med Intake_5_Desktop_1440', ignoreDisplacement: true },
+  // 7. Walk 1 Mile State 2
+  { appName: 'Login Default', testName: 'Med Intake_5a_Desktop', viewport: { width: 1440, height: 1200 }, baselineEnvName: 'Med Intake_5a_Desktop_1440', ignoreDisplacement: true },
+  // 8. has a medical provider ever told you...
+  { appName: 'Login Default', testName: 'Med Intake_7_Desktop', viewport: { width: 1440, height: 1200 }, baselineEnvName: 'Med Intake_7_Desktop_1440', ignoreDisplacement: true },
+  // 9. diagnosed with low blood pressure...
+  { appName: 'Login Default', testName: 'Med Intake_8_Desktop', viewport: { width: 1440, height: 1200 }, baselineEnvName: 'Med Intake_8_Desktop_1440', ignoreDisplacement: true },
+  // 10. diagnosed with high blood pressure...
+  { appName: 'Login Default', testName: 'Med Intake_9_Desktop', viewport: { width: 1440, height: 1200 }, baselineEnvName: 'Med Intake_9_Desktop_1440', ignoreDisplacement: true },
+  // 11. vitamins or supplements...
+  { appName: 'Login Default', testName: 'Med Intake_10_Desktop', viewport: { width: 1440, height: 1200 }, baselineEnvName: 'Med Intake_10_Desktop_1440', ignoreDisplacement: true },
+  // 12. medications...
+  { appName: 'Login Default', testName: 'Med Intake_11.1_Desktop', viewport: { width: 1440, height: 1200 }, baselineEnvName: 'Med Intake_11.1_Desktop_1440', ignoreDisplacement: true },
+  // 13. allergies...
+  { appName: 'Login Default', testName: 'Med Intake_13_Desktop', viewport: { width: 1440, height: 1200 }, baselineEnvName: 'Med Intake_13_Desktop_1440', ignoreDisplacement: true },
+  // 14. ever had any of the following...
+  { appName: 'Login Default', testName: 'Med Intake_14a_Desktop', viewport: { width: 1440, height: 1200 }, baselineEnvName: 'Med Intake_14a_Desktop_1440', ignoreDisplacement: true },
+  // 15. other medical conditions...
+  { appName: 'Login Default', testName: 'Med Intake_15_Desktop', viewport: { width: 1440, height: 1200 }, baselineEnvName: 'Med Intake_15_Desktop_1440', ignoreDisplacement: true },
+  // 16. list other medications...
+  { appName: 'Login Default', testName: 'Med Intake_16_Desktop', viewport: { width: 1440, height: 1200 }, baselineEnvName: 'Med Intake_16_Desktop_1440', ignoreDisplacement: true },
+  // 17. is there anything else you would like to tell us...
+  { appName: 'Login Default', testName: 'Med Intake_17_Desktop', viewport: { width: 1440, height: 1200 }, baselineEnvName: 'Med Intake_17_Desktop_1440', ignoreDisplacement: true },
+];
