@@ -366,4 +366,22 @@ export class MedicalPage {
       }
     });
   }
+
+  /**
+   * Complete medical profile with initial snapshot capture.
+   */
+  async completeMedicalWithVisual(visualConfig: ApplitoolsVisualConfig = MEDICAL_FIGMA_CONFIG, details: MedicalDetails, captureStepByStep = false): Promise<void> {
+    await this.page.waitForURL(/\/medical/);
+    await this.captureMedicalSnapshot(visualConfig, 'Gold Medical Page');
+    await this.completeMedicalProfile(details, captureStepByStep);
+  }
+
+  /**
+   * Complete medical questionnaire with step-by-step progressive visual checkpoints.
+   */
+  async completeGoldMedicalVisual(details: MedicalDetails): Promise<void> {
+    await this.page.waitForURL(/\/medical/);
+    await this.captureGoldMedicalCheckpoint('Gold Medical Page');
+    await this.completeMedicalProfile(details, true);
+  }
 }

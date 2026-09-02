@@ -45,13 +45,10 @@ export class ResultsPage {
   }
 
   async clickTryGold(): Promise<void> {
-    await test.step('Click TRY GOLD and navigate to medical profile', async () => {
+    await test.step('Click TRY GOLD and proceed to registration/medical', async () => {
       await this.actions.click(this.locators.tryGoldButton);
       await this.page.waitForLoadState('load');
       await this.verify.waitForLoaderToDisappear();
-
-      // Wait for the medical profile form (first visible DS input on /medical)
-      await this.verify.waitForVisibility(this.locators.medicalFirstNameInput);
     });
   }
 

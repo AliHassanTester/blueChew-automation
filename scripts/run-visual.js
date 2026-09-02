@@ -2,11 +2,11 @@
 const { spawn } = require('child_process');
 const path = require('path');
 
-const providerArg = process.argv[2] || process.env.VISUAL_PROVIDER || 'percy';
+const providerArg = process.argv[2] || process.env.VISUAL_PROVIDER || 'applitools';
 const providers = providerArg.split(',').map((value) => value.trim().toLowerCase()).filter(Boolean);
 
 if (!providers.length) {
-  console.error('Usage: node scripts/run-visual.js <percy|applitools|percy,applitools>');
+  console.error('Usage: node scripts/run-visual.js <applitools>');
   process.exit(1);
 }
 

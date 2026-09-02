@@ -153,4 +153,11 @@ export class ConfirmationPage {
       }
     });
   }
+
+  /** Complete full post-checkout ID submission, admin approval and televisit verification. */
+  async approveAndVerifyOrder(adminPage: any, details: any): Promise<void> {
+    await this.submitIdAndAwaitProvider();
+    await adminPage.approveAndCreateFirstOrder(details);
+    await this.verifyTelevisit();
+  }
 }

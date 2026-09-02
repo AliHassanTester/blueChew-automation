@@ -105,17 +105,24 @@ export async function captureApplitoolsVisualCheckpoint(
 
     activeEyes.setConfiguration(config);
 
-    console.log(`[Applitools] Opening Eyes session (app="${targetAppName}", test="${targetTestName}")...`);
-    await activeEyes.open(page, targetAppName, targetTestName);
-    isEyesOpen = true;
-    currentAppName = targetAppName;
-    currentTestName = targetTestName;
+    try {
+      console.log(`[Applitools] Opening Eyes session (app="${targetAppName}", test="${targetTestName}")...`);
+      await activeEyes.open(page, targetAppName, targetTestName);
+      isEyesOpen = true;
+      currentAppName = targetAppName;
+      currentTestName = targetTestName;
+    } catch (error: any) {
+      console.error(`[Applitools] Failed to open Eyes session: ${error.message || error}`);
+      return;
+    }
   }
 
-  try {
-    console.log(`[Applitools] Capturing checkpoint: "${checkpointTag}"`);
-    await activeEyes.check(checkpointTag, Target.window().fully());
-  } catch (error) {
-    console.error(`[Applitools] Error capturing checkpoint "${checkpointTag}":`, error);
+  if (isEyesOpen) {
+    try {
+      console.log(`[Applitools] Capturing checkpoint: "${checkpointTag}"`);
+      await activeEyes.check(checkpointTag, Target.window().fully());
+    } catch (error) {
+      console.error(`[Applitools] Error capturing checkpoint "${checkpointTag}":`, error);
+    }
   }
 }

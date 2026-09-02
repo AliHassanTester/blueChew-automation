@@ -34,7 +34,7 @@ const loginTestData: { [key: string]: LoginTestCaseData } = {
     },
     visualConfigs: [LOGIN_DESKTOP_FIGMA_CONFIG, LOGIN_MOBILE_FIGMA_CONFIG],
     testCaseData: {
-      tags: '@regression @smoke @login @percy @visual',
+      tags: '@regression @smoke @login @visual',
       testCase: 'AQ-02-User-Login',
       testDescription: 'Registered user can log in with valid credentials',
       testSummary:

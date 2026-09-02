@@ -304,4 +304,30 @@ export class CheckoutPage {
       await this.verifyCheckoutComplete();
     });
   }
+
+  /**
+   * Capture pre-checkout baseline snapshot and complete payment.
+   */
+  async completeCheckoutWithVisual(
+    visualConfig: ApplitoolsVisualConfig | undefined,
+    shipping: ShippingDetails,
+    payment: PaymentDetails,
+    tag: string = 'Checkout page',
+  ): Promise<void> {
+    await this.captureCheckoutSnapshot(visualConfig, tag);
+    await this.completeCheckoutAndPay(shipping, payment);
+  }
+
+  /**
+   * Capture pre-checkout baseline, pay, and capture post-checkout confirmation baseline.
+   */
+  async completeCheckoutAndConfirmation(
+    visualConfig: ApplitoolsVisualConfig | undefined,
+    details: { shipping: ShippingDetails; payment: PaymentDetails },
+    productPage: any,
+    tag: string = 'Checkout page',
+  ): Promise<void> {
+    await this.completeCheckoutWithVisual(visualConfig, details.shipping, details.payment, tag);
+    await productPage.captureConfirmationSnapshot(undefined, 'Confirmation Page');
+  }
 }

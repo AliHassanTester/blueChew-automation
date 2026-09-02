@@ -168,6 +168,17 @@ export const PRODUCT_MAX_FIGMA_CONFIG: ApplitoolsVisualConfig = {
   ignoreDisplacements: true,
 };
 
+export const HOMEPAGE_FIGMA_CONFIG: ApplitoolsVisualConfig = {
+  appName: 'Login Default',
+  testName: 'Desktop - 9',
+  viewport: {
+    width: 1440,
+    height: 1200,
+  },
+  baselineEnvName: 'Desktop - 9_1440',
+  ignoreDisplacement: true,
+};
+
 export const PRODUCT_GOLD_FIGMA_CONFIG: ApplitoolsVisualConfig = {
   appName: 'Login Default',
   testName: 'Desktop - 9',

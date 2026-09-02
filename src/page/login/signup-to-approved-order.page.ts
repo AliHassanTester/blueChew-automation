@@ -203,4 +203,23 @@ export class RegistrationPage {
       }
     });
   }
+
+  /** Capture baseline snapshot and complete the 3-step registration wizard. */
+  async completeRegistrationWithVisual(visualConfig: ApplitoolsVisualConfig = REGISTRATION_FIGMA_CONFIG, details: RegistrationDetails): Promise<void> {
+    await this.captureRegistrationSnapshot(visualConfig, 'Gold Registration Page');
+    await this.completeRegistrationWizard(details);
+  }
+
+  /** Complete registration and advance through medical profile without checkpoints. */
+  async completeRegistrationAndMedical(details: RegistrationDetails, medicalPage: any): Promise<void> {
+    await this.completeRegistrationWizard(details);
+    await this.page.waitForURL(/\/medical/);
+    await medicalPage.completeMedicalProfile(details.medical, false);
+  }
+
+  /** Complete registration and medical profile with Gold visual baseline snapshots. */
+  async completeGoldRegistrationAndMedical(details: RegistrationDetails, medicalPage: any): Promise<void> {
+    await this.completeRegistrationWithVisual(REGISTRATION_FIGMA_CONFIG, details);
+    await medicalPage.completeMedicalWithVisual(undefined, details.medical, false);
+  }
 }

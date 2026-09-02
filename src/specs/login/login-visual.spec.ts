@@ -10,7 +10,7 @@ import {
 const allureMeta = { feature: 'Authentication', story: 'Login Page Visual Verification' };
 
 test.describe('Feature: Login Page Visual Verification', () => {
-  test.only(
+  test(
     'Test case: LOG-VISUAL-001 - Login Page Visual Flow (6 Checkpoints)',
     async ({ loginPage }) => {
       await logTestCaseData(
@@ -18,7 +18,7 @@ test.describe('Feature: Login Page Visual Verification', () => {
         {
           testCase: 'LOG-VISUAL-001',
           testSummary: 'Login Page Visual Verification',
-          testDescription: 'Sequentially verify 6 distinct visual states of the Login flow using Applitools and Percy across Desktop & Mobile.',
+          testDescription: 'Sequentially verify 6 distinct visual states of the Login flow using Applitools across Desktop & Mobile.',
           tags: '@visual @login',
         },
         allureMeta,
