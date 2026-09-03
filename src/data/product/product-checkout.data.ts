@@ -10,11 +10,12 @@ import {
   PRODUCT_VARDENAFIL_FIGMA_CONFIG,
   PRODUCT_DAILYTAD_FIGMA_CONFIG,
   PRODUCT_MAX_FIGMA_CONFIG,
+  PRODUCT_VMAX_FIGMA_CONFIG,
   PRODUCT_GOLD_FIGMA_CONFIG,
 } from '@data/visual/figma.visual.data';
 
 export interface ProductCheckoutTestCaseData {
-  productName: 'Home' | 'Sildenafil' | 'Tadalafil' | 'Vardenafil' | 'DailyTad' | 'Max' | 'Gold';
+  productName: 'Home' | 'Sildenafil' | 'Tadalafil' | 'Vardenafil' | 'DailyTad' | 'Max' | 'VMax' | 'Gold';
   url: string;
   visualConfig: ApplitoolsVisualConfig;
   registrationDetails: RegistrationDetails;
@@ -61,7 +62,7 @@ function buildTestAccount(suffix: string) {
 }
 
 function createProductScenario(
-  productName: 'Home' | 'Sildenafil' | 'Tadalafil' | 'Vardenafil' | 'DailyTad' | 'Max' | 'Gold',
+  productName: 'Home' | 'Sildenafil' | 'Tadalafil' | 'Vardenafil' | 'DailyTad' | 'Max' | 'VMax' | 'Gold',
   testCase: string,
   url: string,
   visualConfig: ApplitoolsVisualConfig,
@@ -116,6 +117,7 @@ const productCheckoutTestData: { [key: string]: ProductCheckoutTestCaseData } = 
   'PRODUCT-VARDENAFIL':  createProductScenario('Vardenafil', 'PRODUCT-VARDENAFIL',  'https://dev.bluechew.com/vardenafil', PRODUCT_VARDENAFIL_FIGMA_CONFIG),
   'PRODUCT-DAILYTAD':   createProductScenario('DailyTad',   'PRODUCT-DAILYTAD',   'https://dev.bluechew.com/dailytad',  PRODUCT_DAILYTAD_FIGMA_CONFIG),
   'PRODUCT-MAX':        createProductScenario('Max',        'PRODUCT-MAX',        'https://dev.bluechew.com/max',       PRODUCT_MAX_FIGMA_CONFIG),
+  'PRODUCT-VMAX':       createProductScenario('VMax',       'PRODUCT-VMAX',       'https://dev.bluechew.com/vmax',      PRODUCT_VMAX_FIGMA_CONFIG),
   'PRODUCT-GOLD':       createProductScenario('Gold',       'PRODUCT-GOLD',       'https://dev.bluechew.com/gold',      PRODUCT_GOLD_FIGMA_CONFIG),
 };
 

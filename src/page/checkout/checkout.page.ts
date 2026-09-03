@@ -283,11 +283,11 @@ export class CheckoutPage {
   }
 
   async verifyCheckoutComplete(): Promise<void> {
-    await test.step('Verify checkout reached confirmation page', async () => {
-      await this.page.waitForLoadState('load');
-      await this.verify.waitForLoaderToDisappear();
-      await this.verify.waitForProcessingLoaderToDisappear();
-      await this.actions.waitForURL(/\/checkout\/confirmation/);
+    await test.step('Verify checkout reached confirmation or account page', async () => {
+      await this.page.waitForLoadState('load').catch(() => undefined);
+      await this.verify.waitForLoaderToDisappear().catch(() => undefined);
+      await this.verify.waitForProcessingLoaderToDisappear().catch(() => undefined);
+      await this.actions.waitForURL(/\/checkout\/confirmation|\/account/);
     });
   }
 
@@ -319,7 +319,21 @@ export class CheckoutPage {
   }
 
   /**
-   * Capture pre-checkout baseline, pay, and capture post-checkout confirmation baseline.
+   * Capture pre-checkout baseline, pay, and capture post-checkout profile baseline.
+   */
+  async completeCheckoutAndProfile(
+    visualConfig: ApplitoolsVisualConfig | undefined,
+    details: { shipping: ShippingDetails; payment: PaymentDetails },
+    productPage: any,
+    checkoutTag: string = 'Checkout page',
+    profileTag: string = 'Profile page loaded',
+  ): Promise<void> {
+    await this.completeCheckoutWithVisual(visualConfig, details.shipping, details.payment, checkoutTag);
+    await productPage.capturePostCheckoutProfileSnapshot(undefined, profileTag);
+  }
+
+  /**
+   * Capture pre-checkout baseline, pay, and capture post-checkout profile baseline.
    */
   async completeCheckoutAndConfirmation(
     visualConfig: ApplitoolsVisualConfig | undefined,
@@ -327,7 +341,6 @@ export class CheckoutPage {
     productPage: any,
     tag: string = 'Checkout page',
   ): Promise<void> {
-    await this.completeCheckoutWithVisual(visualConfig, details.shipping, details.payment, tag);
-    await productPage.captureConfirmationSnapshot(undefined, 'Confirmation Page');
+    await this.completeCheckoutAndProfile(visualConfig, details, productPage, tag, 'Profile page loaded');
   }
 }

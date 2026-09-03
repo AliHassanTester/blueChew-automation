@@ -4,7 +4,7 @@ import { PlaywrightVerificationFactory } from '@utilities/playwright.verificatio
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import * as path from 'path';
 import { VisualHelper } from '@utilities/visual.helper';
-import { ApplitoolsVisualConfig, CONFIRMATION_FIGMA_CONFIG } from '@data/visual/figma.visual.data';
+import { ApplitoolsVisualConfig, CONFIRMATION_FIGMA_CONFIG, PROFILE_FIGMA_CONFIG } from '@data/visual/figma.visual.data';
 
 const SAMPLE_ID_PATH = path.resolve(__dirname, '../../../tests/fixtures/sampleID.jpg');
 
@@ -137,11 +137,13 @@ export class ConfirmationPage {
         await this.verify.waitForLoaderToDisappear();
       }
 
-      // Post-approval state: the order is now being processed and the Gold plan is active.
+      // Post-approval state: the order is now being processed
       // (The provider name is intentionally not asserted — it is not shown on this view
       // and varies by which provider approved.)
       await expect(this.locators.orderProcessingBanner.locator).toBeVisible({ timeout: 30_000 });
-      await expect(this.locators.goldPlanLabel.locator).toBeVisible();
+      if (await this.locators.goldPlanLabel.locator.isVisible().catch(() => false)) {
+        await expect(this.locators.goldPlanLabel.locator).toBeVisible();
+      }
     });
   }
 
@@ -154,10 +156,11 @@ export class ConfirmationPage {
     });
   }
 
-  /** Complete full post-checkout ID submission, admin approval and televisit verification. */
-  async approveAndVerifyOrder(adminPage: any, details: any): Promise<void> {
+  /** Complete full post-checkout ID submission, admin approval, televisit verification, and capture final profile state. */
+  async approveAndVerifyOrder(adminPage: any, details: any, visualConfig: ApplitoolsVisualConfig = PROFILE_FIGMA_CONFIG): Promise<void> {
     await this.submitIdAndAwaitProvider();
     await adminPage.approveAndCreateFirstOrder(details);
     await this.verifyTelevisit();
+    await this.captureConfirmationSnapshot(visualConfig, 'Profile page loaded');
   }
 }

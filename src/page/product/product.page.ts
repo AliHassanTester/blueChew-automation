@@ -9,6 +9,7 @@ import {
   MEDICAL_FIGMA_CONFIG,
   GOLD_TRANSITION_FIGMA_CONFIG,
   CONFIRMATION_FIGMA_CONFIG,
+  PROFILE_FIGMA_CONFIG,
 } from '@data/visual/figma.visual.data';
 
 export class ProductPage {
@@ -149,6 +150,19 @@ export class ProductPage {
     await test.step(`Capture post-checkout ${tag} baseline`, async () => {
       await this.page.waitForURL(/\/confirmation|account/);
       await this.page.waitForLoadState('load').catch(() => undefined);
+      await this.visual.captureCheckpoint(tag, figmaConfig);
+    });
+  }
+
+  /**
+   * Navigate to the post-checkout profile page and capture the final visual snapshot before test ends.
+   */
+  async capturePostCheckoutProfileSnapshot(figmaConfig: ApplitoolsVisualConfig = PROFILE_FIGMA_CONFIG, tag = 'Profile page loaded'): Promise<void> {
+    await test.step(`Navigate to profile and capture post-checkout ${tag} baseline`, async () => {
+      await this.page.waitForURL(/\/confirmation|account/, { timeout: 30_000 }).catch(() => undefined);
+      await this.actions.navigateToURL('/account/profile');
+      await this.page.waitForLoadState('load').catch(() => undefined);
+      await this.verify.waitForLoaderToDisappear().catch(() => undefined);
       await this.visual.captureCheckpoint(tag, figmaConfig);
     });
   }

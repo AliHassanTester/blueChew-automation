@@ -11,6 +11,7 @@ test.describe('Feature: Unified Product Checkout Flows', () => {
     { key: 'PRODUCT-VARDENAFIL',  tag: '@vardenafil' },
     { key: 'PRODUCT-DAILYTAD',   tag: '@dailytad' },
     { key: 'PRODUCT-MAX',        tag: '@max' },
+    { key: 'PRODUCT-VMAX',       tag: '@vmax' },
   ];
 
   for (const { key, tag } of products) {
