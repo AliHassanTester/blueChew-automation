@@ -1,0 +1,82 @@
+/**
+ * Global Stylesheet for Playwright Visual Regression Testing
+ * File: src/styles/visual-snapshot.css
+ * 
+ * Injected automatically during expect(page).toHaveScreenshot() executions.
+ * Specifically tuned to neutralize BlueChew site-specific animations, loaders,
+ * chat widgets, and dynamic styling artifacts.
+ */
+
+/* 1. Neutralize all CSS animations, transitions, and keyframes globally */
+*,
+*::before,
+*::after {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
+}
+
+/* 2. Freeze BlueChew site-specific animation classes */
+.fadeIn,
+.mobile-fade-in,
+.fadeOut,
+.mobile-fade-out,
+.slideUp,
+.slideUp-25,
+.slideUp-40,
+.slideUp-55,
+.slideUp-70,
+.slide-out-from-bottom-mobile,
+.rotate-180 {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* 3. Hide BlueChew site loading spinners, SVG paths, and overlays */
+#app-loading,
+#app-loading .spinner,
+#app-loading .spinner .path,
+.ds-loader,
+app-loader,
+.loading-spinner,
+.processing-loader,
+.spinner,
+[data-test-id*="loader"],
+[class*="loading-overlay"] {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  animation: none !important;
+}
+
+/* 4. Hide third-party live chat widgets (Chatwoot / Woot) and dynamic tooltips */
+html .woot--bubble-holder,
+html .woot-widget-bubble,
+#woot-widget,
+.tooltip .tooltiptext {
+  visibility: hidden !important;
+  display: none !important;
+}
+
+/* 5. Hide blinking text cursor (caret) across all inputs and textareas */
+input,
+textarea,
+select,
+.form-control,
+[contenteditable="true"] {
+  caret-color: transparent !important;
+}
+
+/* 6. Freeze background videos and embedded video players */
+video,
+audio,
+iframe[src*="vimeo"],
+iframe[src*="youtube"] {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}

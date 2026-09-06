@@ -1,5 +1,4 @@
 import { defineConfig, devices } from '@playwright/test';
-import { EyesFixture } from '@applitools/eyes-playwright/fixture';
 import * as dotenv from 'dotenv';
 
 // ENV_TYPE is set by the npm script (cross-env ENV_TYPE=dev) before this config
@@ -55,10 +54,9 @@ const reporters: Array<readonly [string] | readonly [string, Record<string, unkn
     ],
   }],
   ['list'],
-  ['@applitools/eyes-playwright/reporter'],
 ];
 
-export default defineConfig<EyesFixture>({
+export default defineConfig({
   testDir: '.',
   testMatch: ['src/specs/**/*.spec.ts'],
   // Per-test ceiling — the maximum wall-clock time any single test may run before
@@ -66,23 +64,24 @@ export default defineConfig<EyesFixture>({
   // is a generous last-resort safety net; individual stuck actions are caught much
   // sooner by actionTimeout / navigationTimeout below.
   timeout: 900_000,
+  snapshotPathTemplate: '{testDir}/__snapshots__/{testFilePath}/{projectName}/{arg}{ext}',
   // Web-first assertion timeout — expect(locator).toBeVisible(), toHaveText(), etc.
-  expect: { timeout: 15_000 },
+  expect: {
+    timeout: 15_000,
+    toHaveScreenshot: {
+      animations: 'disabled',
+      caret: 'hide',
+      scale: 'css',
+      threshold: 0.2,
+      maxDiffPixelRatio: 0.01,
+      stylePath: './src/styles/visual-snapshot.css',
+    },
+  },
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 4 : 1,
   reporter: reporters,
   use: {
     baseURL: baseURLs[envType] ?? baseURLs['dev'],
-    eyesConfig: {
-      apiKey: process.env.APPLITOOLS_API_KEY,
-      type: 'ufg',
-      testConcurrency: 10,
-      browsersInfo: [
-        { name: 'chrome', width: 1440, height: 915 },
-        { name: 'firefox', width: 1440, height: 915 },
-        { name: 'safari', width: 1440, height: 915 }
-      ]
-    },
     // The dev app domain is behind HTTP auth; Playwright answers the 401 challenge
     // on every context automatically, so no per-test auth step is needed.
     httpCredentials: {

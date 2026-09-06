@@ -134,34 +134,26 @@ definitions live in the Allure reporter block of [`playwright.config.ts`](playwr
 
 ---
 
-## Visual Testing with Percy
+## Visual Testing with Playwright Native (`toHaveScreenshot`)
 
-- **Env vars:** Add a Percy API key as `PERCY_TOKEN` (local dev: added to `.env.dev`). Control runtime snapshots with `PERCY_ENABLED` (set to `false` or `0` to disable).
-- **Files:** The Playwright session will start/stop the Percy agent via the global setup/teardown added in [src/fixtures/percy.global.setup.ts](src/fixtures/percy.global.setup.ts#L1-L120) and [src/fixtures/percy.global.teardown.ts](src/fixtures/percy.global.teardown.ts#L1-L120). The helper used by pages is [src/utilities/visual.helper.ts](src/utilities/visual.helper.ts#L1-L200).
-- **Behavior:** Page objects call `VisualHelper.captureCheckpoint(...)` which delegates to `@percy/playwright`'s `percySnapshot`. When `PERCY_ENABLED=false` the helper is a no-op and the functional test flow is unchanged.
+Playwright Test includes native visual regression comparison via `expect(page).toHaveScreenshot()` and `expect(locator).toHaveScreenshot()`.
 
-### Run examples
+- **Zero External Dependencies:** Golden baselines are stored directly in the repository (`src/specs/__snapshots__/`).
+- **Dynamic Element Stabilization:** CSS animations and spinners are neutralized automatically via `src/styles/visual-snapshot.css`.
+- **Masking:** Dynamic data (e.g. user emails, order IDs) is masked using `{ mask: [locator] }`.
 
-- Recommended (uses global setup to start Percy automatically when `PERCY_TOKEN` is present):
+### Run commands
+
 ```bash
-cross-env ENV_TYPE=dev npx playwright test --project=chromium-desktop
+# Run all visual tests
+npm run test:visual
+
+# Run Login visual demo
+npm run test:login:visual:playwright
+
+# Update reference baseline snapshots
+npm run test:login:visual:update
 ```
-
-- Alternative (run Percy only for the command using the CLI `exec` wrapper):
-```bash
-npx percy exec -- npx playwright test --grep @percy
-```
-
-- `npm run test:visual` — runs Percy for all specs tagged `@percy`.
-- `npm run test:visual:login` — runs Percy for the login page only.
-
-> Use `npm run test:visual` or `npm run visual` for Percy-only runs. Do not use `npm run test visual`.
-
-### CI notes
-
-- Store `PERCY_TOKEN` as a protected secret in your CI provider and set `PERCY_ENABLED=true` for visual runs. Avoid committing tokens to the repo. The repository's `.env.dev` contains a local token for convenience — do not push a real token to a public repo.
-
-### Troubleshooting
 
 - If snapshots are not being uploaded: confirm `PERCY_TOKEN` is set in the environment available to the test process, and check the Percy CLI output in the test logs. You can also verify the CLI installation with `npx percy --version`.
 

@@ -1,4 +1,4 @@
-import { test as base } from '@applitools/eyes-playwright/fixture';
+import { test as base } from '@playwright/test';
 import { LoginPage } from '@page/login/login.page';
 import { RegistrationPage } from '@page/login/signup-to-approved-order.page';
 import { QuizPage } from '@page/quiz/quiz.page';

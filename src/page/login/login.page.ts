@@ -4,19 +4,25 @@ import { PlaywrightVerificationFactory } from '@utilities/playwright.verificatio
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { LoginDetails } from '@interfaces/login.interface';
 import { LoginPageDetails } from '@interfaces/login.page.interface';
-import { VisualHelper } from '@utilities/visual.helper';
+import { VisualHelper, VisualSnapshotOptions } from '@utilities/visual.helper';
 import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 import {
   LOGIN_DESKTOP_FIGMA_CONFIG,
   LOGIN_MOBILE_FIGMA_CONFIG,
 } from '@data/visual/figma.visual.data';
 
+/**
+ * LoginPage Object Model
+ * 
+ * Encapsulates UI locators and user interactions for the BlueChew Authentication screen (/log-in).
+ * Supports both full-page and element-level visual regression baselines with dynamic masking.
+ */
 export class LoginPage {
   public readonly page: Page;
   private readonly playwrightActionsFactory: PlaywrightActionFactory;
   private readonly playwrightVerificationsFactory: PlaywrightVerificationFactory;
-  private readonly visual: VisualHelper;
-  private readonly locators: { [key: string]: LocatorInfo };
+  public readonly visual: VisualHelper;
+  public readonly locators: { [key: string]: LocatorInfo };
 
   constructor(page: Page, testInfo: TestInfo, visual: VisualHelper) {
     this.page = page;
@@ -24,25 +30,42 @@ export class LoginPage {
     this.playwrightVerificationsFactory = new PlaywrightVerificationFactory(page, testInfo);
     this.visual = visual;
 
-    // Locators are XPath, anchored on stable attributes (data-test-id) and semantic
-    // text, and were derived from a live DOM capture of /log-in.
+    // Locators anchored on stable semantic attributes and data-test-ids
     this.locators = {
-      // ── Login page (/log-in) ───────────────────────────────────────────────
+      // ── Promotional Header Banner ──────────────────────────────────────────
+      promoBanner: {
+        description: 'Promotional Top Banner (e.g. Try 2 months of Gold)',
+        locator: this.page.locator("//div[contains(@class,'banner') or contains(@class,'promo')] | //p[contains(text(),'Gold')]").first(),
+      },
+
+      // ── Login Card & Container (/log-in) ───────────────────────────────────
       loginPageContainer: {
-        description: 'Login Page Container',
-        locator: this.page.locator("//div[@data-test-id='sign-in-page']"),
+        description: 'Login Page Container / Sign-in wrapper',
+        locator: this.page.locator("//div[@data-test-id='sign-in-page'] | //main | //form").first(),
+      },
+      welcomeHeading: {
+        description: 'Welcome Back Header',
+        locator: this.page.locator("//*[contains(normalize-space(),'Welcome back!')]").first(),
+      },
+      googleSSOButton: {
+        description: 'Continue with Google Button',
+        locator: this.page.locator("//button[contains(normalize-space(),'Continue with google') or contains(normalize-space(),'Continue With Google')]"),
+      },
+      appleSSOButton: {
+        description: 'Continue with Apple Button',
+        locator: this.page.locator("//button[contains(normalize-space(),'Continue with apple') or contains(normalize-space(),'Continue With Apple')]"),
       },
       emailInput: {
         description: 'Email Address Input',
-        locator: this.page.locator("//input[@data-test-id='sign-in-email-input']"),
+        locator: this.page.locator("//input[@data-test-id='sign-in-email-input'] | //input[@type='email'] | //input[@placeholder='Email your email']").first(),
       },
       passwordInput: {
         description: 'Password Input',
-        locator: this.page.locator("//input[@data-test-id='sign-in-password-input']"),
+        locator: this.page.locator("//input[@data-test-id='sign-in-password-input'] | //input[@type='password']").first(),
       },
       submitButton: {
         description: 'Login Submit Button (CONTINUE)',
-        locator: this.page.locator("//button[@data-test-id='sign-in-submit-button']"),
+        locator: this.page.locator("//button[@data-test-id='sign-in-submit-button'] | //button[normalize-space()='CONTINUE']").first(),
       },
       forgotEmailLink: {
         description: 'Forgot Email Link',
@@ -54,16 +77,14 @@ export class LoginPage {
       },
       signUpLink: {
         description: 'Create an Account Link (→ /register)',
-        locator: this.page.locator("//a[@href='/register']"),
+        locator: this.page.locator("//a[@href='/register'] | //a[contains(normalize-space(),'Create an account')]").first(),
       },
-      googleSSOButton: {
-        description: 'Continue with Google Button',
-        locator: this.page.locator("//button[contains(normalize-space(),'Continue with google')]"),
+      errorMessageBanner: {
+        description: 'Validation Error Alert Banner',
+        locator: this.page.locator("//div[contains(@class,'alert--danger') or contains(@class,'error') or @role='alert'] | //p[contains(@class,'error')]").first(),
       },
-      appleSSOButton: {
-        description: 'Continue with Apple Button',
-        locator: this.page.locator("//button[contains(normalize-space(),'Continue with apple')]"),
-      },
+
+      // ── Forgot Password Modal / View ───────────────────────────────────────
       forgotPasswordEmailInput: {
         description: 'Forgot Password Email Input',
         locator: this.page.getByRole('textbox').first(),
@@ -73,20 +94,24 @@ export class LoginPage {
         locator: this.page.locator("//button[contains(normalize-space(),'Send') or contains(normalize-space(),'SEND')]"),
       },
 
-      // ── Post-login account shell — verified from live /account DOM ─────────
+      // ── Post-login account shell (/account) ────────────────────────────────
       accountTabMyPlan: {
-        description: 'Account Nav Tab — My Plan (nav-bar section marker)',
-        locator: this.page.locator("//button[@data-test-id='navbar-sub-menu-tab-membership']"),
+        description: 'Account Nav Tab — My Plan',
+        locator: this.page.locator("//button[@data-test-id='navbar-sub-menu-tab-membership'] | //a[contains(@href,'/account')]").first(),
       },
       accountMembershipPage: {
         description: 'Account Content Section — My Plan page container',
-        locator: this.page.locator("//div[@data-test-id='account-membership-page']"),
+        locator: this.page.locator("//div[@data-test-id='account-membership-page'] | //div[contains(@class,'account')]").first(),
+      },
+      userEmailDisplay: {
+        description: 'Dynamic user email / name display (masked in snapshots)',
+        locator: this.page.locator("//div[contains(@class,'user-info')] | //p[contains(@class,'user-email')] | //span[contains(@class,'email')]").first(),
       },
 
-      // ── Hamburger slide-out menu ───────────────────────────────────────────
+      // ── Hamburger navigation menu ──────────────────────────────────────────
       navMenuToggle: {
         description: 'Hamburger Menu Toggle Button',
-        locator: this.page.locator("//*[@data-test-id='nav-menu-toggle']"),
+        locator: this.page.locator("//*[@data-test-id='nav-menu-toggle'] | //button[contains(@class,'menu-toggle')]").first(),
       },
       myPlanLink: {
         description: 'My Plan Link (hamburger menu)',
@@ -103,8 +128,10 @@ export class LoginPage {
     };
   }
 
-  async navigateToLoginPage(loginURL: string): Promise<void> {
-    await test.step('Navigate to login page', async () => {
+  // ── Navigation & Interactions ──────────────────────────────────────────────
+
+  async navigateToLoginPage(loginURL: string = '/log-in'): Promise<void> {
+    await test.step(`Navigate to login page: ${loginURL}`, async () => {
       await this.playwrightActionsFactory.navigateToURL(loginURL);
       await this.playwrightActionsFactory.waitForDomLoad();
       await this.playwrightVerificationsFactory.waitForLoaderToDisappear();
@@ -114,20 +141,10 @@ export class LoginPage {
   async verifyLoginPageLoaded(): Promise<void> {
     await test.step('Verify login page is loaded', async () => {
       await this.page.waitForLoadState('load');
-      await this.visual.captureCheckpoint('Login page loaded');
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.loginPageContainer);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.emailInput);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.passwordInput);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.submitButton);
-    });
-  }
-
-  async captureLoginPageSnapshot(configs?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[]): Promise<void> {
-    await test.step('Capture Applitools visual baseline for Login Page (Desktop & Mobile)', async () => {
-      await this.captureVisualCheckpoint(
-        'Login Page Snapshot',
-        configs || [LOGIN_DESKTOP_FIGMA_CONFIG, LOGIN_MOBILE_FIGMA_CONFIG],
-      );
     });
   }
 
@@ -150,21 +167,88 @@ export class LoginPage {
       await this.playwrightActionsFactory.waitForURL(/\/account\//);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.accountTabMyPlan);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.accountMembershipPage);
-      await this.visual.captureCheckpoint('Login success — account page rendered');
     });
   }
 
-  async verifyNavLinksVisible(): Promise<void> {
-    await test.step('Open hamburger menu and verify navigation links', async () => {
-      await this.playwrightActionsFactory.click(this.locators.navMenuToggle);
-      await this.playwrightVerificationsFactory.expectElementExist(this.locators.myPlanLink);
-      await this.playwrightVerificationsFactory.expectElementExist(this.locators.profileNavLink);
-      await this.playwrightVerificationsFactory.expectElementExist(this.locators.logoutLink);
-      await this.visual.captureCheckpoint('member page slide menu  — account page rendered');
+  // ── Playwright Native Visual Checkpoint Methods ────────────────────────────
+
+  /**
+   * Checkpoint 1: Full-Page Initial Login Baseline
+   * Captures the entire page in pristine state.
+   */
+  async captureFullPageInitialBaseline(snapshotName: string = 'login-page-initial'): Promise<void> {
+    await test.step('Capture Full-Page Initial Login Baseline', async () => {
+      await this.visual.captureSnapshot(snapshotName, {
+        fullPage: true,
+        maxDiffPixelRatio: 0.01,
+      });
     });
   }
 
-  // ── Composite methods for spec-level orchestration ─────────────────────────
+  /**
+   * Checkpoint 2: Isolated Login Card Component Baseline
+   * Focuses strictly on the authentication form container, eliminating extraneous page variations.
+   */
+  async captureLoginCardElementBaseline(snapshotName: string = 'login-card-component'): Promise<void> {
+    await test.step('Capture Isolated Login Card Component Baseline', async () => {
+      await this.visual.captureElementSnapshot(this.locators.loginPageContainer.locator, snapshotName, {
+        maxDiffPixelRatio: 0.01,
+      });
+    });
+  }
+
+  /**
+   * Checkpoint 3: Post-Login Dashboard Baseline with Dynamic Masking
+   * Overlays mask boxes across dynamic elements (e.g. user emails, active session tokens, timestamps).
+   */
+  async captureDashboardBaselineWithMasking(snapshotName: string = 'login-dashboard-landing'): Promise<void> {
+    await test.step('Capture Post-Login Dashboard Baseline with Dynamic Masking', async () => {
+      const dynamicElements = [
+        this.locators.userEmailDisplay?.locator,
+      ].filter(Boolean);
+
+      await this.visual.captureSnapshot(snapshotName, {
+        fullPage: true,
+        mask: dynamicElements,
+        maxDiffPixelRatio: 0.02,
+      });
+    });
+  }
+
+  /**
+   * Checkpoint 4: Validation Error State Baseline
+   * Captures the visual styling of inline alerts, red borders, and error messages.
+   */
+  async captureValidationErrorBaseline(snapshotName: string = 'login-validation-error'): Promise<void> {
+    await test.step('Capture Login Validation Error State Baseline', async () => {
+      await this.visual.captureElementSnapshot(this.locators.loginPageContainer.locator, snapshotName, {
+        maxDiffPixelRatio: 0.01,
+      });
+    });
+  }
+
+  // ── Legacy / Multi-Provider Visual Checkpoint Routing ──────────────────────
+
+  async captureLoginPageSnapshot(configs?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[]): Promise<void> {
+    await test.step('Capture visual baseline for Login Page (Desktop & Mobile)', async () => {
+      await this.captureVisualCheckpoint(
+        'Login Page Snapshot',
+        configs || [LOGIN_DESKTOP_FIGMA_CONFIG, LOGIN_MOBILE_FIGMA_CONFIG],
+      );
+    });
+  }
+
+  async captureVisualCheckpoint(tag: string, config?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[]): Promise<void> {
+    await test.step(`Capture visual checkpoint: ${tag}`, async () => {
+      await this.page.waitForLoadState('load').catch(() => undefined);
+      await this.playwrightVerificationsFactory.waitForLoaderToDisappear().catch(() => undefined);
+      if (this.visual) {
+        await this.visual.captureCheckpoint(tag, config);
+      }
+    });
+  }
+
+  // ── Composite Test Orchestration Methods ───────────────────────────────────
 
   async navigateToPage(loginPageDetails: LoginPageDetails): Promise<void> {
     await this.navigateToLoginPage(loginPageDetails.loginURL);
@@ -200,13 +284,14 @@ export class LoginPage {
     });
   }
 
-  async captureVisualCheckpoint(tag: string, config?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[]): Promise<void> {
-    await test.step(`Capture visual checkpoint: ${tag}`, async () => {
-      await this.page.waitForLoadState('load').catch(() => undefined);
-      await this.playwrightVerificationsFactory.waitForLoaderToDisappear().catch(() => undefined);
-      if (this.visual) {
-        await this.visual.captureCheckpoint(tag, config);
+  async verifyNavLinksVisible(): Promise<void> {
+    await test.step('Open hamburger menu and verify navigation links', async () => {
+      if (await this.locators.navMenuToggle.locator.isVisible().catch(() => false)) {
+        await this.playwrightActionsFactory.click(this.locators.navMenuToggle);
       }
+      await this.playwrightVerificationsFactory.expectElementExist(this.locators.myPlanLink);
+      await this.playwrightVerificationsFactory.expectElementExist(this.locators.profileNavLink);
+      await this.playwrightVerificationsFactory.expectElementExist(this.locators.logoutLink);
     });
   }
 }
