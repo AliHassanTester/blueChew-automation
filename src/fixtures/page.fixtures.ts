@@ -9,6 +9,7 @@ import { ConfirmationPage } from '@page/confirmation/confirmation.page';
 import { AdminPage } from '@page/admin/admin.page';
 import { ProfilePage } from '@page/account/profile.page';
 import { ProductPage } from '@page/product/product.page';
+import { LandingMaxPage } from '@page/product/landing-max.page';
 import { VisualHelper } from '@utilities/visual.helper';
 
 type TestFixtures = {
@@ -22,6 +23,7 @@ type TestFixtures = {
   adminPage: AdminPage;
   profilePage: ProfilePage;
   productPage: ProductPage;
+  landingMaxPage: LandingMaxPage;
   visual: VisualHelper;
 };
 
@@ -66,6 +68,9 @@ export const test = base.extend<TestFixtures>({
   },
   productPage: async ({ page, visual }, use) => {
     await use(new ProductPage(page, base.info(), visual));
+  },
+  landingMaxPage: async ({ page, visual }, use) => {
+    await use(new LandingMaxPage(page, base.info(), visual));
   },
 
   visual: async ({ page }, use) => {

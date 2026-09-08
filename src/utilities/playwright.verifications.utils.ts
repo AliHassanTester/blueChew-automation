@@ -10,14 +10,17 @@ export class PlaywrightVerificationFactory {
   ) {}
 
   async expectElementExist(locatorInfo: LocatorInfo): Promise<void> {
+    console.log(`[Verify] Expecting "${locatorInfo.description}" to exist and be visible`);
     await expect(locatorInfo.locator).toBeVisible();
   }
 
   async verifyNotExist(locatorInfo: LocatorInfo): Promise<void> {
+    console.log(`[Verify] Verifying "${locatorInfo.description}" is hidden / does not exist`);
     await expect(locatorInfo.locator).toBeHidden();
   }
 
   async verifyText(locatorInfo: LocatorInfo, expected: string): Promise<void> {
+    console.log(`[Verify] Verifying text in "${locatorInfo.description}" contains "${expected}"`);
     const actual = (await locatorInfo.locator.textContent()) ?? '';
     if (!actual.includes(expected)) {
       this.testInfo.annotations.push({
@@ -28,6 +31,7 @@ export class PlaywrightVerificationFactory {
   }
 
   async verifyValue(locatorInfo: LocatorInfo, expected: string): Promise<void> {
+    console.log(`[Verify] Verifying value of "${locatorInfo.description}" equals "${expected}"`);
     const actual = await locatorInfo.locator.inputValue();
     if (actual !== expected) {
       this.testInfo.annotations.push({
@@ -38,58 +42,72 @@ export class PlaywrightVerificationFactory {
   }
 
   async verifyTitle(expected: string): Promise<void> {
+    console.log(`[Verify] Verifying page title equals "${expected}"`);
     await expect(this.page).toHaveTitle(expected);
   }
 
   assertAreEqual(expected: unknown, actual: unknown): void {
+    console.log(`[Assert] Asserting values equal: expected "${expected}", actual "${actual}"`);
     expect(actual).toEqual(expected);
   }
 
   assertAreNotEqual(expected: unknown, actual: unknown): void {
+    console.log(`[Assert] Asserting values not equal: expected not "${expected}", actual "${actual}"`);
     expect(actual).not.toEqual(expected);
   }
 
   assertAreTrue(actual: unknown): void {
+    console.log(`[Assert] Asserting value is truthy: "${actual}"`);
     expect(actual).toBeTruthy();
   }
 
   assertGreaterThan(expected: number, actual: number): void {
+    console.log(`[Assert] Asserting actual ${actual} > ${expected}`);
     expect(actual).toBeGreaterThan(expected);
   }
 
   assertGreaterThanOrEqualTo(expected: number, actual: number): void {
+    console.log(`[Assert] Asserting actual ${actual} >= ${expected}`);
     expect(actual).toBeGreaterThanOrEqual(expected);
   }
 
   assertStringsEqual(actual: string, expected: string): void {
+    console.log(`[Assert] Asserting string "${actual}" contains "${expected}"`);
     expect(actual).toContain(expected);
   }
 
   async assertElementHasClass(locatorInfo: LocatorInfo, className: string): Promise<void> {
+    console.log(`[Assert] Asserting "${locatorInfo.description}" has class "${className}"`);
     await expect(locatorInfo.locator).toHaveClass(new RegExp(className));
   }
 
   async assertElementIsEnabled(locatorInfo: LocatorInfo): Promise<void> {
+    console.log(`[Assert] Asserting "${locatorInfo.description}" is enabled`);
     await expect(locatorInfo.locator).toBeEnabled();
   }
 
   async assertElementIsDisabled(locatorInfo: LocatorInfo): Promise<void> {
+    console.log(`[Assert] Asserting "${locatorInfo.description}" is disabled`);
     await expect(locatorInfo.locator).toBeDisabled();
   }
 
   async verifyRadioButtonIsChecked(locatorInfo: LocatorInfo): Promise<void> {
+    console.log(`[Verify] Verifying "${locatorInfo.description}" is checked`);
     await expect(locatorInfo.locator).toBeChecked();
   }
 
   async verifyLocatorsCount(locatorInfo: LocatorInfo, count: number): Promise<void> {
+    console.log(`[Verify] Verifying "${locatorInfo.description}" element count is ${count}`);
     await expect(locatorInfo.locator).toHaveCount(count);
   }
 
   verifyContains(haystack: string, needle: string): void {
+    console.log(`[Verify] Verifying string contains "${needle}"`);
     expect(haystack).toContain(needle);
   }
 
   async verifyUserHasAccess(url: string, shouldMatch: boolean): Promise<void> {
+    console.log(`[Verify] Verifying user access for "${url}" (shouldMatch=${shouldMatch})`);
     const current = this.page.url();
     if (shouldMatch) {
       expect(current).toContain(url);
@@ -99,6 +117,7 @@ export class PlaywrightVerificationFactory {
   }
 
   async verifyFileDownload(locatorInfo: LocatorInfo): Promise<void> {
+    console.log(`[Verify] Verifying file download triggered by "${locatorInfo.description}"`);
     const [download] = await Promise.all([
       this.page.waitForEvent('download'),
       locatorInfo.locator.click(),
@@ -107,6 +126,7 @@ export class PlaywrightVerificationFactory {
   }
 
   async verifyPdfContent(locatorInfo: LocatorInfo, text: string): Promise<void> {
+    console.log(`[Verify] Verifying PDF content downloaded from "${locatorInfo.description}" contains "${text}"`);
     const [download] = await Promise.all([
       this.page.waitForEvent('download'),
       locatorInfo.locator.click(),
@@ -118,32 +138,39 @@ export class PlaywrightVerificationFactory {
   }
 
   async isElementVisible(locatorInfo: LocatorInfo): Promise<boolean> {
+    console.log(`[Verify] Checking visibility of "${locatorInfo.description}"`);
     return locatorInfo.locator.isVisible();
   }
 
   async waitForSelector(locatorInfo: LocatorInfo): Promise<void> {
+    console.log(`[Verify] Waiting for "${locatorInfo.description}" to be attached`);
     await locatorInfo.locator.waitFor({ state: 'attached' });
   }
 
   async waitForVisibility(locatorInfo: LocatorInfo): Promise<void> {
+    console.log(`[Verify] Waiting for "${locatorInfo.description}" to be visible`);
     await locatorInfo.locator.waitFor({ state: 'visible' });
   }
 
   async waitForElementToDisappear(locatorInfo: LocatorInfo): Promise<void> {
+    console.log(`[Verify] Waiting for "${locatorInfo.description}" to disappear`);
     await locatorInfo.locator.waitFor({ state: 'detached' });
   }
 
   async waitForLoaderToDisappear(): Promise<void> {
+    console.log('[Verify] Waiting for loading spinner / loader to disappear');
     // Wait for local-loader-com or spinner elements to be hidden
     await this.page.locator('local-loader-com, .spinner, .loader, mat-spinner, .loading-spinner').waitFor({ state: 'hidden', timeout: 15_000 }).catch(() => undefined);
     await this.waitForPageToSettle();
   }
 
   async waitForLoaderSettled(appearTimeout = 1_000, settleTimeout = 30_000): Promise<void> {
+    console.log('[Verify] Waiting for loader to settle');
     await this.waitForPageToSettle(settleTimeout);
   }
 
   async waitForProcessingLoaderToDisappear(): Promise<void> {
+    console.log('[Verify] Waiting for processing loader to disappear');
     await this.waitForPageToSettle();
   }
 
@@ -171,6 +198,7 @@ export class PlaywrightVerificationFactory {
    */
 
   async expectToPass(assertion: () => Promise<void>, timeout: number = 10_000): Promise<void> {
+    console.log('[Verify] Waiting for assertion to pass');
     const deadline = Date.now() + timeout;
     let lastError: Error | undefined;
     while (Date.now() < deadline) {
@@ -190,6 +218,7 @@ export class PlaywrightVerificationFactory {
     timeout: number = 10_000,
     interval: number = 500,
   ): Promise<void> {
+    console.log('[Verify] Waiting for delegate to pass');
     const deadline = Date.now() + timeout;
     let lastError: Error | undefined;
     while (Date.now() < deadline) {
@@ -205,12 +234,14 @@ export class PlaywrightVerificationFactory {
   }
 
   async embedFullPageScreenshot(description: string): Promise<void> {
+    console.log(`[Verify] Embedding full page screenshot: "${description}"`);
     const screenshot = await this.page.screenshot({ fullPage: true });
     await this.testInfo.attach(description, { body: screenshot, contentType: 'image/png' });
   }
 
   async logOrderNumber(locatorInfo: LocatorInfo, label: string): Promise<void> {
     const value = (await locatorInfo.locator.textContent()) ?? '';
+    console.log(`[Verify] Logging order number "${value.trim()}" for "${locatorInfo.description}" (${label})`);
     this.testInfo.annotations.push({ type: label, description: value.trim() });
   }
 }

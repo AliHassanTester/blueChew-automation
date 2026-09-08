@@ -88,4 +88,50 @@ test.describe('Feature: Native Playwright Visual Regression - Login Flow', () =>
       });
     },
   );
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // Visual Defect Simulation Test: Demonstrates Failure Output & Diff Viewer
+  // ────────────────────────────────────────────────────────────────────────────
+  test(
+    'LOG-VISUAL-FAIL-DEMO - Visual Regression Failure & Diff Demonstration',
+    { tag: ['@visual-fail', '@demo'] },
+    async ({ loginPage }, testInfo) => {
+      await logTestCaseData(
+        testInfo,
+        {
+          testCase: 'LOG-VISUAL-FAIL-DEMO',
+          testSummary: 'Intentional UI Regression Failure Demo',
+          testDescription: 'Simulates an accidental UI bug (CTA button color and label altered) to demonstrate how Playwright detects and highlights pixel mismatches.',
+          tags: '@visual-fail @demo',
+        },
+        allureMeta,
+      );
+
+      await test.step('Step 1: Navigate to Login Page', async () => {
+        await loginPage.navigateToLoginPage(loginData.loginPageDetails.loginURL);
+        await loginPage.verifyLoginPageLoaded();
+      });
+
+      await test.step('Step 2: Simulate an Accidental UI Regression (Button Color, Padding & Layout Shift)', async () => {
+        // Simulates an authentic real-world CSS defect:
+        // 1. Submit CTA button background color changed to #e63946 (Defect Red)
+        // 2. Padding expanded and margin-top shifted by 45px (Vertical Layout Shift)
+        // 3. Border-radius broken to 0px (Square corners instead of design system pill)
+        // 4. Horizontal offset (transform translateX) simulating a flex/grid misalignment
+        await loginPage.locators.submitButton.locator.evaluate((btn: HTMLElement) => {
+          btn.style.setProperty('background-color', '#e63946', 'important');
+          btn.style.setProperty('color', '#ffffff', 'important');
+          btn.style.setProperty('margin-top', '45px', 'important');
+          btn.style.setProperty('padding', '20px 30px', 'important');
+          btn.style.setProperty('border-radius', '0px', 'important');
+          btn.style.setProperty('transform', 'translateX(25px)', 'important');
+        });
+      });
+
+      await test.step('Step 3: Assert Visual Snapshot (Detects Natural UI Defect)', async () => {
+        // Compares the realistic CSS defect against the golden baseline '02-login-card-component.png'
+        await loginPage.captureLoginCardElementBaseline('02-login-card-component');
+      });
+    },
+  );
 });

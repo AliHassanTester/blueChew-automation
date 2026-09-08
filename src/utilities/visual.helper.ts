@@ -2,6 +2,7 @@ import { Page, Locator, expect, test } from '@playwright/test';
 import * as path from 'path';
 import { captureApplitoolsVisualCheckpoint, closeActiveEyes } from './applitools.utils';
 import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
+import { LocatorInfo } from '@interfaces/locator.info.interface';
 
 export type { ApplitoolsVisualConfig };
 
@@ -65,6 +66,7 @@ export class VisualHelper {
    */
   async captureSnapshot(snapshotName: string, options: VisualSnapshotOptions = {}): Promise<void> {
     const sanitizedName = snapshotName.endsWith('.png') ? snapshotName : `${snapshotName}.png`;
+    console.log(`[Visual] Capturing page snapshot: "${sanitizedName}"`);
 
     await test.step(`[Visual] Capture Page Snapshot: "${sanitizedName}"`, async () => {
       await this.waitForPageStabilization();
@@ -84,16 +86,21 @@ export class VisualHelper {
   /**
    * Capture an isolated component/element-level visual snapshot.
    * 
-   * @param locator The Playwright Locator of the specific element to snapshot
+   * @param target The Playwright Locator or LocatorInfo of the specific element to snapshot
    * @param snapshotName Unique file name for the snapshot (e.g., 'login-form-card')
    * @param options Configuration for masking and pixel tolerances
    */
   async captureElementSnapshot(
-    locator: Locator,
+    target: Locator | LocatorInfo,
     snapshotName: string,
     options: Omit<VisualSnapshotOptions, 'fullPage'> = {},
   ): Promise<void> {
     const sanitizedName = snapshotName.endsWith('.png') ? snapshotName : `${snapshotName}.png`;
+    const isLocatorInfo = 'description' in target && 'locator' in target;
+    const locator = isLocatorInfo ? (target as LocatorInfo).locator : (target as Locator);
+    const description = isLocatorInfo ? (target as LocatorInfo).description : snapshotName;
+
+    console.log(`[Visual] Capturing element snapshot for "${description}": "${sanitizedName}"`);
 
     await test.step(`[Visual] Capture Element Snapshot: "${sanitizedName}"`, async () => {
       await locator.waitFor({ state: 'visible', timeout: 10_000 });

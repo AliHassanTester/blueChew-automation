@@ -15,6 +15,7 @@ const desktopViewport = { width: 1440, height: 900 };
 const mobileViewport = { width: 393, height: 852 };
 
 const reporters: Array<readonly [string] | readonly [string, Record<string, unknown>]> = [
+  ['html', { outputFolder: 'playwright-report', open: 'never' }],
   ['junit', { outputFile: 'test-results/junit.xml' }],
   ['allure-playwright', {
     resultsDir: 'allure-results',
