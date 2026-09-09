@@ -96,9 +96,13 @@ export class VisualHelper {
     options: Omit<VisualSnapshotOptions, 'fullPage'> = {},
   ): Promise<void> {
     const sanitizedName = snapshotName.endsWith('.png') ? snapshotName : `${snapshotName}.png`;
-    const isLocatorInfo = 'description' in target && 'locator' in target;
-    const locator = isLocatorInfo ? (target as LocatorInfo).locator : (target as Locator);
-    const description = isLocatorInfo ? (target as LocatorInfo).description : snapshotName;
+    const isDirectLocator = typeof (target as unknown as Record<string, unknown>).click === 'function';
+    const locator: Locator = isDirectLocator
+      ? (target as Locator)
+      : (target as LocatorInfo).locator;
+    const description: string = isDirectLocator
+      ? snapshotName
+      : (target as LocatorInfo).description || snapshotName;
 
     console.log(`[Visual] Capturing element snapshot for "${description}": "${sanitizedName}"`);
 

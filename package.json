@@ -43,7 +43,7 @@
     "test:visual:login": "node ./scripts/test-visual.js src/specs/login/login-visual.spec.ts",
     "test:login:visual": "node ./scripts/test-visual.js src/specs/login/login-visual.spec.ts",
     "test:login:visual:playwright": "cross-env ENV_TYPE=dev npx playwright test src/specs/login/login-visual.spec.ts --grep-invert @visual-fail",
-    "test:login:visual:fail-demo": "cross-env ENV_TYPE=dev npx playwright test src/specs/login/login-visual.spec.ts --grep @visual-fail",
+    "test:login:visual:fail-demo": "cross-env ENV_TYPE=dev npx playwright test src/specs/login/login-visual.spec.ts --grep @visual-fail --project=chromium-desktop",
     "test:login:visual:update": "cross-env ENV_TYPE=dev npx playwright test src/specs/login/login-visual.spec.ts --grep-invert @visual-fail --update-snapshots",
     "test:login:visual:desktop": "node ./scripts/test-visual.js src/specs/login/login-visual.spec.ts --project=chromium-desktop",
     "test:dev:login:visual:desktop": "node ./scripts/test-visual.js src/specs/login/login-visual.spec.ts --project=chromium-desktop",

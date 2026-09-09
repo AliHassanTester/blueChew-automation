@@ -4,6 +4,9 @@ import { getLoginData } from '@data/login/login.data';
 
 const allureMeta = { feature: 'Authentication', story: 'Playwright Native Login Page Visual Verification' };
 
+// Disable automatic whole-page failure screenshots so only the visual snapshot diff is retained
+test.use({ screenshot: 'off' });
+
 /**
  * Feature: Login Page Visual Regression Verification (Native Playwright)
  * 
