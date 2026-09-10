@@ -5,7 +5,7 @@ import { getMaxData } from '@data/product/landing-max.data';
 const scenario = getMaxData('Product-007-Landing-Max');
 
 test.describe('Feature: Product Landing - MAX', () => {
-  test.only(
+  test(
     `Test case: '${scenario.testCaseData.testCase}'
     Description: '${scenario.testCaseData.testDescription}'
     Tags: '${scenario.testCaseData.tags}'

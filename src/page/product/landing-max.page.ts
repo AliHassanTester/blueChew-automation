@@ -21,103 +21,85 @@ export class LandingMaxPage {
       tryNowBtn: {
         description: 'try now button',
         locator: this.page
-          .locator("//button[normalize-space()='TRY NOW']")
-          .or(this.page.locator("//button[text()=' TRY NOW ']"))
-          .or(this.page.locator("button:has-text('TRY NOW')"))
+          .locator("//button[normalize-space()='TRY NOW'] | //button[contains(text(),'TRY NOW')]")
           .first(),
       },
       heroSectionGetStartedBtn: {
         description: 'get started button in hero section',
         locator: this.page
-          .locator('//section[@class="hero-section"]//button[normalize-space()="GET STARTED"]')
-          .or(this.page.locator('section.hero-section button:has-text("GET STARTED")'))
+          .locator("//section[contains(@class,'hero-section')]//button[contains(normalize-space(),'GET STARTED')]")
           .first(),
       },
       maxLogo: {
         description: 'MAX Logo',
         locator: this.page
-          .locator('//img[@alt="MAX Logo"]')
-          .or(this.page.getByAltText('MAX Logo'))
+          .locator("//img[@alt='MAX Logo'] | //img[contains(@src,'max')]")
           .first(),
       },
       formulaSectionStartBtn: {
         description: 'start here button in formula section',
         locator: this.page
-          .locator('//button[normalize-space()="START NOW" and @class="formula-button"]')
-          .or(this.page.locator('button.formula-button:has-text("START NOW")'))
+          .locator("//button[contains(@class,'formula-button') and contains(normalize-space(),'START NOW')] | //button[contains(normalize-space(),'START NOW')]")
           .first(),
       },
       readSafteyInfoBtn: {
         description: 'read safety information',
         locator: this.page
-          .locator('//button[normalize-space()="Read safety information"]')
-          .or(this.page.locator('button:has-text("Read safety information")'))
+          .locator("//button[contains(normalize-space(),'Read safety information')]")
           .first(),
       },
       startNowBtn: {
         description: 'start now button in formula section',
         locator: this.page
-          .locator('//button[@class="start-now-btn"]')
-          .or(this.page.locator('button.start-now-btn'))
+          .locator("//button[contains(@class,'start-now-btn')] | //button[contains(normalize-space(),'START NOW')]")
           .first(),
       },
       topGetStartedBtn: {
         description: 'top nav get started button',
         locator: this.page
-          .locator('//button[@class="btn-get-started top-cta"]')
-          .or(this.page.locator('button.btn-get-started.top-cta'))
+          .locator("//button[contains(@class,'btn-get-started') and contains(@class,'top-cta')] | //header//button[contains(normalize-space(),'GET STARTED')]")
           .first(),
       },
       bottomGetStartedBtn: {
         description: 'bottom nav get started button',
         locator: this.page
-          .locator('//button[@class="btn-bottom"]')
-          .or(this.page.locator('button.btn-bottom'))
+          .locator("//button[contains(@class,'btn-bottom')] | //div[contains(@class,'bottom')]//button[contains(normalize-space(),'GET STARTED')]")
           .first(),
       },
       showAllBtn: {
         description: 'show all button',
         locator: this.page
-          .locator('//button[normalize-space()="SHOW ALL"]')
-          .or(this.page.locator('button:has-text("SHOW ALL")'))
+          .locator("//button[contains(normalize-space(),'SHOW ALL')]")
           .first(),
       },
       faqQuestion: {
         description: 'FAQ questions',
         locator: this.page
-          .locator('//span[contains(normalize-space(), "How does BlueChew MAX work?")]')
-          .or(this.page.locator('span:has-text("How does BlueChew MAX work?")'))
+          .locator("//span[contains(normalize-space(), 'How does BlueChew MAX work?')]")
           .first(),
       },
       faqAnswer: {
         description: 'FAQ answers',
         locator: this.page
-          .locator("//p[contains(text(), 'This combination medication')]")
-          .or(this.page.locator("p:has-text('This combination medication')"))
+          .locator("//p[contains(normalize-space(), 'This combination medication')]")
           .first(),
       },
       destinationPageHeader: {
         description: 'destination page header',
         locator: this.page
-          .getByText('Choose a Plan', { exact: true })
-          .or(this.page.locator('//p[text()="Choose a Plan"]'))
-          .or(this.page.locator('plan-header p'))
-          .or(this.page.locator('.product-plan-modal p'))
+          .locator("//p[normalize-space()='Choose a Plan'] | //h1[contains(normalize-space(),'Choose a Plan')] | //h2[contains(normalize-space(),'Choose a Plan')] | //*[contains(normalize-space(),'Choose a Plan')]")
           .first(),
       },
       safetyPageHeader: {
         description: 'Important Safety Information header',
         locator: this.page
-          .locator("//h1[normalize-space()='IMPORTANT SAFETY INFORMATION']")
-          .or(this.page.locator("//h1[text()='IMPORTANT SAFETY INFORMATION']"))
+          .locator("//h1[normalize-space()='IMPORTANT SAFETY INFORMATION'] | //h1[contains(text(),'IMPORTANT SAFETY INFORMATION')]")
           .first(),
       },
       backBtn: {
         description: 'back button',
         locator: this.page
-          .locator('//img[@alt="back icon"]')
-          .or(this.page.locator('button:has(img[alt="back icon"])'))
-          .or(this.page.locator('button:has-text("Back"), .back-btn, [aria-label*="back"]'))
+          .locator("//img[@alt='back icon'] | //button[contains(@class,'back-btn')] | //button[contains(normalize-space(),'Back')]")
           .first(),
       },
     };

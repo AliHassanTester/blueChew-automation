@@ -10,6 +10,7 @@ import { AdminPage } from '@page/admin/admin.page';
 import { ProfilePage } from '@page/account/profile.page';
 import { ProductPage } from '@page/product/product.page';
 import { LandingMaxPage } from '@page/product/landing-max.page';
+import { FooterRedirectsPage } from '@page/product/footer-redirects.page';
 import { VisualHelper } from '@utilities/visual.helper';
 
 type TestFixtures = {
@@ -24,6 +25,7 @@ type TestFixtures = {
   profilePage: ProfilePage;
   productPage: ProductPage;
   landingMaxPage: LandingMaxPage;
+  footerRedirectsPage: FooterRedirectsPage;
   visual: VisualHelper;
 };
 
@@ -71,6 +73,9 @@ export const test = base.extend<TestFixtures>({
   },
   landingMaxPage: async ({ page, visual }, use) => {
     await use(new LandingMaxPage(page, base.info(), visual));
+  },
+  footerRedirectsPage: async ({ page, visual }, use) => {
+    await use(new FooterRedirectsPage(page, base.info(), visual));
   },
 
   visual: async ({ page }, use) => {
