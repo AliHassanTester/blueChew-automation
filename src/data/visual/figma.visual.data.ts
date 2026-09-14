@@ -1,5 +1,5 @@
-export { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
+export type { ApplitoolsVisualConfig };
 
 // ── Login Page Figma Configurations ──────────────────────────────────────────
 export const LOGIN_DESKTOP_FIGMA_CONFIG: ApplitoolsVisualConfig = {

@@ -6,7 +6,7 @@ import * as path from 'path';
 import { VisualHelper } from '@utilities/visual.helper';
 import { ApplitoolsVisualConfig, CONFIRMATION_FIGMA_CONFIG, PROFILE_FIGMA_CONFIG } from '@data/visual/figma.visual.data';
 
-const SAMPLE_ID_PATH = path.resolve(__dirname, '../../../tests/fixtures/sampleID.jpg');
+const SAMPLE_ID_PATH = path.resolve(__dirname, '../../data/assets/sampleID.jpg');
 
 /**
  * Post-purchase confirmation page (/checkout/confirmation): ID-photo upload → provider

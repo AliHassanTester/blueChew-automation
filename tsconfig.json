@@ -13,15 +13,12 @@
       "@fixtures/*": ["./src/fixtures/*"],
       "@utilities/*": ["./src/utilities/*"],
       "@data/*": ["./src/data/*"],
-      "@interfaces/*": ["./src/interfaces/*"],
-      "@enums/*": ["./src/enums/*"]
+      "@interfaces": ["./src/interfaces/index.ts"],
+      "@interfaces/*": ["./src/interfaces/*"]
     }
   },
   "include": [
     "src/**/*",
-    "tests/**/*",
-    "helpers/**/*",
-    "constants/**/*",
     "playwright.config.ts"
   ],
   "exclude": ["node_modules", "dist"]

@@ -181,7 +181,6 @@ export class PlaywrightVerificationFactory {
     }
     try {
       await this.page.waitForLoadState('load', { timeout: Math.min(timeout, 2_000) });
-      await this.page.waitForLoadState('load', { timeout: Math.min(timeout, 2_000) });
     } catch {
       // Some pages never reach a fully idle state; falling back to the load event keeps
       // the test moving without relying on a fragile app-specific loader check.
@@ -189,15 +188,17 @@ export class PlaywrightVerificationFactory {
   }
 
   /**
-   * Waits for the app's "Just a moment" loader to fully cycle: up to `appearTimeout`
-   * for it to mount (it may never — that's fine), then up to `settleTimeout` for it to
-   * clear. Unlike waitForLoaderToDisappear — which returns instantly when the loader
-   * hasn't mounted *yet* and so can let the next action fire too early — this closes the
-   * race where the loader appears a beat after a click (e.g. the checkout carousel's
-   * strength → quantity → summary transitions, which fetch pricing between slides).
+   * Periodically polls an asynchronous assertion callback until it passes or times out.
+   *
+   * @param assertion Async function containing assertion checks
+   * @param timeout Max duration to wait in milliseconds (default: 10,000ms)
+   * @param interval Polling interval in milliseconds (default: 500ms)
    */
-
-  async expectToPass(assertion: () => Promise<void>, timeout: number = 10_000): Promise<void> {
+  async expectToPass(
+    assertion: () => Promise<void>,
+    timeout = 10_000,
+    interval = 500,
+  ): Promise<void> {
     console.log('[Verify] Waiting for assertion to pass');
     const deadline = Date.now() + timeout;
     let lastError: Error | undefined;
@@ -207,30 +208,21 @@ export class PlaywrightVerificationFactory {
         return;
       } catch (e) {
         lastError = e as Error;
-        await this.page.waitForTimeout(500);
+        await this.page.waitForTimeout(interval);
       }
     }
     throw lastError;
   }
 
+  /**
+   * Alias for expectToPass supporting delegate callback convention.
+   */
   async ExpectDelegateToPass(
     delegate: () => Promise<void>,
-    timeout: number = 10_000,
-    interval: number = 500,
+    timeout = 10_000,
+    interval = 500,
   ): Promise<void> {
-    console.log('[Verify] Waiting for delegate to pass');
-    const deadline = Date.now() + timeout;
-    let lastError: Error | undefined;
-    while (Date.now() < deadline) {
-      try {
-        await delegate();
-        return;
-      } catch (e) {
-        lastError = e as Error;
-        await this.page.waitForTimeout(interval);
-      }
-    }
-    throw lastError;
+    return this.expectToPass(delegate, timeout, interval);
   }
 
   async embedFullPageScreenshot(description: string): Promise<void> {

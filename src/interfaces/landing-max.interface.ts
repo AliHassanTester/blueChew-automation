@@ -1,3 +1,3 @@
 export interface LandingMaxData {
-    mainURL:string; 
+  mainURL: string;
 }
