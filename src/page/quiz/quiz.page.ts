@@ -3,7 +3,7 @@ import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { VisualHelper } from '@utilities/visual.helper';
-import { ApplitoolsVisualConfig, QUIZ_FIGMA_CONFIG } from '@data/visual/figma.visual.data';
+import { ApplitoolsVisualConfig, QUIZ_FIGMA_CONFIG } from '@data/tier2-visual/figma.visual.data';
 
 /**
  * Quiz wizard (dev.bluechew.com/quiz). Stable elements live in the LocatorInfo map;

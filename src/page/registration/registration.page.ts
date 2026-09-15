@@ -6,7 +6,7 @@ import { RegistrationDetails } from '@interfaces/signup-to-approved-order.interf
 import { RegistrationValidationDetails } from '@interfaces/registration-validation.interface';
 import { VisualHelper } from '@utilities/visual.helper';
 import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
-import { REGISTRATION_FIGMA_CONFIG } from '@data/visual/figma.visual.data';
+import { REGISTRATION_FIGMA_CONFIG } from '@data/tier2-visual/figma.visual.data';
 
 /**
  * RegistrationPage Object Model

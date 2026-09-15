@@ -10,7 +10,7 @@ import {
   GOLD_TRANSITION_FIGMA_CONFIG,
   CONFIRMATION_FIGMA_CONFIG,
   PROFILE_FIGMA_CONFIG,
-} from '@data/visual/figma.visual.data';
+} from '@data/tier2-visual/figma.visual.data';
 
 export class ProductPage {
   public readonly page: Page;

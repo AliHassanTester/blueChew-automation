@@ -64,5 +64,9 @@ export async function applyAllureMetadata(
     `${testCaseData.testDescription}\n\n${testCaseData.testSummary}`,
   );
 
+  if (testCaseData.tier) {
+    await allure.label('tier', testCaseData.tier);
+  }
+
   if (tags.length > 0) await allure.tags(...tags);
 }

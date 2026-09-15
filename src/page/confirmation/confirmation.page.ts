@@ -4,7 +4,7 @@ import { PlaywrightVerificationFactory } from '@utilities/playwright.verificatio
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import * as path from 'path';
 import { VisualHelper } from '@utilities/visual.helper';
-import { ApplitoolsVisualConfig, CONFIRMATION_FIGMA_CONFIG, PROFILE_FIGMA_CONFIG } from '@data/visual/figma.visual.data';
+import { ApplitoolsVisualConfig, CONFIRMATION_FIGMA_CONFIG, PROFILE_FIGMA_CONFIG } from '@data/tier2-visual/figma.visual.data';
 
 const SAMPLE_ID_PATH = path.resolve(__dirname, '../../data/assets/sampleID.jpg');
 

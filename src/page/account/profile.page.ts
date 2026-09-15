@@ -4,7 +4,7 @@ import { PlaywrightVerificationFactory } from '@utilities/playwright.verificatio
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { ShippingAddressInput } from '@interfaces/profile.interface';
 import { VisualHelper } from '@utilities/visual.helper';
-import { ApplitoolsVisualConfig, PROFILE_FIGMA_CONFIG } from '@data/visual/figma.visual.data';
+import { ApplitoolsVisualConfig, PROFILE_FIGMA_CONFIG } from '@data/tier2-visual/figma.visual.data';
 
 /**
  * Account → Profile area (/account/profile and its edit sub-pages). Locators are XPath

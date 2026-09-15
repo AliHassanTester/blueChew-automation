@@ -4,7 +4,7 @@ import { PlaywrightVerificationFactory } from '@utilities/playwright.verificatio
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { MedicalDetails } from '@interfaces/signup-to-approved-order.interface';
 import { VisualHelper } from '@utilities/visual.helper';
-import { ApplitoolsVisualConfig, MEDICAL_FIGMA_CONFIG, GOLD_MEDICAL_STEPS_FIGMA_CONFIGS } from '@data/visual/figma.visual.data';
+import { ApplitoolsVisualConfig, MEDICAL_FIGMA_CONFIG, GOLD_MEDICAL_STEPS_FIGMA_CONFIGS } from '@data/tier2-visual/figma.visual.data';
 
 /**
  * Medical-profile wizard (/medical). Stable fields expose aria-labels / formcontrolname,

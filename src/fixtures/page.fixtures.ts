@@ -12,6 +12,14 @@ import { ProductPage } from '@page/product/product.page';
 import { LandingMaxPage } from '@page/product/landing-max.page';
 import { FooterRedirectsPage } from '@page/product/footer-redirects.page';
 import { VisualHelper } from '@utilities/visual.helper';
+import {
+  AuthApiClient,
+  ProductApiClient,
+  RegistrationApiClient,
+  ProfileApiClient,
+  CheckoutApiClient,
+  AdminApiClient,
+} from '@api';
 
 type TestFixtures = {
   loginPage: LoginPage;
@@ -27,6 +35,12 @@ type TestFixtures = {
   landingMaxPage: LandingMaxPage;
   footerRedirectsPage: FooterRedirectsPage;
   visual: VisualHelper;
+  authApi: AuthApiClient;
+  productApi: ProductApiClient;
+  registrationApi: RegistrationApiClient;
+  profileApi: ProfileApiClient;
+  checkoutApi: CheckoutApiClient;
+  adminApi: AdminApiClient;
 };
 
 export const test = base.extend<TestFixtures>({
@@ -84,6 +98,36 @@ export const test = base.extend<TestFixtures>({
     // provide an explicit hook if providers need setup)
     await use(visual);
     await visual.close();
+  },
+
+  authApi: async ({ request, baseURL }, use, testInfo) => {
+    const url = process.env.BLUECHEW_URL || baseURL || 'https://dev.app.bluechew.com';
+    await use(new AuthApiClient(request, url, testInfo));
+  },
+
+  productApi: async ({ request, baseURL }, use, testInfo) => {
+    const url = process.env.BLUECHEW_URL || baseURL || 'https://dev.app.bluechew.com';
+    await use(new ProductApiClient(request, url, testInfo));
+  },
+
+  registrationApi: async ({ request, baseURL }, use, testInfo) => {
+    const url = process.env.BLUECHEW_URL || baseURL || 'https://dev.app.bluechew.com';
+    await use(new RegistrationApiClient(request, url, testInfo));
+  },
+
+  profileApi: async ({ request, baseURL }, use, testInfo) => {
+    const url = process.env.BLUECHEW_URL || baseURL || 'https://dev.app.bluechew.com';
+    await use(new ProfileApiClient(request, url, testInfo));
+  },
+
+  checkoutApi: async ({ request, baseURL }, use, testInfo) => {
+    const url = process.env.BLUECHEW_URL || baseURL || 'https://dev.app.bluechew.com';
+    await use(new CheckoutApiClient(request, url, testInfo));
+  },
+
+  adminApi: async ({ request, baseURL }, use, testInfo) => {
+    const url = process.env.BLUECHEW_URL || baseURL || 'https://dev.app.bluechew.com';
+    await use(new AdminApiClient(request, url, testInfo));
   },
 });
 

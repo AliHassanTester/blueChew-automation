@@ -41,6 +41,13 @@ export interface GeneratedTestAccount {
 }
 
 /**
+ * Generates a unique timestamped email for test automation.
+ */
+export function generateUniqueEmail(prefix = 'autotest'): string {
+  return `${prefix}.${generateRandomAlphanumeric(5)}.${Date.now()}@example.com`;
+}
+
+/**
  * Generates a random Date of Birth (MM/DD/YYYY) for an adult between minAge and maxAge (defaults: 18–80).
  */
 export function generateRandomDOB(minAge = 18, maxAge = 80): string {

@@ -8,3 +8,4 @@ export * from './profile.interface';
 export * from './registration-validation.interface';
 export * from './signup-to-approved-order.interface';
 export * from './testcase.data.interface';
+export * from './api';

@@ -13,8 +13,14 @@
       "@fixtures/*": ["./src/fixtures/*"],
       "@utilities/*": ["./src/utilities/*"],
       "@data/*": ["./src/data/*"],
+      "@tier1-data/*": ["./src/data/tier1-functional/*"],
+      "@tier2-data/*": ["./src/data/tier2-visual/*"],
+      "@tier3-data/*": ["./src/data/tier3-api/*"],
+      "@specs/*": ["./src/specs/*"],
       "@interfaces": ["./src/interfaces/index.ts"],
-      "@interfaces/*": ["./src/interfaces/*"]
+      "@interfaces/*": ["./src/interfaces/*"],
+      "@api": ["./src/api/index.ts"],
+      "@api/*": ["./src/api/*"]
     }
   },
   "include": [

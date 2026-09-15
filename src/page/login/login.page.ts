@@ -9,7 +9,7 @@ import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 import {
   LOGIN_DESKTOP_FIGMA_CONFIG,
   LOGIN_MOBILE_FIGMA_CONFIG,
-} from '@data/visual/figma.visual.data';
+} from '@data/tier2-visual/figma.visual.data';
 
 /**
  * LoginPage Object Model

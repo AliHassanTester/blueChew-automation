@@ -15,6 +15,9 @@ export async function logTestCaseData(
   allureOptions?: AllureMetaOptions,
 ): Promise<void> {
   // Plain annotations — surfaced by the Playwright HTML & JUnit reporters
+  if (testCaseData.tier) {
+    testInfo.annotations.push({ type: 'Tier', description: testCaseData.tier });
+  }
   testInfo.annotations.push({ type: 'Test Case', description: testCaseData.testCase });
   testInfo.annotations.push({ type: 'Description', description: testCaseData.testDescription });
   testInfo.annotations.push({ type: 'Summary', description: testCaseData.testSummary });

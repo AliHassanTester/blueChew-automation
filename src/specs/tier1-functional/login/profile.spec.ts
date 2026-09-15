@@ -1,0 +1,61 @@
+import { logTestCaseData } from '@utilities/test.helper.utils';
+import { getProfileData } from '@data/tier1-functional/login/profile.data';
+import { test } from '@fixtures/page.fixtures';
+
+const changePassword = getProfileData('PROF-010-Change-Password');
+const updateShipping = getProfileData('PROF-011-Update-Shipping-Address');
+const togglePrefs = getProfileData('PROF-012-Toggle-Notification-Preferences');
+
+const allureMeta = { feature: 'Account', story: 'Profile' };
+
+test.describe('Tier 1: Account Profile Flow @tier1 @account @profile', () => {
+  // Every profile scenario runs against the same authenticated account.
+  test.beforeEach(async ({ loginPage }) => {
+    await test.step('Log in and land on the account area', async () => {
+      await loginPage.navigateToPage(changePassword.loginPageDetails);
+      await loginPage.loginWithCredentials(changePassword.loginDetails);
+      await loginPage.verifySuccessfulLogin();
+    });
+  });
+
+  test(
+    `
+    Test case: '${changePassword.testCaseData.testCase}'
+    Description: '${changePassword.testCaseData.testDescription}'
+    Tags: '${changePassword.testCaseData.tags}'
+  `,
+    async ({ profilePage }) => {
+      await logTestCaseData(test.info(), changePassword.testCaseData, allureMeta);
+      await profilePage.captureProfileSnapshot();
+      const d = changePassword.profileDetails;
+      await profilePage.changePasswordAndRestore(d.currentPassword, d.tempPassword);
+    },
+  );
+
+  test(
+    `
+    Test case: '${updateShipping.testCaseData.testCase}'
+    Description: '${updateShipping.testCaseData.testDescription}'
+    Tags: '${updateShipping.testCaseData.tags}'
+  `,
+    async ({ profilePage }) => {
+      await logTestCaseData(test.info(), updateShipping.testCaseData, allureMeta);
+      await profilePage.captureProfileSnapshot();
+      const s = updateShipping.profileDetails;
+      await profilePage.updateShippingAddress(s.shipping, s.shippingAlt);
+    },
+  );
+
+  test(
+    `
+    Test case: '${togglePrefs.testCaseData.testCase}'
+    Description: '${togglePrefs.testCaseData.testDescription}'
+    Tags: '${togglePrefs.testCaseData.tags}'
+  `,
+    async ({ profilePage }) => {
+      await logTestCaseData(test.info(), togglePrefs.testCaseData, allureMeta);
+      await profilePage.captureProfileSnapshot();
+      await profilePage.toggleNotificationPreferences();
+    },
+  );
+});

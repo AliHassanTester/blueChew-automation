@@ -1,0 +1,46 @@
+import { logTestCaseData } from '@utilities/test.helper.utils';
+import { getLoginData } from '@data/tier1-functional/login/login.data';
+import {
+  LOGIN_DESKTOP_FIGMA_CONFIG,
+  LOGIN_MOBILE_FIGMA_CONFIG,
+} from '@data/tier2-visual/figma.visual.data';
+import { test } from '@fixtures/page.fixtures';
+import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
+
+export type { ApplitoolsVisualConfig as EyesFigmaConfig };
+export const loginPageDesktopFigmaConfig = LOGIN_DESKTOP_FIGMA_CONFIG;
+export const loginPageMobileFigmaConfig = LOGIN_MOBILE_FIGMA_CONFIG;
+
+const scenario = getLoginData('AQ-02-User-Login');
+
+test.describe('Tier 1: User Login Flow @tier1 @login', () => {
+  test(
+    `Test case: '${scenario.testCaseData.testCase}'
+    Description: '${scenario.testCaseData.testDescription}'
+    Tags: '${scenario.testCaseData.tags}'
+  `,
+    async ({ loginPage }) => {
+      await logTestCaseData(test.info(), scenario.testCaseData, {
+        feature: 'Authentication',
+        story: 'User Login',
+      });
+
+      await test.step('Navigate to BlueChew login page', async () => {
+        await loginPage.navigateToPage(scenario.loginPageDetails);
+        await loginPage.captureLoginPageSnapshot(scenario.visualConfigs);
+      });
+
+      await test.step('Log in with registered credentials', async () => {
+        await loginPage.loginWithCredentials(scenario.loginDetails);
+      });
+
+      await test.step('Open the navigation menu and verify the main links', async () => {
+        await loginPage.verifyNavLinksVisible();
+      });
+
+      await test.step('Verify successful login — account page rendered', async () => {
+        await loginPage.verifySuccessfulLogin();
+      });
+    },
+  );
+});
