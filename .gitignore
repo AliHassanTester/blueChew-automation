@@ -19,6 +19,7 @@ eyes-playwright-report/
 dom-snapshots/
 # Playwright MCP browser artifacts
 .playwright-mcp/
+scratch/
 
 # OS
 .DS_Store

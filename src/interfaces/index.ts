@@ -7,4 +7,5 @@ export * from './login.page.interface';
 export * from './profile.interface';
 export * from './registration-validation.interface';
 export * from './signup-to-approved-order.interface';
+export * from './medical-edge-cases.interface';
 export * from './testcase.data.interface';

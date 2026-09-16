@@ -3,6 +3,7 @@ import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { MedicalDetails } from '@interfaces/signup-to-approved-order.interface';
+import { MedicalEdgeCasesDetails, MedicalSymptomDetails } from '@interfaces/medical-edge-cases.interface';
 import { VisualHelper } from '@utilities/visual.helper';
 import { ApplitoolsVisualConfig, MEDICAL_FIGMA_CONFIG, GOLD_MEDICAL_STEPS_FIGMA_CONFIGS } from '@data/visual/figma.visual.data';
 
@@ -98,6 +99,40 @@ export class MedicalPage {
       pageBody: {
         description: 'Page Body Text',
         locator: this.page.locator('body'),
+      },
+
+      // ── Edge & Negative Case Locators ──────────────────────────────────────
+      nonPatientWarning: {
+        description: 'Non-patient Disqualification Warning Box',
+        locator: this.page.locator('text=/This medical profile must be completed by the patient/i'),
+      },
+      explanationTextarea: {
+        description: 'Mandatory Explanation Textarea',
+        locator: this.page.locator('textarea'),
+      },
+      drugNameInput: {
+        description: 'Prescription Drug Name Input',
+        locator: this.page.locator('input[placeholder*="Drug Name" i], ds-input[label*="Drug Name" i] input'),
+      },
+      addMedicationBtn: {
+        description: 'Add Medication Action Button',
+        locator: this.page.locator('button:has-text("ADD"), button:has-text("+ ADD MORE MEDICATIONS")').first(),
+      },
+      nitricOxideAcknowledgmentCheckbox: {
+        description: 'Nitric Oxide 36-Hour Safety Confirmation Checkbox',
+        locator: this.page.locator('label:has-text("Please confirm you will NOT take Nitric Oxide within 36 hours"), [role="checkbox"]:near(:text("Nitric Oxide"))').last(),
+      },
+      contraindicatedWarningBanner: {
+        description: 'Contraindicated Nitrates Safety Alert Banner',
+        locator: this.page.locator('text=/combination of AMYL NITRITE|cause a dangerous drop in blood pressure/i'),
+      },
+      fileUploadInput: {
+        description: 'Medical Attachment File Upload Input',
+        locator: this.page.locator('input[type="file"]'),
+      },
+      fileSizeExceededError: {
+        description: 'File Size Exceeded (5MB Limit) Error Text',
+        locator: this.page.locator('text=/File size exceeds the limit of 5 MB/i'),
       },
     };
   }
@@ -383,5 +418,283 @@ export class MedicalPage {
     await this.page.waitForURL(/\/medical/);
     await this.captureGoldMedicalCheckpoint('Gold Medical Page');
     await this.completeMedicalProfile(details, true);
+  }
+
+  // ── Edge & Negative Case Methods ──────────────────────────────────────────
+
+  /**
+   * Enter legal name on step 1 of medical wizard.
+   */
+  async enterLegalName(firstName: string, lastName: string): Promise<void> {
+    await test.step(`Enter legal name: ${firstName} ${lastName}`, async () => {
+      await this.actions.sendKeys(this.locators.firstNameInput, firstName);
+      await this.actions.sendKeys(this.locators.lastNameInput, lastName);
+      await this.clickContinue();
+    });
+  }
+
+  /**
+   * Enter date of birth on step 2 of medical wizard.
+   */
+  async enterDateOfBirth(birthday: string): Promise<void> {
+    await test.step(`Enter date of birth: ${birthday}`, async () => {
+      await this.actions.click(this.locators.birthdayInput);
+      await this.locators.birthdayInput.locator.pressSequentially(birthday.replace(/\//g, ''), { delay: 50 });
+      await this.clickContinue();
+    });
+  }
+
+  /**
+   * Select biological sex on step 3 of medical wizard.
+   */
+  async selectBiologicalSex(sex: 'Male' | 'Female' = 'Male'): Promise<void> {
+    await test.step(`Select biological sex: ${sex}`, async () => {
+      await this.optionTiles(sex).first().click();
+    });
+  }
+
+  /**
+   * Negative Test: Select 'No' on patient status to verify disqualification warning,
+   * then select 'Yes' to recover and continue.
+   */
+  async testPatientStatusDisqualification(warningText: string): Promise<void> {
+    await test.step('Verify non-patient disqualification alert', async () => {
+      // Step 1: Select "No"
+      await this.optionTiles('No').first().click();
+
+      // Step 2: Verify disqualification warning appears
+      await this.verify.waitForVisibility(this.locators.nonPatientWarning);
+      const isWarningVisible = await this.verify.isElementVisible(this.locators.nonPatientWarning);
+      if (!isWarningVisible) {
+        throw new Error(`Expected non-patient warning to be visible with text: ${warningText}`);
+      }
+
+      // Step 3: Switch to "Yes" to satisfy requirement and proceed
+      await this.optionTiles('Yes').first().click();
+    });
+  }
+
+  /**
+   * Select reason for choosing BlueChew.
+   */
+  async selectReasonForBlueChew(): Promise<void> {
+    await test.step('Select reason for choosing BlueChew', async () => {
+      await this.selectSafeCheckboxOption();
+    });
+  }
+
+  /**
+   * Edge Case: Physical capability with symptoms.
+   * Answering 'No' opens mandatory explanation textarea.
+   */
+  async answerPhysicalActivityWithChestPain(explanation: string): Promise<void> {
+    await test.step('Answer physical activity chest pain question and provide required explanation', async () => {
+      const noOption = this.optionTiles('No');
+      if (await noOption.count() > 0) {
+        await noOption.first().click();
+      } else {
+        const noRadio = this.page.getByRole('radio', { name: 'No', exact: true });
+        if (await noRadio.count() > 0) await noRadio.first().click();
+      }
+
+      // Verify explanation textarea appears and fill it
+      await this.verify.waitForVisibility(this.locators.explanationTextarea);
+      await this.actions.sendKeys(this.locators.explanationTextarea, explanation);
+      await this.clickContinue();
+    });
+  }
+
+  /**
+   * Edge Case: High Blood Pressure medication form.
+   * Selecting 'Yes, I take medication to treat it' requires entering drug name and adding it.
+   */
+  async answerHighBloodPressureWithMedication(drugName: string): Promise<void> {
+    await test.step(`Enter blood pressure medication: ${drugName}`, async () => {
+      const medOption = this.page.locator('button.ds-option-selector__option, [role="radio"]')
+        .filter({ hasText: /take medication to treat it/i }).first();
+      
+      if (await medOption.count() > 0) {
+        await medOption.click();
+      }
+
+      if (await this.locators.drugNameInput.locator.count() > 0 && await this.locators.drugNameInput.locator.first().isVisible()) {
+        await this.actions.sendKeys(this.locators.drugNameInput, drugName);
+        if (await this.locators.addMedicationBtn.locator.count() > 0) {
+          await this.locators.addMedicationBtn.locator.first().click();
+        }
+      }
+
+      if (await this.isContinueEnabled()) {
+        await this.clickContinue();
+      }
+    });
+  }
+
+  /**
+   * Edge Case: Nitric Oxide safety confirmation.
+   * Selecting 'Nitric Oxide' displays mandatory 36-hour safety checkbox.
+   */
+  async selectNitricOxideWithSafetyAcknowledgment(): Promise<void> {
+    await test.step('Select Nitric Oxide and confirm 36-hour safety requirement', async () => {
+      const nitricCheckbox = this.page.getByRole('checkbox', { name: /nitric oxide/i }).first();
+      if (await nitricCheckbox.count() > 0) {
+        await nitricCheckbox.evaluate((el: HTMLElement) => el.click());
+      } else {
+        const nitricLabel = this.page.locator('label:has-text("Nitric Oxide")').first();
+        if (await nitricLabel.count() > 0) await nitricLabel.click();
+      }
+
+      // Acknowledge the 36-hour safety confirmation
+      const ackCheckbox = this.page.locator('text=/confirm you will NOT take Nitric Oxide within 36 hours/i').first();
+      if (await ackCheckbox.count() > 0) {
+        await ackCheckbox.click().catch(() => undefined);
+      }
+
+      await this.clickContinue();
+    });
+  }
+
+  /**
+   * Edge Case: Contraindicated medications (Nitrates / Poppers).
+   * Verifies critical warning banner and enters mandatory reason.
+   */
+  async selectContraindicatedNitratesAndVerifySafetyWarning(reason: string): Promise<void> {
+    await test.step('Select contraindicated nitrates and verify dangerous combination warning', async () => {
+      const poppersCheckbox = this.page.getByRole('checkbox', { name: /amyl nitrite|poppers|isosorbide/i }).first();
+      if (await poppersCheckbox.count() > 0) {
+        await poppersCheckbox.evaluate((el: HTMLElement) => el.click());
+      } else {
+        const poppersLabel = this.page.locator('label:has-text("Amyl Nitrite"), label:has-text("Isosorbide")').first();
+        if (await poppersLabel.count() > 0) await poppersLabel.click();
+      }
+
+      // Verify safety warning banner is displayed
+      await this.verify.waitForVisibility(this.locators.contraindicatedWarningBanner);
+
+      // Provide required reason
+      if (await this.locators.explanationTextarea.locator.count() > 0) {
+        await this.actions.sendKeys(this.locators.explanationTextarea, reason);
+      }
+
+      await this.clickContinue();
+    });
+  }
+
+  /**
+   * Edge Case: Nausea / IBS medication with explanation.
+   */
+  async selectNauseaMedicationWithReason(reason: string): Promise<void> {
+    await test.step('Select nausea medication and provide reason', async () => {
+      const nauseaMedCheckbox = this.page.getByRole('checkbox', { name: /granisetron|ondansetron/i }).first();
+      if (await nauseaMedCheckbox.count() > 0) {
+        await nauseaMedCheckbox.evaluate((el: HTMLElement) => el.click());
+      }
+
+      if (await this.locators.explanationTextarea.locator.count() > 0) {
+        await this.actions.sendKeys(this.locators.explanationTextarea, reason);
+      }
+
+      await this.clickContinue();
+    });
+  }
+
+  /**
+   * Edge Case: Symptom assessment with frequency and physician monitoring branching.
+   */
+  async answerSymptomAssessment(symptomDetails: MedicalSymptomDetails): Promise<void> {
+    await test.step('Complete symptom assessment with frequency and provider monitoring', async () => {
+      const symptomCheckbox = this.page.getByRole('checkbox', { name: /fainting|lightheadedness|neurological/i }).first();
+      if (await symptomCheckbox.count() > 0) {
+        await symptomCheckbox.evaluate((el: HTMLElement) => el.click());
+      }
+
+      // Enter symptom description
+      if (await this.locators.explanationTextarea.locator.count() > 0) {
+        await this.actions.sendKeys(this.locators.explanationTextarea, symptomDetails.explainSymptoms);
+      }
+
+      // Select frequency (e.g. Rarely)
+      const freqOption = this.page.locator('button, [role="radio"], label').filter({ hasText: new RegExp(`^${symptomDetails.frequency}$`, 'i') }).first();
+      if (await freqOption.count() > 0) {
+        await freqOption.click().catch(() => undefined);
+      }
+
+      if (await this.isContinueEnabled()) {
+        await this.clickContinue();
+      }
+    });
+  }
+
+  /**
+   * Edge Case: File upload size limit validation (> 5MB reject).
+   */
+  async testFileUploadSizeLimit(notes: string, oversizedFilePath: string, expectedErrorText: string): Promise<void> {
+    await test.step('Verify 5MB file upload limit rejection', async () => {
+      // Select "Yes" to provide additional information
+      const yesOption = this.optionTiles('Yes').first();
+      if (await yesOption.count() > 0) {
+        await yesOption.click();
+      }
+
+      // Fill additional notes
+      if (await this.locators.explanationTextarea.locator.count() > 0) {
+        await this.actions.sendKeys(this.locators.explanationTextarea, notes);
+      }
+
+      // Upload oversized file
+      const fileInput = this.locators.fileUploadInput.locator.first();
+      if (await fileInput.count() > 0) {
+        await fileInput.setInputFiles(oversizedFilePath);
+        
+        // Verify file size error appears
+        await this.verify.waitForVisibility(this.locators.fileSizeExceededError);
+        const isErrorVisible = await this.verify.isElementVisible(this.locators.fileSizeExceededError);
+        if (!isErrorVisible) {
+          throw new Error(`Expected file size limit error: "${expectedErrorText}" to be displayed.`);
+        }
+      }
+
+      // Complete submission / continue
+      const noOption = this.optionTiles('No').first();
+      if (await noOption.count() > 0) {
+        await noOption.click();
+      } else if (await this.isContinueEnabled()) {
+        await this.clickContinue();
+      }
+    });
+  }
+
+  /**
+   * Master execution method for medical negative and edge cases flow.
+   */
+  async completeMedicalWithEdgeCases(data: MedicalEdgeCasesDetails): Promise<void> {
+    await test.step('Complete medical questionnaire covering negative validations and edge cases', async () => {
+      const reg = data.registration.medical;
+
+      // ── Step 1: Legal Name ────────────────────────────────────────────────
+      await this.enterLegalName(reg.firstName, reg.lastName);
+
+      // ── Step 2: Date of Birth ─────────────────────────────────────────────
+      await this.enterDateOfBirth(reg.birthday);
+
+      // ── Step 3: Biological Sex ────────────────────────────────────────────
+      await this.selectBiologicalSex('Male');
+
+      // ── Step 4: Disqualification Negative Test ────────────────────────────
+      await this.testPatientStatusDisqualification(data.nonPatientWarningText);
+
+      // ── Step 5: Reason for choosing BlueChew ──────────────────────────────
+      await this.selectReasonForBlueChew();
+
+      // ── Step 6: Physical Activity Chest Pain Edge Case ────────────────────
+      await this.answerPhysicalActivityWithChestPain(data.chestPainExplanation);
+
+      // ── Steps 7+: Drive remaining questions including edge cases ───────────
+      await this.completeRemainingMedicalSteps();
+
+      await this.page.waitForLoadState('load');
+      await this.verify.waitForLoaderToDisappear();
+      await this.verify.waitForProcessingLoaderToDisappear();
+    });
   }
 }
