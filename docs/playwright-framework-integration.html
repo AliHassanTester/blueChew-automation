@@ -1,0 +1,958 @@
+<title>From Recording to Test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap">
+<style>
+/* ─── TOKENS ─────────────────────────────────────── */
+:root {
+  --g0: #F2F6FC;
+  --g1: #FFFFFF;
+  --g2: #E8EFF8;
+  --border: #C2D0E5;
+  --bstrong: #96AECC;
+  --ink: #0A1422;
+  --ink-2: #3D5470;
+  --ink-3: #8299B5;
+  --blue: #1D5FD4;
+  --blue-s: #D8E6FF;
+  --green: #15803D;
+  --green-s: #EDFBF3;
+  --green-b: #6EE7A8;
+  --orange: #B84210;
+  --orange-s: #FFF3EE;
+  --orange-b: #FCA570;
+  --sky: #0274B5;
+  --sky-s: #EBF6FF;
+  --sky-b: #7DD3FC;
+  --code-bg: #E6EEF8;
+  --code: #163558;
+  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', 'Courier New', monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --g0: #060E1C;
+    --g1: #0C1628;
+    --g2: #122030;
+    --border: #1A2E48;
+    --bstrong: #264460;
+    --ink: #DEE9F8;
+    --ink-2: #6E8CAE;
+    --ink-3: #2E4560;
+    --blue: #4287FF;
+    --blue-s: #0B1E3E;
+    --green: #22C55E;
+    --green-s: #051E10;
+    --green-b: #166534;
+    --orange: #FB923C;
+    --orange-s: #1E0800;
+    --orange-b: #7C2D12;
+    --sky: #38BDF8;
+    --sky-s: #061926;
+    --sky-b: #075985;
+    --code-bg: #0B1928;
+    --code: #93C5FD;
+  }
+}
+
+:root[data-theme="dark"] {
+  --g0: #060E1C;
+  --g1: #0C1628;
+  --g2: #122030;
+  --border: #1A2E48;
+  --bstrong: #264460;
+  --ink: #DEE9F8;
+  --ink-2: #6E8CAE;
+  --ink-3: #2E4560;
+  --blue: #4287FF;
+  --blue-s: #0B1E3E;
+  --green: #22C55E;
+  --green-s: #051E10;
+  --green-b: #166534;
+  --orange: #FB923C;
+  --orange-s: #1E0800;
+  --orange-b: #7C2D12;
+  --sky: #38BDF8;
+  --sky-s: #061926;
+  --sky-b: #075985;
+  --code-bg: #0B1928;
+  --code: #93C5FD;
+}
+
+/* ─── RESET ──────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  font-weight: 400;
+  background: var(--g0);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── PAGE SHELL ─────────────────────────────────── */
+.page { max-width: 960px; margin: 0 auto; }
+
+.inner { max-width: 740px; }
+
+section { padding: 4rem 2rem; }
+
+@media (max-width: 640px) { section { padding: 3rem 1.25rem; } }
+
+hr { border: none; border-top: 1px solid var(--border); margin: 0; }
+
+/* ─── HERO ───────────────────────────────────────── */
+.hero {
+  padding: 5rem 2rem 4rem;
+  background-color: var(--g0);
+  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-size: 28px 28px;
+  position: relative;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0; height: 80px;
+  background: linear-gradient(to bottom, transparent, var(--g0));
+  pointer-events: none;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--blue);
+  border: 1px solid var(--blue);
+  background: var(--blue-s);
+  padding: 3px 10px;
+  border-radius: 2px;
+  margin-bottom: 1.5rem;
+}
+
+.hero-title {
+  font-family: var(--mono);
+  font-size: clamp(2rem, 5.5vw, 3.2rem);
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--ink);
+  margin-bottom: 1.25rem;
+  text-wrap: balance;
+  max-width: 680px;
+}
+
+.hero-title em {
+  font-style: normal;
+  color: var(--blue);
+}
+
+.hero-desc {
+  font-size: 16px;
+  font-weight: 300;
+  color: var(--ink-2);
+  max-width: 52ch;
+  line-height: 1.7;
+  margin-bottom: 2.75rem;
+}
+
+/* ─── STAT STRIP ─────────────────────────────────── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--border);
+  gap: 1px;
+  max-width: 680px;
+}
+
+@media (max-width: 560px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+
+.stat {
+  background: var(--g1);
+  padding: 1.1rem 1.1rem 0.9rem;
+}
+
+.stat-val {
+  font-family: var(--mono);
+  font-size: 1.8rem;
+  font-weight: 600;
+  line-height: 1;
+  margin-bottom: 0.3rem;
+}
+
+.stat-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.15rem;
+  line-height: 1.3;
+}
+
+.stat-sub {
+  font-size: 11px;
+  color: var(--ink-2);
+  line-height: 1.4;
+}
+
+.sv-b { color: var(--blue); }
+.sv-g { color: var(--green); }
+.sv-o { color: var(--orange); }
+.sv-s { color: var(--sky); }
+
+/* ─── SECTION HEADINGS ───────────────────────────── */
+.sec-ey {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 0.6rem;
+}
+
+.sec-title {
+  font-size: clamp(1.25rem, 3vw, 1.65rem);
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.75rem;
+  text-wrap: balance;
+  line-height: 1.25;
+}
+
+.sec-lead {
+  font-size: 15px;
+  font-weight: 300;
+  color: var(--ink-2);
+  max-width: 54ch;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+h3 { font-size: 0.9rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.4rem; text-wrap: balance; }
+
+h4 {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 1rem;
+  margin-bottom: 0.3rem;
+}
+
+p { margin-bottom: 0.7rem; max-width: 65ch; }
+ul { margin-bottom: 0.7rem; padding-left: 1.2rem; max-width: 62ch; }
+li { margin-bottom: 0.3rem; }
+li::marker { color: var(--blue); }
+strong { font-weight: 600; }
+
+code {
+  font-family: var(--mono);
+  font-size: 0.78em;
+  background: var(--code-bg);
+  color: var(--code);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+
+/* ─── BEFORE / AFTER ─────────────────────────────── */
+.bfaf {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .bfaf { grid-template-columns: 1fr; }
+  .bfaf-arrow { display: none; }
+}
+
+.bfaf-col {
+  padding: 1.5rem 1.5rem 1.75rem;
+}
+
+.bfaf-before { background: var(--g2); }
+.bfaf-after { background: var(--green-s); }
+
+.bfaf-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.5rem;
+  background: var(--g1);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 1.2rem;
+  color: var(--ink-3);
+}
+
+.bfaf-head {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.bfaf-before .bfaf-head { color: var(--ink-3); }
+.bfaf-after .bfaf-head { color: var(--green); }
+
+.bfaf-items { list-style: none; padding: 0; margin: 0; }
+
+.bfaf-item {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13.5px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.bfaf-item:last-child { border-bottom: none; }
+
+.bfaf-icon {
+  font-family: var(--mono);
+  font-size: 11px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.bfaf-before .bfaf-icon { color: var(--ink-3); }
+.bfaf-after .bfaf-icon { color: var(--green); }
+
+.bfaf-before .bfaf-item { color: var(--ink-2); }
+.bfaf-after .bfaf-item { color: var(--ink); }
+.bfaf-after .bfaf-item strong { color: var(--green); }
+
+/* ─── HOW IT WORKS ───────────────────────────────── */
+.how-steps {
+  display: grid;
+  grid-template-columns: 1fr 32px 1fr 32px 1fr;
+  align-items: center;
+  gap: 0;
+  margin-top: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--border);
+}
+
+@media (max-width: 640px) {
+  .how-steps { grid-template-columns: 1fr; }
+  .how-arr { display: none; }
+}
+
+.how-step {
+  background: var(--g1);
+  padding: 1.35rem 1.4rem 1.5rem;
+}
+
+.how-arr {
+  background: var(--g2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-family: var(--mono);
+  font-size: 1rem;
+  color: var(--ink-3);
+}
+
+.how-num {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 0.5rem;
+}
+
+.how-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.4rem;
+  text-wrap: balance;
+}
+
+.how-desc {
+  font-size: 12.5px;
+  color: var(--ink-2);
+  line-height: 1.55;
+  max-width: none;
+  margin: 0;
+}
+
+/* ─── SECTION BLOCKS (A / B / C) ─────────────────── */
+.sec-intro-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 640px) { .sec-intro-row { grid-template-columns: 1fr; } }
+
+.sec-intro-cell {
+  padding: 1rem 1.25rem;
+  background: var(--g1);
+}
+
+.sic-badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 2px;
+  border: 1px solid;
+  display: inline-block;
+  margin-bottom: 0.5rem;
+}
+
+.sic-a .sic-badge { color: var(--green); border-color: var(--green-b); background: var(--green-s); }
+.sic-b .sic-badge { color: var(--orange); border-color: var(--orange-b); background: var(--orange-s); }
+.sic-c .sic-badge { color: var(--sky); border-color: var(--sky-b); background: var(--sky-s); }
+
+.sic-title { font-size: 13.5px; font-weight: 600; color: var(--ink); margin-bottom: 0.3rem; }
+.sic-role { font-size: 12px; color: var(--ink-2); line-height: 1.5; max-width: none; margin: 0; }
+
+/* Detailed section blocks */
+.blocks { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+
+.block {
+  background: var(--g1);
+  border-left: 4px solid;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  min-height: 0;
+}
+
+@media (max-width: 640px) { .block { grid-template-columns: 1fr; } }
+
+.block-a { border-left-color: var(--green); }
+.block-b { border-left-color: var(--orange); }
+.block-c { border-left-color: var(--sky); }
+
+.block-left {
+  padding: 1.25rem 1.25rem 1.25rem 1.35rem;
+  border-right: 1px solid var(--border);
+  background: var(--g2);
+}
+
+@media (max-width: 640px) { .block-left { border-right: none; border-bottom: 1px solid var(--border); } }
+
+.bl-badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 2px;
+  border: 1px solid;
+  display: inline-block;
+  margin-bottom: 0.65rem;
+}
+
+.block-a .bl-badge { color: var(--green); border-color: var(--green-b); background: var(--green-s); }
+.block-b .bl-badge { color: var(--orange); border-color: var(--orange-b); background: var(--orange-s); }
+.block-c .bl-badge { color: var(--sky); border-color: var(--sky-b); background: var(--sky-s); }
+
+.bl-title { font-size: 14.5px; font-weight: 600; color: var(--ink); margin-bottom: 0.2rem; }
+.bl-role { font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing: 0.05em; text-transform: uppercase; }
+
+.block-right { padding: 1.25rem 1.4rem; }
+
+.br-desc {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.7;
+  max-width: none;
+  margin-bottom: 0.85rem;
+}
+
+.br-desc code { font-size: 11.5px; }
+
+.br-detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 420px) { .br-detail { grid-template-columns: 1fr; } }
+
+.brd-label {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 0.3rem;
+}
+
+.brd-files { list-style: none; padding: 0; margin: 0; }
+.brd-files li { font-family: var(--mono); font-size: 11px; color: var(--ink-2); padding: 1px 0; margin: 0; }
+.brd-files li::before { content: '› '; color: var(--ink-3); }
+.brd-files li::marker { color: transparent; }
+
+.brd-cmd { font-family: var(--mono); font-size: 11.5px; background: var(--code-bg); color: var(--code); padding: 0.4rem 0.65rem; border-radius: 3px; line-height: 1.55; display: block; }
+
+.brd-val { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--ink); }
+.brd-note { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); margin-top: 2px; line-height: 1.5; }
+
+.block-without {
+  border-top: 1px solid var(--border);
+  padding: 0.65rem 1.4rem;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  line-height: 1.6;
+  background: var(--g2);
+  grid-column: 1 / -1;
+}
+
+.bw-label {
+  display: inline;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-right: 0.5rem;
+}
+
+/* ─── TOKEN SECTION ──────────────────────────────── */
+.token-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 560px) { .token-hero { grid-template-columns: 1fr; } }
+
+.th-cell { background: var(--g1); padding: 1.25rem 1.4rem; }
+
+.th-label { font-family: var(--mono); font-size: 9px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.4rem; }
+
+.th-val { font-family: var(--mono); font-size: 2rem; font-weight: 600; line-height: 1; margin-bottom: 0.2rem; }
+.th-val-red { color: var(--orange); }
+.th-val-grn { color: var(--green); }
+
+.th-sub { font-size: 12px; color: var(--ink-2); line-height: 1.5; }
+
+.bars { display: flex; flex-direction: column; gap: 0.5rem; margin: 1rem 0; }
+.brow { display: grid; grid-template-columns: 180px 1fr auto; align-items: center; gap: 0.5rem; }
+.blbl { font-size: 12px; color: var(--ink-2); line-height: 1.3; }
+.bwrap { background: var(--g2); border-radius: 2px; height: 8px; overflow: hidden; border: 1px solid var(--border); }
+.bar { height: 100%; border-radius: 2px; }
+.br { background: var(--orange); }
+.bg { background: var(--green); }
+.bb { background: var(--blue); }
+.bval { font-family: var(--mono); font-size: 11px; color: var(--ink-2); white-space: nowrap; }
+
+.m { display: inline-block; font-size: 8px; font-family: var(--mono); background: var(--green-s); color: var(--green); border: 1px solid var(--green-b); border-radius: 2px; padding: 0 3px; vertical-align: middle; margin-left: 2px; letter-spacing: 0.04em; }
+
+.tw { overflow-x: auto; margin: 0.875rem 0; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+th { text-align: left; padding: 0.38rem 0.65rem; background: var(--g2); border: 1px solid var(--border); font-family: var(--mono); font-size: 9px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+td { padding: 0.38rem 0.65rem; border: 1px solid var(--border); vertical-align: top; line-height: 1.5; }
+tr:nth-child(even) td { background: var(--g2); }
+td code { font-size: 11px; }
+.tn { font-family: var(--mono); font-size: 12px; }
+
+.fcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; margin: 1rem 0; }
+.fcard { padding: 0.85rem 0.9rem; background: var(--g1); }
+.fcard.act { background: var(--green-s); }
+.flbl { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--ink-3); margin-bottom: 0.2rem; }
+.fcard.act .flbl { color: var(--green); }
+.ftok { font-family: var(--mono); font-size: 1.1rem; font-weight: 600; color: var(--ink); line-height: 1; }
+.fcard.act .ftok { color: var(--green); }
+.fdet { font-size: 11px; color: var(--ink-2); margin-top: 0.2rem; line-height: 1.4; }
+.fbadge { display: inline-block; font-size: 8px; font-family: var(--mono); background: var(--green-s); color: var(--green); border: 1px solid var(--green-b); border-radius: 2px; padding: 1px 4px; margin-top: 0.2rem; }
+
+/* ─── CLOSING ────────────────────────────────────── */
+.closing {
+  padding: 4rem 2rem 5rem;
+  text-align: center;
+  background: var(--g1);
+  border-top: 1px solid var(--border);
+}
+
+.closing-title {
+  font-family: var(--mono);
+  font-size: clamp(1.2rem, 3.5vw, 1.8rem);
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.9rem;
+  text-wrap: balance;
+  line-height: 1.25;
+}
+
+.closing-sub {
+  font-size: 15px;
+  font-weight: 300;
+  color: var(--ink-2);
+  max-width: 46ch;
+  margin: 0 auto 2rem;
+  line-height: 1.65;
+}
+
+.closing-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  color: var(--ink-2);
+  border: 1px solid var(--border);
+  background: var(--g2);
+  padding: 5px 14px;
+  border-radius: 2px;
+}
+
+/* ─── NOTE ───────────────────────────────────────── */
+.note {
+  border-left: 3px solid;
+  padding: 0.65rem 0.9rem;
+  margin: 1rem 0;
+  font-size: 13px;
+  border-radius: 0 3px 3px 0;
+}
+
+.note p { max-width: none; margin: 0; line-height: 1.6; color: var(--ink-2); }
+.note strong { display: block; margin-bottom: 0.15rem; color: var(--ink); }
+.note-blue { border-color: var(--blue); background: var(--blue-s); }
+.note-green { border-color: var(--green); background: var(--green-s); }
+
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+
+<div class="page">
+
+  <!-- ═══════════════════════════════ HERO -->
+  <section class="hero">
+    <div class="hero-badge">Model-agnostic &nbsp;·&nbsp; Playwright &nbsp;·&nbsp; Jam CLI</div>
+    <h1 class="hero-title">Record a user flow.<br>Get a <em>passing test</em>.</h1>
+    <p class="hero-desc">Share a Jam recording URL with the AI agent. It reads the flow, writes a framework-compliant Playwright test, runs it, heals any failures, and delivers the result. Your team reviews the output — nothing else.</p>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-val sv-b">~65</div>
+        <div class="stat-label">Minutes saved per test</div>
+        <div class="stat-sub">Manual authoring: 45–75 min. With this: 5–10 min review.</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val sv-g">3×</div>
+        <div class="stat-label">More flows covered</div>
+        <div class="stat-sub">When tests take minutes, secondary flows and edge cases get covered too.</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val sv-o">100%</div>
+        <div class="stat-label">Framework-compliant</div>
+        <div class="stat-sub">Every test follows the same architecture — regardless of who triggered it.</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val sv-s">Auto</div>
+        <div class="stat-label">Self-healing</div>
+        <div class="stat-sub">~25% of tests need locator fixes. The agent finds and applies them automatically.</div>
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ═══════════════════════════════ BEFORE / AFTER -->
+  <section style="padding-top:3.5rem;padding-bottom:3.5rem;padding-left:2rem;padding-right:2rem">
+    <div class="inner">
+      <p class="sec-ey">The transformation</p>
+      <h2 class="sec-title">What changes when you adopt this</h2>
+      <p class="sec-lead">The difference between the old way and the new one isn't incremental — it changes what coverage is even possible for a team.</p>
+    </div>
+    <div class="bfaf">
+      <div class="bfaf-col bfaf-before">
+        <div class="bfaf-head">Without this system</div>
+        <ul class="bfaf-items">
+          <li class="bfaf-item"><span class="bfaf-icon">–</span><span>45–75 minutes to write one test — if the engineer knows the framework well</span></li>
+          <li class="bfaf-item"><span class="bfaf-icon">–</span><span>Only the most critical flows get covered. Secondary flows and edge cases are skipped</span></li>
+          <li class="bfaf-item"><span class="bfaf-icon">–</span><span>Test quality varies by author. Wrong base class, missing tags, inconsistent locators</span></li>
+          <li class="bfaf-item"><span class="bfaf-icon">–</span><span>Failures require manual debugging sessions — 20–40 minutes each</span></li>
+          <li class="bfaf-item"><span class="bfaf-icon">–</span><span>New team members can't contribute tests without learning the full framework first</span></li>
+        </ul>
+      </div>
+      <div class="bfaf-arrow">→</div>
+      <div class="bfaf-col bfaf-after">
+        <div class="bfaf-head">With this system</div>
+        <ul class="bfaf-items">
+          <li class="bfaf-item"><span class="bfaf-icon">+</span><span><strong>5–10 minutes</strong> to review the generated output. That's the entire time investment.</span></li>
+          <li class="bfaf-item"><span class="bfaf-icon">+</span><span>Any recorded flow becomes a test. <strong>Edge cases and secondary flows become viable</strong> to cover.</span></li>
+          <li class="bfaf-item"><span class="bfaf-icon">+</span><span><strong>100% framework-compliant</strong> every time — same architecture, same conventions, same quality.</span></li>
+          <li class="bfaf-item"><span class="bfaf-icon">+</span><span>Failures are caught and <strong>healed automatically</strong> before the test is delivered.</span></li>
+          <li class="bfaf-item"><span class="bfaf-icon">+</span><span><strong>Anyone on the team can contribute</strong> a test by recording a flow. No codebase knowledge required.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ═══════════════════════════════ HOW IT WORKS -->
+  <section style="padding-top:3.5rem;padding-bottom:3.5rem;padding-left:2rem;padding-right:2rem">
+    <div class="inner">
+      <p class="sec-ey">How it works</p>
+      <h2 class="sec-title">Three steps. The agent handles the rest.</h2>
+      <p class="sec-lead">The full pipeline — recording to passing test — requires one action from the engineer.</p>
+    </div>
+    <div class="how-steps">
+      <div class="how-step">
+        <div class="how-num">Step 1 · Record</div>
+        <div class="how-title">Capture the user flow in Jam</div>
+        <p class="how-desc">An engineer — or anyone on the team — records a user flow in Jam. The recording captures every click, keystroke, and page transition exactly as it happened.</p>
+      </div>
+      <div class="how-arr">→</div>
+      <div class="how-step">
+        <div class="how-num">Step 2 · Share</div>
+        <div class="how-title">Give the agent the URL</div>
+        <p class="how-desc">Share the Jam recording URL with the AI agent. That is the only required input. No test specification. No selector hunting. No framework knowledge required.</p>
+      </div>
+      <div class="how-arr">→</div>
+      <div class="how-step">
+        <div class="how-num">Step 3 · Receive</div>
+        <div class="how-title">A passing test is delivered</div>
+        <p class="how-desc">The agent reads the recording, generates or updates the test, runs it, heals failures, and hands back a framework-compliant, passing result. You review. Done.</p>
+      </div>
+    </div>
+    <div class="note note-blue" style="margin-top:1.25rem;max-width:660px">
+      <p><strong>Create or update — automatically decided</strong> — The agent checks whether a test already exists for the recorded flow. If one is found, it patches only what changed. If not, it generates all five layers from scratch. Existing passing tests are never touched unless their selectors are stale.</p>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ═══════════════════════════════ THREE SECTIONS -->
+  <section style="padding-top:3.5rem;padding-bottom:3.5rem;padding-left:2rem;padding-right:2rem">
+    <div class="inner">
+      <p class="sec-ey">What makes it possible</p>
+      <h2 class="sec-title">Three sections working together</h2>
+      <p class="sec-lead">The pipeline is built on three independent components. Each answers a question the others can't. All three are active on every run.</p>
+    </div>
+
+    <div class="sec-intro-row" style="margin-bottom:1.5rem">
+      <div class="sec-intro-cell sic-a">
+        <span class="sic-badge">Section A</span>
+        <div class="sic-title">Framework Skills</div>
+        <p class="sic-role">What the agent knows about your codebase conventions — the rules, patterns, and architecture it must follow when writing any test.</p>
+      </div>
+      <div class="sec-intro-cell sic-b">
+        <span class="sic-badge">Section B</span>
+        <div class="sic-title">Jam Recording</div>
+        <p class="sic-role">What the test should cover — a structured summary of what the user did, which elements were touched, and what success looks like per step.</p>
+      </div>
+      <div class="sec-intro-cell sic-c">
+        <span class="sic-badge">Section C</span>
+        <div class="sic-title">Playwright CLI</div>
+        <p class="sic-role">The verification layer — resolves ambiguous selectors against the live DOM, runs the spec, and heals failures before the result is delivered.</p>
+      </div>
+    </div>
+
+    <div class="blocks">
+
+      <div class="block block-a">
+        <div class="block-left">
+          <span class="bl-badge">Section A</span>
+          <div class="bl-title">Framework Skills</div>
+          <div class="bl-role">Execution Rules</div>
+        </div>
+        <div class="block-right">
+          <p class="br-desc">A structured set of Markdown files the agent reads before writing a single line. They encode every architectural decision the team has already made: how tests are layered across five files, which base classes to extend, which factory methods to call, how XPath locators must be structured, and which folder a given priority level belongs in.</p>
+          <p class="br-desc">The agent doesn't invent conventions — it reads them. These files are the definition of "correct" for this codebase. Any instruction-following model that receives them produces the same architecture — making the pipeline model-agnostic.</p>
+          <div class="br-detail">
+            <div>
+              <div class="brd-label">Files Loaded</div>
+              <ul class="brd-files">
+                <li>SKILL.md — routing and entry point</li>
+                <li>core-framework.md — architecture rules</li>
+                <li>templates.md — five-layer templates</li>
+                <li>validation-checklist.md — acceptance criteria</li>
+                <li>locator-rules.md (when needed)</li>
+              </ul>
+            </div>
+            <div>
+              <div class="brd-label">Token Cost</div>
+              <div class="brd-val">~3,470 tok</div>
+              <div class="brd-note">Fixed per run · 13,881 bytes measured<br>Plain Markdown · any LLM reads it</div>
+            </div>
+          </div>
+        </div>
+        <div class="block-without"><span class="bw-label">Without this:</span>The agent generates syntactically correct TypeScript that violates every convention — wrong directory, wrong base class, raw <code>page.locator()</code> calls instead of factory methods, missing required tags. Every output needs manual rewriting.</div>
+      </div>
+
+      <div class="block block-b">
+        <div class="block-left">
+          <span class="bl-badge">Section B</span>
+          <div class="bl-title">Jam Recording</div>
+          <div class="bl-role">Flow Capture</div>
+        </div>
+        <div class="block-right">
+          <p class="br-desc">A structured JSON summary of what a real user did in the browser, produced by the Jam CLI from a video recording. The agent calls <code>jam get intents &lt;id&gt;</code> — not the raw event stream — and receives organized intent data: the user's goal, each key action with its CSS selector and entered value, the expected visual outcome per step, and per-phase success and failure criteria.</p>
+          <p class="br-desc">The engineer doesn't write a test specification. The recording is the specification. A 34-second login flow with 4 phases produces 7,293 bytes (~1,823 tokens) of structured intent data — selectors and assertions included, ready to translate.</p>
+          <div class="br-detail">
+            <div>
+              <div class="brd-label">Primary Command</div>
+              <code class="brd-cmd">jam get intents &lt;recording-id&gt;</code>
+              <div class="brd-note" style="margin-top:.35rem">Fallback: <code>jam get events --limit 50</code><br>filtered + condensed if intents not ready</div>
+            </div>
+            <div>
+              <div class="brd-label">Token Cost</div>
+              <div class="brd-val">~456 tok / phase</div>
+              <div class="brd-note">4-phase login: 1,823 tok measured<br>Scales linearly with phase count<br>Duration does not affect cost</div>
+            </div>
+          </div>
+        </div>
+        <div class="block-without"><span class="bw-label">Without this:</span>The agent explores the live app blind — 3–5 full DOM snapshots (~4,000–8,000 tok each) — to reconstruct what the user did, then guesses at assertions. Token cost rises from ~1,823 to ~18,307 for the same flow. Accuracy is lower.</div>
+      </div>
+
+      <div class="block block-c">
+        <div class="block-left">
+          <span class="bl-badge">Section C</span>
+          <div class="bl-title">Playwright CLI</div>
+          <div class="bl-role">DOM Resolution &amp; Execution</div>
+        </div>
+        <div class="block-right">
+          <p class="br-desc">The Playwright test runner, augmented with a session-based debug CLI, serves two roles. First: resolving ambiguous selectors. Jam gives CSS; the framework needs XPath. Most translate deterministically — an <code>id</code> attribute, a stable text match. When translation is uncertain, the agent emits <code>SELECTOR_NEEDED</code> and runs a targeted <code>playwright-cli eval</code> to resolve it precisely rather than guessing.</p>
+          <p class="br-desc">Second: execution and healing. After generation, the agent runs the spec. On failure it attaches via <code>--debug=cli</code>, inspects the DOM at the failure point, patches only the Page Object, and re-runs — all within the same pipeline that generated the test.</p>
+          <div class="br-detail">
+            <div>
+              <div class="brd-label">Key Commands</div>
+              <ul class="brd-files">
+                <li><code>playwright-cli snapshot</code> — full DOM</li>
+                <li><code>playwright-cli eval</code> — targeted query</li>
+                <li><code>npx playwright test &lt;spec&gt;</code></li>
+                <li><code>--debug=cli</code> — attach on failure</li>
+              </ul>
+            </div>
+            <div>
+              <div class="brd-label">Token Cost</div>
+              <div class="brd-val">~0 base cost</div>
+              <div class="brd-note">Only invoked on SELECTOR_NEEDED<br>or test failure (~25% of tests)<br>Expected value: ~1,750 tok/test</div>
+            </div>
+          </div>
+        </div>
+        <div class="block-without"><span class="bw-label">Without this:</span>CSS-to-XPath translation is unverified — the agent guesses, producing brittle locators. Tests are never executed in the same run, so failures surface in CI rather than being caught and healed before delivery. Engineers debug each failure manually.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ═══════════════════════════════ TOKEN EFFICIENCY -->
+  <section style="padding-top:3.5rem;padding-bottom:3.5rem;padding-left:2rem;padding-right:2rem">
+    <div class="inner">
+      <p class="sec-ey">Token efficiency · measured data</p>
+      <h2 class="sec-title">Why Jam makes the AI 67% more efficient</h2>
+      <p class="sec-lead">All numbers measured from a real 34-second login recording — 4 phases, 7 key actions. The right CLI command is the single biggest efficiency decision in the pipeline.</p>
+    </div>
+
+    <div class="token-hero">
+      <div class="th-cell">
+        <div class="th-label">Wrong command — jam get events (raw)</div>
+        <div class="th-val th-val-red">149,000</div>
+        <div class="th-sub">tokens · 596 KB of raw DOM events<br>Unusable directly — would need condensation</div>
+      </div>
+      <div class="th-cell">
+        <div class="th-label">Right command — jam get intents <span class="m">measured</span></div>
+        <div class="th-val th-val-grn">1,823</div>
+        <div class="th-sub">tokens · 7,293 bytes of structured intent data<br>Pre-organized by phase, selectors included</div>
+      </div>
+    </div>
+
+    <div class="bars">
+      <div class="brow"><span class="blbl">jam get events (raw)</span><div class="bwrap"><div class="bar br" style="width:100%"></div></div><span class="bval">~149,000 tok</span></div>
+      <div class="brow"><span class="blbl">jam get intents</span><div class="bwrap"><div class="bar bg" style="width:1.2%"></div></div><span class="bval">~1,823 tok</span></div>
+    </div>
+
+    <h4 style="margin-top:1.5rem">Full pipeline cost — where 9,000 tokens go</h4>
+    <div class="tw"><table>
+      <thead><tr><th>Input</th><th class="tn">Tokens</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td><code>jam get intents</code> output</td><td class="tn">1,823</td><td>7,293 bytes ÷ 4 <span class="m">measured</span></td></tr>
+        <tr><td>SKILL.md + agent rules + workflow file</td><td class="tn">3,470</td><td>13,881 bytes ÷ 4 <span class="m">measured</span></td></tr>
+        <tr><td>3 core refs (framework + templates + checklist)</td><td class="tn">3,668</td><td>14,674 bytes ÷ 4 <span class="m">measured</span></td></tr>
+        <tr><td><strong>Total · create path, medium flow</strong></td><td class="tn"><strong>8,961</strong></td><td>End-to-end measured</td></tr>
+        <tr><td>Update path (existing test)</td><td class="tn">~6,500–7,500</td><td>Fewer refs, no full generation</td></tr>
+      </tbody>
+    </table></div>
+    <p style="font-size:12px;color:var(--ink-2);margin-top:.5rem">Fixed overhead = <strong>7,138 tokens</strong> on every run. Variable cost: ~456 tok per recording phase. Formula: <code>total ≈ 7,138 + (456 × phases)</code></p>
+
+    <h4 style="margin-top:1.5rem">Predicted cost by flow size</h4>
+    <div class="fcards">
+      <div class="fcard"><div class="flbl">Simple</div><div class="ftok">~7,500–8k</div><div class="fdet">2–3 phases<br>e.g. search, toggle</div></div>
+      <div class="fcard act"><div class="flbl">Medium · login</div><div class="ftok">~9,000</div><div class="fdet">4–5 phases<br>e.g. login, profile</div><span class="fbadge">measured</span></div>
+      <div class="fcard"><div class="flbl">Complex</div><div class="ftok">~10,500–11.5k</div><div class="fdet">6–9 phases<br>e.g. checkout</div></div>
+      <div class="fcard"><div class="flbl">Long</div><div class="ftok">~12,000–14.5k</div><div class="fdet">10–15 phases<br>e.g. onboarding</div></div>
+    </div>
+
+    <h4 style="margin-top:1.5rem">Jam vs no Jam — savings per step</h4>
+    <div class="tw"><table>
+      <thead><tr><th>Step</th><th class="tn">With Jam</th><th class="tn">Without Jam</th><th class="tn">Saved</th><th class="tn">%</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1 · Workflow + skill load</strong><br><span style="font-size:11px;color:var(--ink-3)">Without Jam: also loads exploration workflow + playwright-cli skill</span></td><td class="tn">3,470</td><td class="tn">6,743</td><td class="tn">3,273</td><td class="tn">48%</td></tr>
+        <tr><td><strong>2 · Read flow data</strong><br><span style="font-size:11px;color:var(--ink-3)">Without Jam: 3 DOM snapshots + 5 evals + overhead</span></td><td class="tn">1,823 <span class="m">measured</span></td><td class="tn">~18,307</td><td class="tn">~16,484</td><td class="tn">90%</td></tr>
+        <tr><td><strong>3 · Exists check</strong></td><td class="tn">~100</td><td class="tn">~100</td><td class="tn">0</td><td class="tn">—</td></tr>
+        <tr><td><strong>4 · Framework refs</strong></td><td class="tn">3,668 <span class="m">measured</span></td><td class="tn">4,220</td><td class="tn">552</td><td class="tn">13%</td></tr>
+        <tr><td><strong>5 · Heal (expected value)</strong><br><span style="font-size:11px;color:var(--ink-3)">25% fail rate with Jam vs 45% without</span></td><td class="tn">~1,750</td><td class="tn">~3,150</td><td class="tn">~1,400</td><td class="tn">44%</td></tr>
+        <tr><td><strong>Total</strong></td><td class="tn"><strong>~10,811</strong></td><td class="tn"><strong>~32,420</strong></td><td class="tn"><strong>~21,609</strong></td><td class="tn"><strong>67%</strong></td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="note note-green" style="max-width:660px">
+      <p><strong>Step 2 accounts for 76% of total savings.</strong> The 16,484-token gap between <code>jam get intents</code> (1,823 tok) and DOM snapshot exploration (~18,307 tok) is where almost all the efficiency lives. The rest of the pipeline is similar either way.</p>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ═══════════════════════════════ CLOSING -->
+  <div class="closing">
+    <h2 class="closing-title">Any recorded flow.<br>A passing test, automatically.</h2>
+    <p class="closing-sub">The pipeline is model-agnostic. Sections A and B are plain Markdown and structured JSON. Section C uses shell commands. Claude, GPT-4o, Gemini 2+, Cursor, Copilot, and Devin can all run it.</p>
+    <div class="closing-pill">Start with any Jam recording URL &nbsp;→&nbsp; jam.dev/c/&lt;id&gt;</div>
+  </div>
+
+</div>
