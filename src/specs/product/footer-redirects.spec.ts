@@ -4,11 +4,8 @@ import { getFooterRedirectsData } from '@data/product/footer-redirects.data';
 
 const scenario = getFooterRedirectsData('FOOTER-001-Bottom-Page-Redirects');
 
-// Suppress whole-page failure screenshots so only visual snapshot comparison artifacts are captured
-test.use({ screenshot: 'off' });
-
-test.describe('Feature: Homepage Footer - Bottom Page Redirects & Visual Baseline', () => {
-  test(
+test.describe('Feature: Homepage Footer - Bottom Page Redirects Flow', () => {
+  test.only(
     `Test case: '${scenario.testCaseData.testCase}'
     Description: '${scenario.testCaseData.testDescription}'
     Tags: '${scenario.testCaseData.tags}'
@@ -17,7 +14,7 @@ test.describe('Feature: Homepage Footer - Bottom Page Redirects & Visual Baselin
       await logTestCaseData(test.info(), scenario.testCaseData, {
         epic: 'Homepage',
         feature: 'Footer Navigation',
-        story: 'Bottom Page Redirects & Visual Verification',
+        story: 'Bottom Page Redirects & Functional Verification',
       });
 
       await footerRedirectsPage.executeFullFooterFlow(

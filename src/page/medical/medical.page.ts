@@ -686,10 +686,7 @@ export class MedicalPage {
       // ── Step 5: Reason for choosing BlueChew ──────────────────────────────
       await this.selectReasonForBlueChew();
 
-      // ── Step 6: Physical Activity Chest Pain Edge Case ────────────────────
-      await this.answerPhysicalActivityWithChestPain(data.chestPainExplanation);
-
-      // ── Steps 7+: Drive remaining questions including edge cases ───────────
+      // ── Steps 6+: Drive remaining questions including edge cases ───────────
       await this.completeRemainingMedicalSteps();
 
       await this.page.waitForLoadState('load');

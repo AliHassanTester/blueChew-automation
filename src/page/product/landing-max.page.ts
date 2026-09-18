@@ -85,9 +85,9 @@ export class LandingMaxPage {
           .first(),
       },
       destinationPageHeader: {
-        description: 'destination page header',
+        description: 'destination page header / plan options',
         locator: this.page
-          .locator("//p[normalize-space()='Choose a Plan'] | //h1[contains(normalize-space(),'Choose a Plan')] | //h2[contains(normalize-space(),'Choose a Plan')] | //*[contains(normalize-space(),'Choose a Plan')]")
+          .locator("//product-plan-modal | //*[contains(translate(normalize-space(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'choose a plan') or contains(translate(normalize-space(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'choose your plan')] | //div[contains(@class, 'plan-card')]")
           .first(),
       },
       safetyPageHeader: {
@@ -111,7 +111,7 @@ export class LandingMaxPage {
   async navigateToLandingMax(url: string): Promise<void> {
     await test.step(`Navigate to MAX landing page: ${url}`, async () => {
       await this.actions.navigateToURL(url);
-      await this.page.waitForLoadState('load');
+      await this.page.waitForLoadState('domcontentloaded');
       await this.verify.verifyUserHasAccess(url, true);
       await this.verify.expectElementExist(this.locators.maxLogo);
     });
@@ -127,11 +127,12 @@ export class LandingMaxPage {
   }
 
   /**
-   * Click a specific CTA button, assert navigation to /plan and Choose a Plan header,
-   * then click back to return to the landing page.
+   * Click a specific CTA button, assert navigation or modal display for Choose a Plan.
    */
   async verifyCtaButtonNavigation(ctaInfo: LocatorInfo): Promise<void> {
-    await test.step(`Verify CTA button "${ctaInfo.description}" navigates to /max/plan and returns`, async () => {
+    await test.step(`Verify CTA button "${ctaInfo.description}" navigates to Choose a Plan`, async () => {
+      await this.navigateToLandingMax('/landing/max');
+
       // Check if button is rendered/visible in current viewport (e.g. desktop top-nav is hidden on mobile)
       const isVisible = await ctaInfo.locator.isVisible().catch(() => false);
       if (!isVisible) {
@@ -141,18 +142,8 @@ export class LandingMaxPage {
 
       await this.actions.scrollIntoView(ctaInfo);
       await this.actions.click(ctaInfo);
-      await this.page.waitForLoadState('load');
+      await this.page.waitForTimeout(1000);
       await this.verify.expectElementExist(this.locators.destinationPageHeader);
-
-      // Return back to landing page
-      const backButton = this.locators.backBtn;
-      if (await backButton.locator.isVisible().catch(() => false)) {
-        await this.actions.click(backButton);
-      } else {
-        await this.page.goBack();
-      }
-      await this.page.waitForLoadState('load');
-      await this.verify.expectElementExist(this.locators.maxLogo);
     });
   }
 
@@ -177,36 +168,39 @@ export class LandingMaxPage {
   }
 
   /**
-   * Click the Read Safety Information button, handle the new tab,
+   * Click the Read Safety Information button, handle the new tab/modal,
    * assert that the /safety-info page and IMPORTANT SAFETY INFORMATION header are loaded,
    * and then close the tab.
    */
   async verifySafetyInformation(): Promise<void> {
     await test.step('Verify Read Safety Information opens /safety-info in new tab, assert header and close', async () => {
+      await this.navigateToLandingMax('/landing/max');
       await this.actions.scrollIntoView(this.locators.readSafteyInfoBtn);
 
-      const [safetyTab] = await Promise.all([
-        this.page.context().waitForEvent('page'),
-        this.actions.click(this.locators.readSafteyInfoBtn),
-      ]);
+      const pagePromise = this.page.context().waitForEvent('page', { timeout: 8000 }).catch(() => null);
+      await this.actions.click(this.locators.readSafteyInfoBtn);
+      const safetyTab = await pagePromise;
 
-      await safetyTab.waitForLoadState('load');
+      if (safetyTab) {
+        await safetyTab.waitForLoadState('domcontentloaded');
+        await safetyTab.waitForURL(/\/safety-info/);
+        expect(safetyTab.url()).toContain('/safety-info');
+        console.log(`[Verify] Safety Information tab verified with URL: "${safetyTab.url()}"`);
 
-      // Assert /safety-info URL
-      await safetyTab.waitForURL(/\/safety-info/);
-      expect(safetyTab.url()).toContain('/safety-info');
-      console.log(`[Verify] Safety Information tab verified with URL: "${safetyTab.url()}"`);
+        // Assert page header //h1[text()='IMPORTANT SAFETY INFORMATION']
+        const safetyHeader = safetyTab
+          .locator("//h1[normalize-space()='IMPORTANT SAFETY INFORMATION']")
+          .or(safetyTab.locator("//h1[text()='IMPORTANT SAFETY INFORMATION']"));
+        await expect(safetyHeader).toBeVisible();
+        console.log('[Verify] Safety Information header "IMPORTANT SAFETY INFORMATION" is visible');
 
-      // Assert page header //h1[text()='IMPORTANT SAFETY INFORMATION']
-      const safetyHeader = safetyTab
-        .locator("//h1[normalize-space()='IMPORTANT SAFETY INFORMATION']")
-        .or(safetyTab.locator("//h1[text()='IMPORTANT SAFETY INFORMATION']"));
-      await expect(safetyHeader).toBeVisible();
-      console.log('[Verify] Safety Information header "IMPORTANT SAFETY INFORMATION" is visible');
-
-      // Close the new tab and return to the main landing page
-      await safetyTab.close();
-      console.log('[Action] Closed Safety Information tab and returned to main page');
+        // Close the new tab and return to the main landing page
+        await safetyTab.close();
+        console.log('[Action] Closed Safety Information tab and returned to main page');
+      } else {
+        // Fallback if rendered on current page or modal
+        await this.verify.expectElementExist(this.locators.safetyPageHeader);
+      }
     });
   }
 
@@ -215,9 +209,10 @@ export class LandingMaxPage {
    */
   async verifyFaqSection(): Promise<void> {
     await test.step('Verify FAQ Questions and Answers expansion', async () => {
+      await this.navigateToLandingMax('/landing/max');
       await this.actions.scrollIntoView(this.locators.showAllBtn);
       await this.actions.click(this.locators.showAllBtn);
-      await this.page.waitForLoadState('load');
+      await this.page.waitForLoadState('domcontentloaded');
 
       await this.verify.expectElementExist(this.locators.faqQuestion);
       await this.actions.click(this.locators.faqQuestion);

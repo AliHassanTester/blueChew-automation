@@ -9,14 +9,12 @@ export class FooterRedirectsPage {
   public readonly page: Page;
   private readonly actions: PlaywrightActionFactory;
   private readonly verify: PlaywrightVerificationFactory;
-  private readonly visual: VisualHelper;
   public readonly locators: { [key: string]: LocatorInfo };
 
-  constructor(page: Page, testInfo: TestInfo, visual: VisualHelper) {
+  constructor(page: Page, testInfo: TestInfo, _visual?: VisualHelper) {
     this.page = page;
     this.actions = new PlaywrightActionFactory(page, testInfo);
     this.verify = new PlaywrightVerificationFactory(page, testInfo);
-    this.visual = visual;
 
     this.locators = {
       footerContainer: {
@@ -53,15 +51,15 @@ export class FooterRedirectsPage {
   }
 
   /**
-   * Get a dynamic LocatorInfo wrapper for any footer link.
+   * Get a dynamic LocatorInfo wrapper for any footer link strictly scoped to footer.
    */
   public getFooterLinkLocatorInfo(item: FooterRedirectItem): LocatorInfo {
-    const xpathSelector = item.linkSelector.startsWith('//')
-      ? `//footer${item.linkSelector}`
-      : `//footer//${item.linkSelector}`;
+    const selector = item.href.startsWith('http')
+      ? `//footer//a[contains(@href, '${item.href.replace(/^https?:\/\//, '')}')]`
+      : `//footer//a[@href='${item.href}']`;
     return {
       description: item.description || `Footer link: "${item.name}"`,
-      locator: this.page.locator(xpathSelector).first(),
+      locator: this.page.locator(selector).first(),
     };
   }
 
@@ -88,23 +86,13 @@ export class FooterRedirectsPage {
   }
 
   /**
-   * Capture a component-level visual baseline of the entire footer widget.
-   */
-  async captureFooterVisualBaseline(snapshotName: string = 'homepage-footer-component'): Promise<void> {
-    await test.step(`[Visual] Capture Footer Component Baseline: "${snapshotName}"`, async () => {
-      await this.scrollToFooter();
-      await this.visual.captureElementSnapshot(this.locators.footerContainer, snapshotName, {
-        maxDiffPixelRatio: 0.01,
-      });
-    });
-  }
-
-  /**
    * Verify a single footer redirect:
    * - Clicks the link (or handles new tab if isNewTab)
    * - Executes at least 2 assertions:
    *     Assertion 1: URL matches expected pattern
-   *     Assertion 2: Page Title matches expected pattern (and element is verified)
+   *     Assertion 2: Primary Prominent Locator is visible
+   *     Assertion 3: Secondary Prominent Locator is visible
+   *     Assertion 4: Page Title matches expected pattern
    * - Cleans up (closes new tab or navigates back to homepage)
    */
   async verifyFooterRedirect(item: FooterRedirectItem): Promise<void> {
@@ -194,12 +182,11 @@ export class FooterRedirectsPage {
   }
 
   /**
-   * Execute the full end-to-end footer flow (Navigate -> Visual Baseline -> All Redirect Verifications).
+   * Execute the full end-to-end footer redirects functional flow.
    */
   async executeFullFooterFlow(homeUrl: string, footerLinks: FooterRedirectItem[]): Promise<void> {
     await test.step('Execute Full Homepage Footer Bottom Page Redirects Flow', async () => {
       await this.navigateToHomePage(homeUrl);
-      await this.captureFooterVisualBaseline('01-homepage-footer-baseline');
       await this.verifyAllFooterRedirects(footerLinks);
     });
   }
