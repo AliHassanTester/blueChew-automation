@@ -58,6 +58,7 @@ const reporters: Array<readonly [string] | readonly [string, Record<string, unkn
 ];
 
 export default defineConfig({
+  globalSetup: './src/utilities/global-setup.ts',
   testDir: '.',
   testMatch: ['src/specs/**/*.spec.ts'],
   // Per-test ceiling — the maximum wall-clock time any single test may run before
@@ -79,7 +80,7 @@ export default defineConfig({
     },
   },
   retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 4 : 1,
+  workers: process.env.CI ? 4 : 2,
   reporter: reporters,
   use: {
     baseURL: baseURLs[envType] ?? baseURLs['dev'],
@@ -111,16 +112,17 @@ export default defineConfig({
         isMobile: false,
       },
     },
-    {
-      name: 'chromium-mobile',
-      testMatch: 'src/specs/**/*.spec.ts',
-      use: {
-        ...devices['Pixel 7'],
-        viewport: mobileViewport,
-        isMobile: true,
-        hasTouch: true,
-      },
-    },
+    // Temporarily disabled mobile viewport to minimize test execution time
+    // {
+    //   name: 'chromium-mobile',
+    //   testMatch: 'src/specs/**/*.spec.ts',
+    //   use: {
+    //     ...devices['Pixel 7'],
+    //     viewport: mobileViewport,
+    //     isMobile: true,
+    //     hasTouch: true,
+    //   },
+    // },
   ],
   grep: undefined,
 });

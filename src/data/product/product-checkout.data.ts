@@ -43,6 +43,7 @@ function createProductScenario(
 ): ProductCheckoutTestCaseData {
   const account = buildTestAccount(productName.toLowerCase());
   const tag = productName.toLowerCase();
+
   return {
     productName,
     url,

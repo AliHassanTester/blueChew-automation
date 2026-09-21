@@ -33,17 +33,29 @@ export class MedicalPage {
       // ── Step 1: legal name ─────────────────────────────────────────────────
       firstNameInput: {
         description: 'Legal First Name Input',
-        locator: this.page.locator('//ds-input[@label="Legal First Name"]//input'),
+        locator: this.page
+          .locator(
+            "//input[contains(@placeholder,'First Name') or @formcontrolname='first_name' or @formcontrolname='firstName'] | //ds-input[contains(@label,'First Name')]//input | //*[contains(text(),'Legal First Name')]/preceding-sibling::input | //*[contains(text(),'Legal First Name')]/following-sibling::input | //label[contains(.,'First Name')]//input | //input[@id='first_name' or @name='first_name']",
+          )
+          .first(),
       },
       lastNameInput: {
         description: 'Legal Last Name Input',
-        locator: this.page.locator('//ds-input[@label="Legal Last Name"]//input'),
+        locator: this.page
+          .locator(
+            "//input[contains(@placeholder,'Last Name') or @formcontrolname='last_name' or @formcontrolname='lastName'] | //ds-input[contains(@label,'Last Name')]//input | //*[contains(text(),'Legal Last Name')]/preceding-sibling::input | //*[contains(text(),'Legal Last Name')]/following-sibling::input | //label[contains(.,'Last Name')]//input | //input[@id='last_name' or @name='last_name']",
+          )
+          .first(),
       },
 
       // ── Step 2: date of birth ──────────────────────────────────────────────
       birthdayInput: {
         description: 'Date of Birth Input',
-        locator: this.page.locator('input[formcontrolname="birthday"]'),
+        locator: this.page
+          .locator(
+            "//input[@formcontrolname='birthday' or @formcontrolname='dob' or contains(@placeholder,'MM/DD/YYYY') or contains(@placeholder,'Birth')] | //*[contains(text(),'Birth Date')]/preceding-sibling::input | //*[contains(text(),'Birth Date')]/following-sibling::input | //label[contains(.,'Birth')]//input",
+          )
+          .first(),
       },
 
       // ── Active-step primary action — the single visible CONTINUE / SUBMIT ───

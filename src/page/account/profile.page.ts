@@ -219,6 +219,9 @@ export class ProfilePage {
 
   async captureProfileSnapshot(visualConfig: ApplitoolsVisualConfig = PROFILE_FIGMA_CONFIG, tag: string = 'Profile page loaded'): Promise<void> {
     await test.step(`Capture the fully loaded ${tag} state`, async () => {
+      if (this.page.url() === 'about:blank' || !this.page.url().includes('/account')) {
+        await this.actions.navigateToURL('/account/profile');
+      }
       await this.page.waitForLoadState('load').catch(() => undefined);
       if (this.visual) {
         await this.visual.captureCheckpoint(tag, visualConfig);

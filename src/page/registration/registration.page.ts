@@ -84,7 +84,8 @@ export class RegistrationPage {
    */
   private async clickActiveStepContinue(): Promise<void> {
     await this.actions.clickFirstActionable("//button[normalize-space()='CONTINUE']");
-    await this.page.waitForLoadState('load');
+    await this.page.waitForLoadState('load').catch(() => undefined);
+    await this.verify.waitForLoaderToDisappear().catch(() => undefined);
   }
 
   /**
@@ -92,6 +93,7 @@ export class RegistrationPage {
    * field, fill it, Tab to trigger validation/blur, then advance to the next step.
    */
   private async fillInputStep(input: LocatorInfo, value: string): Promise<void> {
+    await this.verify.waitForLoaderToDisappear().catch(() => undefined);
     await this.actions.waitForVisibility(input);
     await this.actions.sendKeys(input, value);
     await this.actions.pressKey(input, 'Tab');
@@ -113,14 +115,20 @@ export class RegistrationPage {
         await this.actions.click(this.locators.signUpLink);
         await this.page.waitForLoadState('load');
       }
+      await this.verify.waitForLoaderToDisappear().catch(() => undefined);
       await this.actions.waitForVisibility(this.locators.stateDropdownTrigger);
     });
   }
 
   async completeStateAndTerms(state: string): Promise<void> {
     await test.step('Step 1 — select state and accept terms', async () => {
+      await this.page.waitForLoadState('domcontentloaded').catch(() => undefined);
+      await this.verify.waitForLoaderToDisappear().catch(() => undefined);
       await this.actions.waitForVisibility(this.locators.stateDropdownTrigger);
-      await this.actions.click(this.locators.stateDropdownTrigger);
+      await this.actions.click(this.locators.stateDropdownTrigger).catch(async () => {
+        await this.verify.waitForLoaderToDisappear().catch(() => undefined);
+        await this.actions.forceClick(this.locators.stateDropdownTrigger);
+      });
       await this.actions.click(this.stateOption(state));
       await this.actions.selectRadioButtonOrCheckBox(this.locators.termsCheckbox);
       await this.clickActiveStepContinue();

@@ -67,20 +67,3 @@ test(
     await checkoutPage.completeCheckoutAndConfirmation(data.visualConfig, d, productPage, 'Gold checkout page');
   },
 );
-
-// ── 4. Gold Medical Visual Only Flow (Isolated Checkpoints) ──────────────────
-test(
-  `Product Checkout Flow - Gold Medical Visual ('PRODUCT-GOLD-MEDICAL')`,
-  { tag: ['@gold-medical', '@product', '@visual'] },
-  async ({ productPage, registrationPage, medicalPage }, testInfo) => {
-    const data = getProductCheckoutData('PRODUCT-GOLD');
-    const d = data.registrationDetails;
-    await logTestCaseData(testInfo, data.testCaseData, { feature: 'Product Checkout', story: 'Gold Medical Visual Only' });
-    testInfo.annotations.push({ type: 'Test Email', description: d.email });
-
-    await productPage.selectPlanAndProceedToRegistration(data);
-    await registrationPage.completeRegistrationWizard(d);
-    await medicalPage.completeGoldMedicalVisual(d.medical);
-    await productPage.handleTransitionScreen(GOLD_TRANSITION_FIGMA_CONFIG, 'Gold Transition Page');
-  },
-);

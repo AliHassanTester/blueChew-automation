@@ -14,6 +14,7 @@ test-results/
 allure-results/
 allure-report/
 eyes-playwright-report/
+.auth/
 
 # DOM capture dev artifacts (one-off locator derivation, not part of test suite)
 dom-snapshots/

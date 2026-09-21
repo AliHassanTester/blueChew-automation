@@ -97,33 +97,39 @@ export class LoginPage {
       // ── Post-login account shell (/account) ────────────────────────────────
       accountTabMyPlan: {
         description: 'Account Nav Tab — My Plan',
-        locator: this.page.locator("//button[@data-test-id='navbar-sub-menu-tab-membership'] | //a[contains(@href,'/account')]").first(),
+        locator: this.page.locator("//button[@data-test-id='navbar-sub-menu-tab-membership'] | //a[contains(@href,'/account')] | //a[normalize-space()='MY PLAN']").first(),
       },
       accountMembershipPage: {
         description: 'Account Content Section — My Plan page container',
-        locator: this.page.locator("//div[@data-test-id='account-membership-page'] | //div[contains(@class,'account')]").first(),
+        locator: this.page.locator("//div[@data-test-id='account-membership-page'] | //div[contains(@class,'account')] | //main").first(),
       },
       userEmailDisplay: {
         description: 'Dynamic user email / name display (masked in snapshots)',
         locator: this.page.locator("//div[contains(@class,'user-info')] | //p[contains(@class,'user-email')] | //span[contains(@class,'email')]").first(),
       },
 
-      // ── Hamburger navigation menu ──────────────────────────────────────────
+      // ── Navigation menu (desktop header & mobile drawer) ───────────────────
       navMenuToggle: {
         description: 'Hamburger Menu Toggle Button',
-        locator: this.page.locator("//*[@data-test-id='nav-menu-toggle'] | //button[contains(@class,'menu-toggle')]").first(),
+        locator: this.page.locator("//*[@data-test-id='nav-menu-toggle'] | //button[contains(@class,'menu-toggle')] | //button[@aria-label='Toggle navigation']").first(),
       },
       myPlanLink: {
-        description: 'My Plan Link (hamburger menu)',
-        locator: this.page.locator("//a[@data-test-id='nav-link-plan']"),
+        description: 'My Plan Link (header tab or hamburger menu)',
+        locator: this.page.locator(
+          "//button[@data-test-id='navbar-sub-menu-tab-membership'] | //a[@data-test-id='nav-link-plan'] | //a[contains(@href,'/account') and contains(.,'Plan')] | //a[normalize-space()='MY PLAN']",
+        ).first(),
       },
       profileNavLink: {
-        description: 'Profile Link (hamburger menu)',
-        locator: this.page.locator("//a[@data-test-id='nav-link-profile']"),
+        description: 'Profile Link (header tab or hamburger menu)',
+        locator: this.page.locator(
+          "//button[@data-test-id='navbar-sub-menu-tab-profile'] | //a[@data-test-id='nav-link-profile'] | //a[contains(@href,'/account/profile')] | //a[normalize-space()='PROFILE']",
+        ).first(),
       },
       logoutLink: {
-        description: 'Logout Link (hamburger menu)',
-        locator: this.page.locator("//a[@data-test-id='nav-link-logout']"),
+        description: 'Logout Link / Account tab (header or hamburger menu)',
+        locator: this.page.locator(
+          "//a[@data-test-id='nav-link-logout'] | //button[@data-test-id='navbar-sub-menu-tab-order'] | //button[contains(.,'Log Out') or contains(.,'Logout')] | //a[contains(@href,'logout') or contains(.,'Log Out') or contains(.,'Logout')]",
+        ).first(),
       },
     };
   }
@@ -163,8 +169,9 @@ export class LoginPage {
 
   async verifyLoginSuccess(): Promise<void> {
     await test.step('Verify login succeeded — account page rendered', async () => {
-      await this.page.waitForLoadState();
-      await this.playwrightActionsFactory.waitForURL(/\/account\//);
+      await this.page.waitForLoadState('domcontentloaded');
+      await this.playwrightActionsFactory.waitForURL(/\/account/);
+      await this.playwrightVerificationsFactory.waitForLoaderToDisappear();
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.accountTabMyPlan);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.accountMembershipPage);
     });
@@ -286,6 +293,10 @@ export class LoginPage {
 
   async verifyNavLinksVisible(): Promise<void> {
     await test.step('Open hamburger menu and verify navigation links', async () => {
+      await this.page.waitForLoadState('domcontentloaded').catch(() => undefined);
+      await this.playwrightActionsFactory.waitForURL(/\/account/).catch(() => undefined);
+      await this.playwrightVerificationsFactory.waitForLoaderToDisappear().catch(() => undefined);
+
       if (await this.locators.navMenuToggle.locator.isVisible().catch(() => false)) {
         await this.playwrightActionsFactory.click(this.locators.navMenuToggle);
       }

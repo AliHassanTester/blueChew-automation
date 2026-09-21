@@ -51,7 +51,7 @@ Configure your keys and preferences using these environment variables:
 
 ## 💻 Commands Reference
 
-Run visual tests locally using the dedicated CLI script (`scripts/test-visual.js`):
+Run visual tests locally using standard npm commands:
 
 | Goal | Terminal Command | Active Providers |
 | :--- | :--- | :--- |

@@ -12,8 +12,12 @@ import { ProductPage } from '@page/product/product.page';
 import { LandingMaxPage } from '@page/product/landing-max.page';
 import { FooterRedirectsPage } from '@page/product/footer-redirects.page';
 import { VisualHelper } from '@utilities/visual.helper';
+import { AUTH_FILE_PATH } from '@utilities/global-setup';
+
+export { AUTH_FILE_PATH };
 
 type TestFixtures = {
+  // Page Object fixtures
   loginPage: LoginPage;
   registrationPage: RegistrationPage;
   quizPage: QuizPage;
@@ -38,6 +42,7 @@ export const test = base.extend<TestFixtures>({
     await context.close();
   },
 
+  // ── Page Object Fixtures ───────────────────────────────────────────────────
   loginPage: async ({ page, visual }, use) => {
     await use(new LoginPage(page, base.info(), visual));
   },
@@ -84,6 +89,12 @@ export const test = base.extend<TestFixtures>({
     // provide an explicit hook if providers need setup)
     await use(visual);
     await visual.close();
+  },
+});
+
+export const authenticatedTest = test.extend({
+  storageState: async ({}, use) => {
+    await use(AUTH_FILE_PATH);
   },
 });
 

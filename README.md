@@ -80,12 +80,21 @@ tests/
 
 ---
 
-## Test Suites
+## Test Suites & Coverage Tracker
 
-| Spec | ID | Description |
-|---|---|---|
-| `login.spec.ts` | AQ-00 | Login with existing account |
-| `signup-to-approved-order.spec.ts` | AQ-01 | Full new-customer journey: sign up → quiz → medical → checkout → payment → confirmation → provider approval → first order |
+For a complete, plain-language breakdown of all automated tests across Tiers and Classes, see [`docs/automation-test-case-tracker.md`](docs/automation-test-case-tracker.md).
+
+| Area / Spec | ID(s) | Description | Nature |
+|---|---|---|---|
+| `signup-to-approved-order.spec.ts` | AQ-01 | Full new-customer onboarding: sign up → quiz → medical → checkout → payment → ID verification → admin approval | Functional E2E + Visual |
+| `login.spec.ts` | AQ-02 | Login with registered credentials & navigate account areas | Functional + Visual |
+| `registration-validation.spec.ts` | AQ-07 | Registration duplicate-email validation & rejection | Functional Negative |
+| `medical-edge-cases.spec.ts` | AQ-08 | Clinical safety warnings, non-patient alerts, dangerous drug alerts, and file size limits | Functional Safety |
+| `product-checkout.spec.ts` | `PRODUCT-*` | Product plan selection & checkout across 7 medication lines (Sildenafil, Tadalafil, etc.) | Functional E2E + Visual |
+| `profile.spec.ts` | `PROF-010..012` | Account settings (Change password, update shipping address, toggle notifications) | Functional |
+| `landing-max.spec.ts` | Product-007 | BlueChew MAX promotional landing page validation | Functional |
+| `footer-redirects.spec.ts` | FOOTER-001 | Global footer menu links & legal policy redirections (12+ destinations) | Functional |
+| `login-visual.spec.ts` | `LOG-VISUAL-*` | Native Playwright full-page, component-level, error state, and defect visual regression | Dedicated Visual |
 
 ---
 

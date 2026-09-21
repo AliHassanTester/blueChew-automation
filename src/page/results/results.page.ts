@@ -32,7 +32,11 @@ export class ResultsPage {
       // ── Post-navigation marker — first /medical field (confirms TRY GOLD landed) ──
       medicalFirstNameInput: {
         description: 'Medical Profile First Name Input (navigation marker)',
-        locator: this.page.locator('input[aria-label="Legal First Name"]'),
+        locator: this.page
+          .locator(
+            "//input[@aria-label='Legal First Name' or contains(@placeholder,'First Name') or @formcontrolname='first_name' or @formcontrolname='firstName'] | //*[contains(text(),'Legal First Name')]/preceding-sibling::input | //*[contains(text(),'Legal First Name')]/following-sibling::input | //label[contains(.,'First Name')]//input",
+          )
+          .first(),
       },
     };
   }

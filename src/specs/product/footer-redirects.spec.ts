@@ -5,7 +5,7 @@ import { getFooterRedirectsData } from '@data/product/footer-redirects.data';
 const scenario = getFooterRedirectsData('FOOTER-001-Bottom-Page-Redirects');
 
 test.describe('Feature: Homepage Footer - Bottom Page Redirects Flow', () => {
-  test.only(
+  test(
     `Test case: '${scenario.testCaseData.testCase}'
     Description: '${scenario.testCaseData.testDescription}'
     Tags: '${scenario.testCaseData.tags}'

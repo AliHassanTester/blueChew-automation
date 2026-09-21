@@ -1,6 +1,6 @@
 import { logTestCaseData } from '@utilities/test.helper.utils';
 import { getProfileData } from '@data/login/profile.data';
-import { test } from '@fixtures/page.fixtures';
+import { test, AUTH_FILE_PATH } from '@fixtures/page.fixtures';
 
 const changePassword = getProfileData('PROF-010-Change-Password');
 const updateShipping = getProfileData('PROF-011-Update-Shipping-Address');
@@ -8,15 +8,11 @@ const togglePrefs = getProfileData('PROF-012-Toggle-Notification-Preferences');
 
 const allureMeta = { feature: 'Account', story: 'Profile' };
 
+// Direct context storageState injection — single page, zero blank windows
+test.use({ storageState: AUTH_FILE_PATH });
+
 test.describe('Feature: Account Profile', () => {
-  // Every profile scenario runs against the same authenticated account.
-  test.beforeEach(async ({ loginPage }) => {
-    await test.step('Log in and land on the account area', async () => {
-      await loginPage.navigateToPage(changePassword.loginPageDetails);
-      await loginPage.loginWithCredentials(changePassword.loginDetails);
-      await loginPage.verifySuccessfulLogin();
-    });
-  });
+  test.describe.configure({ mode: 'serial' });
 
   test(
     `

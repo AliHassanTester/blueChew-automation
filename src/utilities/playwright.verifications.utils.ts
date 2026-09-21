@@ -159,8 +159,11 @@ export class PlaywrightVerificationFactory {
 
   async waitForLoaderToDisappear(): Promise<void> {
     console.log('[Verify] Waiting for loading spinner / loader to disappear');
-    // Wait for local-loader-com or spinner elements to be hidden
-    await this.page.locator('local-loader-com, .spinner, .loader, mat-spinner, .loading-spinner').waitFor({ state: 'hidden', timeout: 15_000 }).catch(() => undefined);
+    // Wait for local-loader-com, overlay, or spinner elements to be hidden
+    await this.page
+      .locator('local-loader-com, .overlay, .spinner, .loader, mat-spinner, .loading-spinner, .ds-loading')
+      .waitFor({ state: 'hidden', timeout: 15_000 })
+      .catch(() => undefined);
     await this.waitForPageToSettle();
   }
 

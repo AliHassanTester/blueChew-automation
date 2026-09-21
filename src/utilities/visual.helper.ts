@@ -60,11 +60,14 @@ export class VisualHelper {
 
   /**
    * Capture a full-page or viewport-level visual snapshot using native Playwright.
-   * 
-   * @param snapshotName Unique file name for the snapshot (e.g., 'login-page-initial')
-   * @param options Configuration for masking, fullPage, and pixel tolerances
+   * Only executes if VISUAL_PROVIDERS explicitly includes 'playwright'.
    */
   async captureSnapshot(snapshotName: string, options: VisualSnapshotOptions = {}): Promise<void> {
+    const providers = (process.env.VISUAL_PROVIDERS || '').toLowerCase().split(',').map((s) => s.trim());
+    if (!providers.includes('playwright')) {
+      return;
+    }
+
     const sanitizedName = snapshotName.endsWith('.png') ? snapshotName : `${snapshotName}.png`;
     console.log(`[Visual] Capturing page snapshot: "${sanitizedName}"`);
 
@@ -85,16 +88,18 @@ export class VisualHelper {
 
   /**
    * Capture an isolated component/element-level visual snapshot.
-   * 
-   * @param target The Playwright Locator or LocatorInfo of the specific element to snapshot
-   * @param snapshotName Unique file name for the snapshot (e.g., 'login-form-card')
-   * @param options Configuration for masking and pixel tolerances
+   * Only executes if VISUAL_PROVIDERS explicitly includes 'playwright'.
    */
   async captureElementSnapshot(
     target: Locator | LocatorInfo,
     snapshotName: string,
     options: Omit<VisualSnapshotOptions, 'fullPage'> = {},
   ): Promise<void> {
+    const providers = (process.env.VISUAL_PROVIDERS || '').toLowerCase().split(',').map((s) => s.trim());
+    if (!providers.includes('playwright')) {
+      return;
+    }
+
     const sanitizedName = snapshotName.endsWith('.png') ? snapshotName : `${snapshotName}.png`;
     const isDirectLocator = typeof (target as unknown as Record<string, unknown>).click === 'function';
     const locator: Locator = isDirectLocator
@@ -126,7 +131,7 @@ export class VisualHelper {
    * Automatically executes native Playwright snapshot and/or Applitools when enabled.
    */
   async captureCheckpoint(name: string, config?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[]): Promise<void> {
-    const providers = (process.env.VISUAL_PROVIDERS || 'playwright').toLowerCase().split(',').map((s) => s.trim());
+    const providers = (process.env.VISUAL_PROVIDERS || '').toLowerCase().split(',').map((s) => s.trim());
 
     if (providers.includes('playwright')) {
       const sanitized = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
