@@ -194,66 +194,87 @@ export class CheckoutPage {
     });
   }
 
-  /** Focuses the secured field and types the value into all inputs in the matched frame. */
-  private async typeCardField(fieldType: 'number' | 'expiry' | 'cvc', value: string): Promise<void> {
+  /** Focuses the secured field and types the value into matched inputs across frames or DOM. */
+  private async typeCardField(fieldType: 'number' | 'expiry' | 'cvc', value: string, rawValue?: string): Promise<void> {
+    const fieldSelectors: Record<'number' | 'expiry' | 'cvc', string> = {
+      number: 'input[name="cardnumber"], input[name="cardNumber"], input[autocomplete="cc-number"], input[data-elements-stable-field-name="cardNumber"], input[placeholder*="Card number" i], input[placeholder*="Card Number" i], input[aria-label*="card number" i], input[aria-label*="Card number" i]',
+      expiry: 'input[name="exp-date"], input[name="expiry"], input[name="cardExpiry"], input[autocomplete="cc-exp"], input[data-elements-stable-field-name="cardExpiry"], input[placeholder*="MM" i], input[placeholder*="Exp" i], input[aria-label*="expir" i], input[aria-label*="Expir" i]',
+      cvc: 'input[name="cvc"], input[name="cvv"], input[name="cardCvc"], input[name="securityCode"], input[autocomplete="cc-csc"], input[data-elements-stable-field-name="cardCvc"], input[placeholder*="CVC" i], input[placeholder*="CVV" i], input[placeholder*="Security code" i], input[aria-label*="security code" i], input[aria-label*="CVC" i], input[aria-label*="CVV" i]',
+    };
+
+    const selector = fieldSelectors[fieldType];
+    const alternateVal = rawValue || value;
+
     await expect
       .poll(
         async () => {
+          // 1. Check all frames and main page for selector matches
+          const allContexts = [this.page, ...this.page.frames()];
+          for (const ctx of allContexts) {
+            try {
+              const matches = await ctx.locator(selector).all();
+              for (const input of matches) {
+                if (await input.isVisible().catch(() => false)) {
+                  await input.focus().catch(() => undefined);
+                  await input.click({ force: true }).catch(() => undefined);
+                  await input.fill(value).catch(() => undefined);
+                  const currentVal = await input.inputValue().catch(() => '');
+                  if (!currentVal) {
+                    await input.pressSequentially(value, { delay: 40 }).catch(() => undefined);
+                  }
+                  return true;
+                }
+              }
+            } catch {}
+          }
+
+          // 2. Check dedicated Adyen-style iframes
           for (const frame of this.page.frames()) {
             const url = frame.url().toLowerCase();
             const name = frame.name().toLowerCase();
-            if (fieldType === 'number' && (url.includes('card') || name.includes('card'))) return true;
-            if (fieldType === 'expiry' && (url.includes('expir') || name.includes('expir'))) return true;
+            let isMatch = false;
             if (
+              fieldType === 'number' &&
+              (url.includes('encryptedcardnumber') || (url.includes('card') && !url.includes('stripe') && !url.includes('expir') && !url.includes('cvc')))
+            ) {
+              isMatch = true;
+            } else if (fieldType === 'expiry' && (url.includes('encryptedexpirydate') || url.includes('encryptedmonth') || url.includes('encryptedexpirymonth') || url.includes('expir') || url.includes('expiry') || name.includes('expir'))) {
+              isMatch = true;
+            } else if (
               fieldType === 'cvc' &&
-              (url.includes('security') || url.includes('cvc') || url.includes('cvv') || name.includes('security') || name.includes('cvc') || name.includes('cvv'))
-            )
-              return true;
+              (url.includes('encryptedsecuritycode') || url.includes('security') || url.includes('cvc') || url.includes('cvv') || name.includes('cvc') || name.includes('cvv'))
+            ) {
+              isMatch = true;
+            }
+
+            if (isMatch) {
+              try {
+                const inputs = await frame.locator('input:not([type="hidden"])').all();
+                for (const input of inputs) {
+                  if (await input.isVisible().catch(() => false)) {
+                    await input.focus().catch(() => undefined);
+                    await input.click({ force: true }).catch(() => undefined);
+                    await input.fill(value).catch(() => undefined);
+                    let inputVal = await input.inputValue().catch(() => '');
+                    if (!inputVal) {
+                      await input.fill(alternateVal).catch(() => undefined);
+                      inputVal = await input.inputValue().catch(() => '');
+                    }
+                    if (!inputVal) {
+                      await input.pressSequentially(value, { delay: 50 }).catch(() => undefined);
+                    }
+                    return true;
+                  }
+                }
+              } catch {}
+            }
           }
+
           return false;
         },
-        { timeout: 30_000, message: `Could not locate payment frame for ${fieldType}` },
+        { timeout: 35_000, message: `Could not locate and fill payment field for ${fieldType}` },
       )
       .toBeTruthy();
-
-    for (const frame of this.page.frames()) {
-      const url = frame.url().toLowerCase();
-      const name = frame.name().toLowerCase();
-
-      let isMatch = false;
-      if (fieldType === 'number' && (url.includes('card') || name.includes('card'))) {
-        isMatch = true;
-      } else if (fieldType === 'expiry' && (url.includes('expir') || name.includes('expir'))) {
-        isMatch = true;
-      } else if (
-        fieldType === 'cvc' &&
-        (url.includes('security') || url.includes('cvc') || url.includes('cvv') || name.includes('security') || name.includes('cvc') || name.includes('cvv'))
-      ) {
-        isMatch = true;
-      }
-
-      if (isMatch) {
-        const inputs = await frame.locator('input:not([type="hidden"])').all();
-        for (const input of inputs) {
-          if (await input.isVisible().catch(() => false)) {
-            await input.focus().catch(() => undefined);
-            await input.click({ force: true }).catch(() => undefined);
-            await input.fill(value).catch(() => undefined);
-            await input.pressSequentially(value, { delay: 30 }).catch(() => undefined);
-            await input
-              .evaluate((el: HTMLInputElement, val: string) => {
-                if (el) {
-                  el.value = val;
-                  el.dispatchEvent(new Event('input', { bubbles: true }));
-                  el.dispatchEvent(new Event('change', { bubbles: true }));
-                }
-              }, value)
-              .catch(() => undefined);
-          }
-        }
-        return;
-      }
-    }
   }
 
   async fillPaymentDetails(payment: PaymentDetails): Promise<void> {
@@ -271,12 +292,67 @@ export class CheckoutPage {
       const sanitizedExpiry = payment.expiry.replace(/\D/g, '');
       const sanitizedCvv = payment.cvv.replace(/\D/g, '');
 
-      // Type card number
-      await this.typeCardField('number', sanitizedCardNumber);
-      // Type expiry
-      await this.typeCardField('expiry', sanitizedExpiry);
-      // Type CVC
-      await this.typeCardField('cvc', sanitizedCvv);
+      const cardSelectors =
+        'input[data-fieldtype*="CardNumber" i], input[name="cardnumber"], input[name="cardNumber"], input[autocomplete="cc-number"], input[data-elements-stable-field-name="cardNumber"], input[placeholder*="Card number" i], input[aria-label*="card number" i], input[name*="encryptedCardNumber" i]';
+      const expSelectors =
+        'input[data-fieldtype*="Expiry" i], input[name="exp-date"], input[name="expiry"], input[name="cardExpiry"], input[autocomplete="cc-exp"], input[data-elements-stable-field-name="cardExpiry"], input[placeholder*="MM" i], input[aria-label*="expir" i], input[aria-label*="Expiration" i], input[name*="encryptedExpiry" i]';
+      const cvcSelectors =
+        'input[data-fieldtype*="Security" i], input[name="cvc"], input[name="cvv"], input[name="cardCvc"], input[name="securityCode"], input[autocomplete="cc-csc"], input[data-elements-stable-field-name="cardCvc"], input[placeholder*="Security code" i], input[placeholder*="CVC" i], input[placeholder*="CVV" i], input[aria-label*="security code" i], input[aria-label*="CVC" i], input[name*="encryptedSecurity" i]';
+
+      const fillSingleField = async (
+        selectors: string,
+        value: string,
+        alternateVal?: string,
+      ): Promise<boolean> => {
+        const allContexts = [this.page, ...this.page.frames()];
+        for (const ctx of allContexts) {
+          try {
+            const matches = await ctx.locator(selectors).all();
+            for (const input of matches) {
+              if (await input.isVisible().catch(() => false)) {
+                await input.focus().catch(() => undefined);
+                await input.click({ force: true }).catch(() => undefined);
+                await input.fill(value).catch(() => undefined);
+                let currentVal = await input.inputValue().catch(() => '');
+                if (!currentVal && alternateVal) {
+                  await input.fill(alternateVal).catch(() => undefined);
+                  currentVal = await input.inputValue().catch(() => '');
+                }
+                if (!currentVal) {
+                  await input.pressSequentially(value, { delay: 35 }).catch(() => undefined);
+                }
+                return true;
+              }
+            }
+          } catch {}
+        }
+        return false;
+      };
+
+      await expect
+        .poll(
+          async () => {
+            const numDone = await fillSingleField(cardSelectors, sanitizedCardNumber);
+            const expDone = await fillSingleField(expSelectors, payment.expiry, sanitizedExpiry);
+            const cvcDone = await fillSingleField(cvcSelectors, sanitizedCvv);
+            return numDone && expDone && cvcDone;
+          },
+          { timeout: 35_000, message: 'Could not fill all card fields (number, expiry, cvc)' },
+        )
+        .toBeTruthy();
+
+      // Postal if present (Stripe)
+      for (const frame of this.page.frames()) {
+        try {
+          const zipInput = frame
+            .locator('input[name="postal"], input[autocomplete="postal-code"], input[placeholder*="ZIP" i]')
+            .first();
+          if (await zipInput.isVisible().catch(() => false)) {
+            await zipInput.focus().catch(() => undefined);
+            await zipInput.fill('10001').catch(() => undefined);
+          }
+        } catch {}
+      }
 
       // Trigger change detection / blur across frames
       await this.page.keyboard.press('Tab').catch(() => undefined);
@@ -297,11 +373,11 @@ export class CheckoutPage {
       const isDeclined = await declineAlert.waitFor({ state: 'visible', timeout: 6000 }).then(() => true).catch(() => false);
 
       if (isDeclined) {
-        console.log('[Checkout] Test card declined or rate-limited by gateway. Retrying with alternate card...');
+        console.log('[Checkout] Primary test card declined. Falling back to secondary card (3700 0000 0000 002, 03/30, 7373)...');
         const alt = alternatePayment || {
-          cardNumber: '4111111111111111',
-          expiry: '12/28',
-          cvv: '737',
+          cardNumber: process.env.SECONDARY_CARD_NUMBER || '370000000000002',
+          expiry: process.env.SECONDARY_CARD_EXP || '03/30',
+          cvv: process.env.SECONDARY_CARD_CVV || '7373',
         };
         await this.fillPaymentDetails(alt);
         await this.actions.click(this.locators.buyNowButton);

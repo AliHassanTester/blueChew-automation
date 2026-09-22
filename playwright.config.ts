@@ -80,7 +80,7 @@ export default defineConfig({
     },
   },
   retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 4 : 2,
+  workers: 1,
   reporter: reporters,
   use: {
     baseURL: baseURLs[envType] ?? baseURLs['dev'],
