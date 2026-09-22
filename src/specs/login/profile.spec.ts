@@ -12,7 +12,6 @@ const allureMeta = { feature: 'Account', story: 'Profile' };
 test.use({ storageState: AUTH_FILE_PATH });
 
 test.describe('Feature: Account Profile', () => {
-  test.describe.configure({ mode: 'serial' });
 
   test(
     `

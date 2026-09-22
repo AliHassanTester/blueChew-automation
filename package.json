@@ -27,6 +27,8 @@
     "test:medical:edge": "cross-env ENV_TYPE=dev npx playwright test src/specs/medical/medical-edge-cases.spec.ts",
     "test:product": "cross-env ENV_TYPE=dev npx playwright test src/specs/product/product-checkout.spec.ts",
     "test:e2e": "cross-env ENV_TYPE=dev npx playwright test --grep-invert \"@visual-only|@visual-fail|@api\"",
+    "test:e2e:core": "cross-env ENV_TYPE=dev npx playwright test src/specs/login src/specs/medical src/specs/registration src/specs/product/footer-redirects.spec.ts",
+    "test:e2e:non-product": "cross-env ENV_TYPE=dev npx playwright test --grep-invert \"@product|@visual-only|@visual-fail|@api\"",
     "test:e2e:signup": "cross-env ENV_TYPE=dev npx playwright test src/specs/login/signup-to-approved-order.spec.ts",
     "test:signup": "cross-env ENV_TYPE=dev npx playwright test src/specs/login/signup-to-approved-order.spec.ts",
     "test:product:sildenafil": "cross-env ENV_TYPE=dev npx playwright test src/specs/product/product-checkout.spec.ts --grep PRODUCT-SILDENAFIL",

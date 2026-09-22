@@ -103,6 +103,37 @@ export class ProfilePage {
     await this.verify.waitForLoaderToDisappear();
   }
 
+  private async ensureAuthenticated(targetUrl?: string): Promise<void> {
+    await this.page.waitForLoadState('domcontentloaded').catch(() => undefined);
+    const loginInput = this.page
+      .locator("//input[@data-test-id='sign-in-email-input'] | //input[@type='email'] | //input[contains(@placeholder,'Email')]")
+      .first();
+    const isLogin =
+      this.page.url().includes('/log-in') ||
+      (await loginInput.waitFor({ state: 'visible', timeout: 3500 }).then(() => true).catch(() => false));
+    if (isLogin) {
+      console.log('[ProfilePage] Session expired or redirected to login; re-authenticating...');
+      const email = process.env.user_name || 'ali@meds.com';
+      const pass = process.env.password || 'certa@123';
+      if (await loginInput.isVisible().catch(() => false)) {
+        await loginInput.fill(email);
+        const passInput = this.page
+          .locator("//input[@data-test-id='sign-in-password-input'] | //input[@type='password']")
+          .first();
+        await passInput.fill(pass);
+        const submitBtn = this.page
+          .locator("//button[@data-test-id='sign-in-submit-button'] | //button[normalize-space()='CONTINUE']")
+          .first();
+        await submitBtn.click();
+        await this.page.waitForURL(/\/account/, { timeout: 25_000 }).catch(() => undefined);
+        if (targetUrl) {
+          await this.actions.navigateToURL(targetUrl);
+          await this.page.waitForLoadState('domcontentloaded').catch(() => undefined);
+        }
+      }
+    }
+  }
+
   // ── PROF-010 ────────────────────────────────────────────────────────────────
 
   /**
@@ -125,6 +156,10 @@ export class ProfilePage {
   /** Opens the change-password card, submits old/new/confirm, and asserts the success message. */
   private async submitPasswordChange(oldPassword: string, newPassword: string): Promise<void> {
     await this.actions.navigateToURL('/account/profile/change-password');
+    await this.ensureAuthenticated();
+    if (this.page.url().includes('/account') && !this.page.url().includes('change-password')) {
+      await this.actions.navigateToURL('/account/profile/change-password');
+    }
     await this.actions.waitForVisibility(this.locators.currentPasswordInput);
     await this.actions.sendKeys(this.locators.currentPasswordInput, oldPassword);
     await this.actions.sendKeys(this.locators.newPasswordInput, newPassword);
@@ -147,6 +182,10 @@ export class ProfilePage {
     await test.step('Update shipping address and verify it persists', async () => {
       await test.step('Fill the form with an address different from the current one, and save', async () => {
         await this.actions.navigateToURL('/account/profile/update-shipping-address');
+        await this.ensureAuthenticated();
+        if (this.page.url().includes('/account') && !this.page.url().includes('update-shipping-address')) {
+          await this.actions.navigateToURL('/account/profile/update-shipping-address');
+        }
         await this.actions.waitForVisibility(this.locators.shippingStreetInput);
         const currentStreet = (await this.actions.getInputValue(this.locators.shippingStreetInput)).trim();
         target = currentStreet === primary.streetAddress ? alternate : primary;

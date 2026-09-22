@@ -328,10 +328,179 @@ export class MedicalPage {
     }
   }
 
+  /** Completes all 16 questions when the medical intake renders as a single-page form rather than step-by-step. */
+  private async completeSinglePageMedicalForm(details: MedicalDetails): Promise<void> {
+    console.log('[MedicalPage] Detected Unified Single-Page Medical Form. Completing all 16 questions...');
+
+    // Q1: Personal info
+    await this.actions.sendKeys(this.locators.firstNameInput, details.firstName);
+    await this.actions.sendKeys(this.locators.lastNameInput, details.lastName);
+
+    // Birthday field
+    const birthdayLocator = this.page
+      .locator(
+        "//input[@formcontrolname='birthday' or @formcontrolname='dob' or contains(@placeholder,'MM/DD/YYYY') or contains(@placeholder,'Birth')] | //*[contains(text(),'Birth Date')]/preceding-sibling::input | //*[contains(text(),'Birth Date')]/following-sibling::input | //label[contains(.,'Birth')]//input",
+      )
+      .first();
+    await birthdayLocator.click();
+    await birthdayLocator.pressSequentially(details.birthday.replace(/\//g, ''), { delay: 50 });
+
+    // Q2: Sex -> Male
+    const sexMale = this.page
+      .locator('//h6[contains(text(),"2.")]/following::*[@role="radio" or @type="radio" or self::label][contains(.,"Male") or @value="Male"][1]')
+      .first();
+    if ((await sexMale.count()) > 0) {
+      await sexMale.click().catch(() => undefined);
+    } else {
+      await this.page.getByRole('radio', { name: 'Male', exact: true }).first().click().catch(() => undefined);
+    }
+
+    // Q3: Patient -> Yes
+    const patientYes = this.page
+      .locator('//h6[contains(text(),"3.")]/following::*[@role="radio" or @type="radio" or self::label][contains(.,"Yes") or @value="Yes"][1]')
+      .first();
+    if ((await patientYes.count()) > 0) {
+      await patientYes.click().catch(() => undefined);
+    }
+
+    // Q4: Reason -> Select first option
+    const reasonCb = this.page
+      .locator('//h6[contains(text(),"4.")]/following::*[@role="checkbox" or @type="checkbox" or self::label][1]')
+      .first();
+    if ((await reasonCb.count()) > 0) {
+      await reasonCb.click().catch(() => undefined);
+    }
+
+    // Q5: Walk 1 mile -> Yes
+    const walkYes = this.page
+      .locator('//h6[contains(text(),"5.")]/following::*[@role="radio" or @type="radio" or self::label][contains(.,"Yes") or @value="Yes"][1]')
+      .first();
+    if ((await walkYes.count()) > 0) {
+      await walkYes.click().catch(() => undefined);
+    }
+
+    // Q6: Climb 2 flights -> About 10 seconds
+    const climb10 = this.page
+      .locator('//h6[contains(text(),"6.")]/following::*[@role="radio" or @type="radio" or self::label][contains(.,"10 seconds")][1]')
+      .first();
+    if ((await climb10.count()) > 0) {
+      await climb10.click().catch(() => undefined);
+    } else {
+      const firstClimb = this.page
+        .locator('//h6[contains(text(),"6.")]/following::*[@role="radio" or @type="radio" or self::label][1]')
+        .first();
+      await firstClimb.click().catch(() => undefined);
+    }
+
+    // Q7: Told NOT to have sex -> No
+    const q7No = this.page
+      .locator('//h6[contains(text(),"7.")]/following::*[@role="radio" or @type="radio" or self::label][contains(.,"No") or @value="No"][1]')
+      .first();
+    if ((await q7No.count()) > 0) {
+      await q7No.click().catch(() => undefined);
+    }
+
+    // Q8: Low blood pressure -> No
+    const q8No = this.page
+      .locator('//h6[contains(text(),"8.")]/following::*[@role="radio" or @type="radio" or self::label][contains(.,"No") or @value="No"][1]')
+      .first();
+    if ((await q8No.count()) > 0) {
+      await q8No.click().catch(() => undefined);
+    }
+
+    // Q9: High blood pressure -> No
+    const q9No = this.page
+      .locator('//h6[contains(text(),"9.")]/following::*[@role="radio" or @type="radio" or self::label][contains(.,"No") or @value="No"][1]')
+      .first();
+    if ((await q9No.count()) > 0) {
+      await q9No.click().catch(() => undefined);
+    }
+
+    // Q10: Vitamins/supplements -> "I DO NOT take any of these"
+    const q10None = this.page
+      .locator('//h6[contains(text(),"10.")]/following::*[contains(normalize-space(),"DO NOT take any of these") or contains(.,"I DO NOT")][1]')
+      .first();
+    if ((await q10None.count()) > 0) {
+      await q10None.click().catch(() => undefined);
+    }
+
+    // Q11: Medications -> "I DO NOT take any of these"
+    const q11None = this.page
+      .locator('//h6[contains(text(),"11.")]/following::*[contains(normalize-space(),"DO NOT take any of these") or contains(.,"I DO NOT")][1]')
+      .first();
+    if ((await q11None.count()) > 0) {
+      await q11None.click().catch(() => undefined);
+    }
+
+    // Q12: Allergies -> No
+    const q12No = this.page
+      .locator('//h6[contains(text(),"12.")]/following::*[@role="radio" or @type="radio" or self::label][contains(.,"No") or @value="No"][1]')
+      .first();
+    if ((await q12No.count()) > 0) {
+      await q12No.click().catch(() => undefined);
+    }
+
+    // Q13: Medical conditions -> "I have NONE of these"
+    const q13None = this.page
+      .locator('//h6[contains(text(),"13.")]/following::*[contains(normalize-space(),"I have NONE of these") or contains(.,"NONE")][1]')
+      .first();
+    if ((await q13None.count()) > 0) {
+      await q13None.click().catch(() => undefined);
+    }
+
+    // Q14: Other medical conditions -> No
+    const q14No = this.page
+      .locator('//h6[contains(text(),"14.")]/following::*[@role="radio" or @type="radio" or self::label][contains(.,"No") or @value="No"][1]')
+      .first();
+    if ((await q14No.count()) > 0) {
+      await q14No.click().catch(() => undefined);
+    }
+
+    // Q15: Other medications -> "I am NOT taking any other medication."
+    const q15None = this.page
+      .locator('//h6[contains(text(),"15.")]/following::*[contains(normalize-space(),"NOT taking any other medication")][1]')
+      .first();
+    if ((await q15None.count()) > 0) {
+      await q15None.click().catch(() => undefined);
+    }
+
+    // Q16: Anything else -> No
+    const q16No = this.page
+      .locator('//h6[contains(text(),"16.")]/following::*[@role="radio" or @type="radio" or self::label][contains(.,"No") or @value="No"][1]')
+      .first();
+    if ((await q16No.count()) > 0) {
+      await q16No.click().catch(() => undefined);
+    }
+
+    // Click Submit
+    const submitBtn = this.page
+      .locator('//button[normalize-space()="Submit" or contains(.,"Submit") or @type="submit"]')
+      .first();
+    await submitBtn.scrollIntoViewIfNeeded().catch(() => undefined);
+    await submitBtn.click();
+    await this.page.waitForLoadState('load').catch(() => undefined);
+    await this.verify.waitForLoaderToDisappear().catch(() => undefined);
+    await this.verify.waitForProcessingLoaderToDisappear().catch(() => undefined);
+  }
+
   // ── Public API ───────────────────────────────────────────────────────────────
 
   async completeMedicalProfile(details: MedicalDetails, captureCheckpoints = false): Promise<void> {
     await test.step('Complete medical profile', async () => {
+      await this.page.waitForLoadState('domcontentloaded').catch(() => undefined);
+      await this.verify.waitForLoaderToDisappear().catch(() => undefined);
+
+      // Check if this is the all-in-one / single-page medical form
+      const isSinglePage =
+        (await this.page.locator('//button[normalize-space()="Submit" or contains(.,"Submit")]').count() > 0) ||
+        (await this.page.locator('text=1. Enter your personal information').count() > 0) ||
+        (await this.page.locator('text=16. Is there anything else').count() > 0);
+
+      if (isSinglePage) {
+        await this.completeSinglePageMedicalForm(details);
+        return;
+      }
+
       // ── Step 1: Legal name ─────────────────────────────────────────────────
       await test.step('Enter legal name', async () => {
         if (captureCheckpoints) {
