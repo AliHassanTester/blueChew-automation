@@ -19,6 +19,7 @@ test.describe('Feature: User Login', () => {
     Description: '${scenario.testCaseData.testDescription}'
     Tags: '${scenario.testCaseData.tags} @visual'
   `,
+    { tag: ['@smoke', '@login', '@visual'] },
     async ({ loginPage }) => {
       await logTestCaseData(test.info(), scenario.testCaseData, {
         feature: 'Authentication',
@@ -40,6 +41,7 @@ test.describe('Feature: User Login', () => {
 
       await test.step('Verify successful login — account page rendered', async () => {
         await loginPage.verifySuccessfulLogin();
+        await loginPage.captureVisualCheckpoint('Account Dashboard - My Plan', scenario.visualConfigs);
       });
     },
   );

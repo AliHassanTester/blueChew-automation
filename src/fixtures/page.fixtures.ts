@@ -84,7 +84,7 @@ export const test = base.extend<TestFixtures>({
   },
 
   visual: async ({ page }, use) => {
-    const visual = new VisualHelper(page);
+    const visual = new VisualHelper(page, base.info());
     // initialize configured providers (lazy init occurs in captureCheckpoint, but
     // provide an explicit hook if providers need setup)
     await use(visual);

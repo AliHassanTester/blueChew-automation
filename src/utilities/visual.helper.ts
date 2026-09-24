@@ -1,6 +1,7 @@
-import { Page, Locator, expect, test } from '@playwright/test';
+import { Page, TestInfo, Locator, expect, test } from '@playwright/test';
 import * as path from 'path';
 import { captureApplitoolsVisualCheckpoint, closeActiveEyes } from './applitools.utils';
+import { capturePercyVisualCheckpoint } from './percy.utils';
 import { ApplitoolsVisualConfig } from '@interfaces/applitools.interface';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 
@@ -30,14 +31,14 @@ export interface VisualSnapshotOptions {
  * VisualHelper
  * 
  * Provides unified, production-grade visual regression testing capabilities using:
- * 1. Native Playwright expect(page).toHaveScreenshot() (Fast, free, deterministic, in-repo baselines)
- * 2. Component-level expect(locator).toHaveScreenshot() for isolated UI widget baselines
- * 3. Backward-compatible routing for legacy cloud visual providers when configured
+ * 1. BrowserStack Percy via @percy/playwright
+ * 2. Native Playwright expect(page).toHaveScreenshot()
+ * 3. Applitools Eyes Visual AI
  */
 export class VisualHelper {
   private readonly defaultStylePath: string;
 
-  constructor(private readonly page: Page) {
+  constructor(private readonly page: Page, private readonly testInfo?: TestInfo) {
     this.defaultStylePath = path.resolve(__dirname, '../styles/visual-snapshot.css');
   }
 
@@ -127,11 +128,22 @@ export class VisualHelper {
   }
 
   /**
+   * Capture explicit Percy visual checkpoint.
+   */
+  async capturePercyCheckpoint(name: string, options?: any): Promise<void> {
+    await capturePercyVisualCheckpoint(this.page, name, this.testInfo, options);
+  }
+
+  /**
    * Dynamic checkpoint capture for multi-provider compatibility.
-   * Automatically executes native Playwright snapshot and/or Applitools when enabled.
+   * Automatically executes Percy, native Playwright snapshot, and/or Applitools when enabled.
    */
   async captureCheckpoint(name: string, config?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[]): Promise<void> {
     const providers = (process.env.VISUAL_PROVIDERS || '').toLowerCase().split(',').map((s) => s.trim());
+
+    if (providers.includes('percy')) {
+      await capturePercyVisualCheckpoint(this.page, name, this.testInfo, config);
+    }
 
     if (providers.includes('playwright')) {
       const sanitized = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
