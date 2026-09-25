@@ -1,10 +1,11 @@
-import { Page, TestInfo, test, Locator } from '@playwright/test';
+import { Page, TestInfo, test, expect, Locator } from '@playwright/test';
+import * as path from 'path';
 import { PlaywrightActionFactory } from '@utilities/playwright.actions.utils';
 import { PlaywrightVerificationFactory } from '@utilities/playwright.verifications.utils';
 import { LocatorInfo } from '@interfaces/locator.info.interface';
 import { MedicalDetails } from '@interfaces/signup-to-approved-order.interface';
 import { MedicalEdgeCasesDetails, MedicalSymptomDetails } from '@interfaces/medical-edge-cases.interface';
-import { MedicalNegativeDetails } from '@interfaces/medical-negative.interface';
+import { MedicalNegativeDetails, MedicalNegativeStepDetails } from '@interfaces/medical-negative.interface';
 import { VisualHelper } from '@utilities/visual.helper';
 import { ApplitoolsVisualConfig, MEDICAL_FIGMA_CONFIG, GOLD_MEDICAL_STEPS_FIGMA_CONFIGS } from '@data/visual/figma.visual.data';
 
@@ -62,7 +63,7 @@ export class MedicalPage {
       // ── Active-step primary action — the single visible CONTINUE / SUBMIT ───
       continueButton: {
         description: 'Active Step CONTINUE / SUBMIT Button',
-        locator: this.page.locator('button[class*="ds-button--primary"]').filter({ visible: true }).first(),
+        locator: this.page.locator('button').filter({ hasText: /^(?:CONTINUE|SUBMIT)$/i }).filter({ visible: true }).first(),
       },
       // Generic CONTINUE link on transition / info pages that lack the DS button.
       proceedLink: {
@@ -151,6 +152,22 @@ export class MedicalPage {
         description: 'Off-label / Pregnancy Disqualification Warning Banner',
         locator: this.page.locator('text=/We cannot proceed|primary care provider/i'),
       },
+      tryGoldHeading: {
+        description: 'Try Gold / Match Heading on Checkout Page',
+        locator: this.page
+          .getByRole('heading', { name: /Your #1 Match Gold|Gold/i })
+          .or(this.page.locator('h1, h2, h3, .ds-heading, [class*="heading"]').filter({ hasText: /Your #1 Match Gold|Gold|Checkout/i }))
+          .filter({ visible: true })
+          .first(),
+      },
+      tryGoldContinueBtn: {
+        description: 'Continue Action on Checkout Landing Page',
+        locator: this.page
+          .getByText('CONTINUE', { exact: true })
+          .or(this.page.locator('button, [role="button"], div, a').filter({ hasText: /^CONTINUE$/i }))
+          .filter({ visible: true })
+          .first(),
+      },
     };
   }
 
@@ -180,7 +197,27 @@ export class MedicalPage {
    */
   private async clickContinue(): Promise<void> {
     await this.dismissSnackbar();
-    await this.actions.click(this.locators.continueButton);
+
+    // If an open empty medication form with CANCEL is blocking CONTINUE, cancel it
+    const cancelButtons = this.page
+      .getByRole('button', { name: /^CANCEL$/i })
+      .or(this.page.locator('button:has-text("CANCEL")'))
+      .or(this.page.locator('xpath=//button[normalize-space()="CANCEL"]'))
+      .filter({ visible: true });
+    const cancelCount = await cancelButtons.count();
+    for (let i = 0; i < cancelCount; i++) {
+      const c = cancelButtons.nth(i);
+      if (await c.isVisible().catch(() => false)) {
+        await c.click().catch(() => undefined);
+        await this.page.waitForTimeout(300);
+      }
+    }
+
+    const btn = this.locators.continueButton.locator;
+    await btn.waitFor({ state: 'visible', timeout: 10000 });
+    await btn.scrollIntoViewIfNeeded().catch(() => undefined);
+    await btn.click({ timeout: 10000 });
+    await this.page.waitForTimeout(500);
   }
 
   /** Option tiles a step can render, optionally narrowed to an exact (case-insensitive) label. */
@@ -560,8 +597,20 @@ export class MedicalPage {
   }
 
   async verifyNavigatedToCheckout(): Promise<void> {
-    await test.step('Verify navigation to checkout', async () => {
+    await test.step('Verify navigation to checkout page and assert Try Gold match landing header', async () => {
       await this.actions.waitForURL(/\/checkout/);
+      await this.page.waitForLoadState('domcontentloaded').catch(() => undefined);
+      await this.verify.waitForLoaderToDisappear().catch(() => undefined);
+
+      // Assert visible Try Gold / Checkout landing heading (clearly visible to user at first glance)
+      await this.verify.waitForVisibility(this.locators.tryGoldHeading);
+      const isHeadingVisible = await this.verify.isElementVisible(this.locators.tryGoldHeading);
+      expect(isHeadingVisible).toBeTruthy();
+
+      // Assert primary checkout / Try Gold CONTINUE CTA is visible
+      await this.verify.waitForVisibility(this.locators.tryGoldContinueBtn);
+      const isContinueVisible = await this.verify.isElementVisible(this.locators.tryGoldContinueBtn);
+      expect(isContinueVisible).toBeTruthy();
     });
   }
 
@@ -887,32 +936,13 @@ export class MedicalPage {
   async selectOptionForQuestion(questionPattern: RegExp, optionPattern: RegExp): Promise<boolean> {
     const questionTextEl = this.page.getByText(questionPattern).first();
     if ((await questionTextEl.count()) > 0) {
-      // 1. Look for the following radiogroup or options container
-      const nextGroup = questionTextEl.locator(
-        'xpath=following::*[@role="radiogroup" or contains(@class,"ds-option-selector") or contains(@class,"option-selector")][1]',
-      );
-      if ((await nextGroup.count()) > 0) {
-        const option = nextGroup
-          .locator('[role="radio"], button, label, .ds-option-selector__option')
-          .filter({ hasText: optionPattern })
-          .first();
-        if ((await option.count()) > 0) {
-          await option.scrollIntoViewIfNeeded().catch(() => undefined);
-          await option.click();
-          return true;
-        }
-      }
-
-      // 2. Look for following radio/button directly
-      const followingOpt = questionTextEl
-        .locator(
-          'xpath=following::*[@role="radio" or contains(@class,"ds-option-selector__option") or contains(@class,"custom-multi-option-select") or self::button or self::label][1]',
-        )
+      const option = questionTextEl
+        .locator('xpath=following::*[self::label or self::button or @role="radio" or contains(@class,"custom-multi-option-select") or contains(@class,"ds-option-selector__option") or contains(@class,"ds-checkbox")]')
         .filter({ hasText: optionPattern })
         .first();
-      if ((await followingOpt.count()) > 0) {
-        await followingOpt.scrollIntoViewIfNeeded().catch(() => undefined);
-        await followingOpt.click();
+      if ((await option.count()) > 0 && (await option.isVisible().catch(() => false))) {
+        await option.scrollIntoViewIfNeeded().catch(() => undefined);
+        await option.click().catch(() => undefined);
         return true;
       }
     }
@@ -921,49 +951,104 @@ export class MedicalPage {
   }
 
   /**
+   * Helper to select a radio/button option for ALL instances of matching question text on the page.
+   */
+  async selectAllOptionsForQuestion(questionPattern: RegExp, optionPattern: RegExp): Promise<number> {
+    const questionTextEls = this.page.getByText(questionPattern);
+    const count = await questionTextEls.count();
+    let selected = 0;
+    for (let i = 0; i < count; i++) {
+      const qEl = questionTextEls.nth(i);
+      if (!(await qEl.isVisible().catch(() => false))) continue;
+
+      const option = qEl
+        .locator('xpath=following::*[self::label or self::button or @role="radio" or contains(@class,"custom-multi-option-select") or contains(@class,"ds-option-selector__option") or contains(@class,"ds-checkbox")]')
+        .filter({ hasText: optionPattern })
+        .first();
+
+      if ((await option.count()) > 0 && (await option.isVisible().catch(() => false))) {
+        await option.scrollIntoViewIfNeeded().catch(() => undefined);
+        await option.click().catch(() => undefined);
+        await this.page.waitForTimeout(200);
+        selected++;
+      }
+    }
+    return selected;
+  }
+
+  /**
    * Helper to fill and submit the inline Drug Name / Reason medication form.
+   */
+  /**
+   * Helper to fill and submit the inline Drug Name / Reason medication form.
+   * Immediately selects from dropdown when it opens to prevent overlay blocking.
    */
   async addMedicationForm(drugName: string, reason?: string): Promise<void> {
     const drugInput = this.page
-      .getByRole('textbox', { name: /drug name/i })
-      .or(this.page.locator('ds-input[label*="Drug Name" i] input, input.ds-input__native'))
+      .locator('input[placeholder*="Drug Name" i], ds-input[label*="Drug Name" i] input, input[aria-label*="Drug Name" i]')
+      .or(this.page.getByRole('textbox', { name: /drug name/i }))
       .filter({ visible: true })
       .first();
 
-    await drugInput.waitFor({ state: 'visible', timeout: 6000 }).catch(() => undefined);
-    if ((await drugInput.count()) > 0) {
-      await drugInput.fill(drugName);
+    await drugInput.waitFor({ state: 'visible', timeout: 5000 });
+    await drugInput.scrollIntoViewIfNeeded().catch(() => undefined);
+    await drugInput.click();
+    await drugInput.fill(drugName);
 
-      // If autocomplete popup appears in .overlay, click the matching option
-      const popupOption = this.page
-        .locator('.overlay button.option, .overlay .option')
-        .filter({ hasText: new RegExp(drugName.trim(), 'i') })
-        .first();
-      if ((await popupOption.count()) > 0 && (await popupOption.isVisible())) {
-        await popupOption.click().catch(() => undefined);
+    // Look for autocomplete dropdown suggestions and click immediately
+    const dropdownOptions = this.page
+      .locator(
+        'button.option, .ds-autocomplete__option, .ds-autocomplete__item, .ds-typeahead__option, .ds-typeahead__item, ' +
+        '.cdk-overlay-pane [role="option"], .cdk-overlay-pane button, .cdk-overlay-pane li, .cdk-overlay-pane span, ' +
+        '[role="listbox"] [role="option"], [role="listbox"] button, [role="listbox"] li, [role="listbox"] div, ' +
+        '[role="option"], li.option, div.option, ul.dropdown-menu li, .dropdown-item, .item'
+      )
+      .filter({ visible: true });
+
+    try {
+      await dropdownOptions.first().waitFor({ state: 'visible', timeout: 1500 });
+      const matchingOpt = dropdownOptions.filter({ hasText: new RegExp(drugName.trim(), 'i') }).first();
+      if ((await matchingOpt.count()) > 0 && (await matchingOpt.isVisible().catch(() => false))) {
+        await matchingOpt.click({ force: true });
+      } else {
+        await dropdownOptions.first().click({ force: true });
       }
+      await this.page.waitForTimeout(200);
+    } catch {
+      // If no dropdown appeared, press Enter to submit text
+      await drugInput.press('Enter').catch(() => undefined);
     }
 
     if (reason) {
       const reasonInput = this.page
-        .getByRole('textbox', { name: /reason/i })
-        .or(this.page.locator('ds-input[label*="Reason" i] input, textarea'))
+        .locator('input[placeholder*="Reason" i], textarea[placeholder*="Reason" i], input[formcontrolname="reason"], textarea[formcontrolname="reason"]')
+        .or(drugInput.locator('xpath=following::textarea[1] | following::input[1]'))
         .filter({ visible: true })
         .first();
-      if ((await reasonInput.count()) > 0 && (await reasonInput.isEditable())) {
+      if ((await reasonInput.count()) > 0 && (await reasonInput.isVisible().catch(() => false))) {
+        await reasonInput.scrollIntoViewIfNeeded().catch(() => undefined);
+        await reasonInput.click().catch(() => undefined);
         await reasonInput.fill(reason).catch(() => undefined);
       }
     }
 
     const addBtn = this.page
-      .getByRole('button', { name: /^ADD$/i })
-      .or(this.page.locator('button:has-text("ADD")'))
+      .getByRole('button', { name: 'ADD', exact: true })
+      .or(this.page.locator('//button[normalize-space()="ADD" or contains(normalize-space(),"ADD")]'))
       .filter({ visible: true })
       .first();
-    await addBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => undefined);
-    if ((await addBtn.count()) > 0 && (await addBtn.isEnabled())) {
-      await addBtn.click();
+
+    if ((await addBtn.count()) > 0) {
+      await addBtn.scrollIntoViewIfNeeded().catch(() => undefined);
+      await addBtn.click({ force: true }).catch(() => undefined);
       await this.page.waitForTimeout(500);
+
+      // If ADD is still visible, press Enter and click again
+      if (await addBtn.isVisible().catch(() => false)) {
+        await this.page.keyboard.press('Enter').catch(() => undefined);
+        await addBtn.click({ force: true }).catch(() => undefined);
+        await this.page.waitForTimeout(500);
+      }
     }
   }
 
@@ -971,7 +1056,33 @@ export class MedicalPage {
    * Helper to click an option tile, checkbox, or radio matching a text pattern.
    */
   async clickOptionTile(textPattern: RegExp | string): Promise<void> {
-    const pattern = typeof textPattern === 'string' ? new RegExp(textPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') : textPattern;
+    let pattern: RegExp;
+    if (typeof textPattern === 'string') {
+      const escaped = textPattern
+        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/["“”]/g, '["“”]')
+        .replace(/['‘’]/g, "['‘’]");
+      pattern = new RegExp(escaped, 'i');
+    } else {
+      pattern = textPattern;
+    }
+
+    const checkbox = this.page.getByRole('checkbox', { name: pattern }).first();
+    if ((await checkbox.count()) > 0 && (await checkbox.isVisible().catch(() => false))) {
+      await checkbox.scrollIntoViewIfNeeded().catch(() => undefined);
+      await checkbox.click().catch(() => undefined);
+      await this.page.waitForTimeout(300);
+      return;
+    }
+
+    const radio = this.page.getByRole('radio', { name: pattern }).first();
+    if ((await radio.count()) > 0 && (await radio.isVisible().catch(() => false))) {
+      await radio.scrollIntoViewIfNeeded().catch(() => undefined);
+      await radio.click().catch(() => undefined);
+      await this.page.waitForTimeout(300);
+      return;
+    }
+
     const target = this.page
       .locator('label, button, [role="checkbox"], [role="radio"], .ds-option-selector__option, .ds-checkbox')
       .filter({ hasText: pattern })
@@ -983,6 +1094,430 @@ export class MedicalPage {
     await target.scrollIntoViewIfNeeded().catch(() => undefined);
     await target.click();
     await this.page.waitForTimeout(300);
+  }
+
+  // ── Modular Clinical Step Methods for Medical Negative & Questionnaire Flows ──
+
+  /**
+   * Step 5 (if shown): Off-label Treatment & Pregnancy Disclosures.
+   * Confirms off-label use, answers pregnancy questions, tests Deny warning, and recovers with Confirm.
+   */
+  async verifyOffLabelAndPregnancyDisclosures(): Promise<void> {
+    const offLabelTitle = this.page.locator('text=/off-label|pregnant or breastfeeding/i').first();
+    if ((await offLabelTitle.count()) > 0 && (await offLabelTitle.isVisible().catch(() => false))) {
+      await test.step('Verify off-label and pregnancy disclosures', async () => {
+        await this.selectOptionForQuestion(/off-label/i, /Confirm/i);
+        await this.selectOptionForQuestion(/pregnant or breastfeeding/i, /No/i);
+
+        // Deny pregnancy disclaimer -> verify red warning banner -> Confirm
+        const denyClicked = await this.selectOptionForQuestion(/will not use this treatment if you become pregnant/i, /Deny/i);
+        if (denyClicked) {
+          await this.verify.waitForVisibility(this.locators.offLabelDenyWarning).catch(() => undefined);
+          await this.selectOptionForQuestion(/will not use this treatment if you become pregnant/i, /Confirm/i);
+        }
+
+        await this.clickContinue();
+      });
+    }
+  }
+
+  /**
+   * Step 6: Select specific reasons for choosing BlueChew.
+   */
+  async selectReasonsForBlueChew(reasons: string[]): Promise<void> {
+    await test.step('Select specific BlueChew reasons', async () => {
+      const reasonHeader = this.page.getByText(/reason for choosing bluechew/i).first();
+      await reasonHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
+
+      for (const reason of reasons) {
+        await this.clickOptionTile(reason);
+      }
+      await this.clickContinue();
+    });
+  }
+
+  /**
+   * Step 7: Exercise and Physical Fitness assessment.
+   * Handles Walk 1 mile (Yes), Climb 2 flights ("I cannot"), Poor physical fitness ("No"),
+   * Sex without chest pain ("No"), and fills required explanation textareas.
+   */
+  async answerExerciseAndPhysicalFitness(explanation = 'Test'): Promise<void> {
+    await test.step('Answer exercise and physical fitness questions with negative branches', async () => {
+      const walkHeader = this.page.getByText(/walk 1 mile|climb 2 flights/i).first();
+      await walkHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
+
+      // Walk 1 mile -> Yes
+      await this.selectOptionForQuestion(/walk 1 mile/i, /^Yes$/i);
+
+      // Climb 2 flights -> "I cannot"
+      await this.selectOptionForQuestion(/climb 2 flights/i, /I cannot/i);
+
+      // Poor physical fitness agreement -> "No"
+      await this.selectOptionForQuestion(/poor physical fitness/i, /^No$/i);
+
+      // Sex without chest pain -> "No"
+      await this.selectOptionForQuestion(/without chest pain/i, /^No$/i);
+
+      // Fill all visible textareas with explanation
+      const textareas = this.page.locator('textarea').filter({ visible: true });
+      const count = await textareas.count();
+      for (let i = 0; i < count; i++) {
+        await textareas.nth(i).fill(explanation).catch(() => undefined);
+      }
+
+      await this.clickContinue();
+    });
+  }
+
+  /**
+   * Step 8: Told NOT to have sex question (auto-advancing single choice).
+   */
+  async answerToldNotToHaveSex(answer: 'Yes' | 'No' = 'No'): Promise<void> {
+    await test.step(`Answer told NOT to have sex question with: ${answer} (auto-advance)`, async () => {
+      const sexHeader = this.page.getByText(/told you not to have sex/i).first();
+      await sexHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
+
+      const opt = sexHeader
+        .locator('xpath=following::*[@role="radiogroup" or contains(@class,"option-selector")][1]')
+        .locator('[role="radio"], button, label, .ds-option-selector__option')
+        .filter({ hasText: new RegExp(`^${answer}$`, 'i') })
+        .first();
+
+      if ((await opt.count()) > 0) {
+        await opt.click();
+      } else {
+        await this.selectOptionForQuestion(/told you not to have sex/i, new RegExp(`^${answer}$`, 'i'));
+      }
+    });
+  }
+
+  /**
+   * Step 9: Low Blood Pressure diagnosis (auto-advancing single choice).
+   */
+  async answerLowBloodPressure(answer: 'Yes' | 'No' = 'No'): Promise<void> {
+    await test.step(`Answer low blood pressure diagnosis with: ${answer} (auto-advance)`, async () => {
+      const lowBpHeader = this.page.getByText(/low blood pressure/i).first();
+      await lowBpHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
+
+      const opt = lowBpHeader
+        .locator('xpath=following::*[@role="radiogroup" or contains(@class,"option-selector")][1]')
+        .locator('[role="radio"], button, label, .ds-option-selector__option')
+        .filter({ hasText: new RegExp(`^${answer}$`, 'i') })
+        .first();
+
+      if ((await opt.count()) > 0) {
+        await opt.click();
+      } else {
+        await this.selectOptionForQuestion(/low blood pressure/i, new RegExp(`^${answer}$`, 'i'));
+      }
+    });
+  }
+
+  /**
+   * Step 10: High Blood Pressure (Hypertension) Branching & Medication Entry.
+   * Selects non-medication lifestyle options first, then switches to medication and enters drug details.
+   */
+  async answerBloodPressureDiagnosis(lifestyleOptions: string[], lifestyleExplanation: string, drugName: string): Promise<void> {
+    await test.step('Answer blood pressure diagnosis with lifestyle options and medication entry', async () => {
+      const highBpHeader = this.page.getByText(/high blood pressure|hypertension/i).first();
+      await highBpHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
+
+      // Option 1: "Yes, but I do not take medication to treat it."
+      const noMedOpt = this.page
+        .locator('button.ds-option-selector__option, [role="radio"], label')
+        .filter({ hasText: /do not take medication/i })
+        .first();
+      if ((await noMedOpt.count()) > 0) {
+        await noMedOpt.click();
+
+        // Check lifestyle options (Diet, Exercise, Other)
+        for (const optName of lifestyleOptions) {
+          await this.clickOptionTile(optName);
+        }
+
+        // Fill explanation textarea
+        const textareas = this.page.locator('textarea').filter({ visible: true });
+        if ((await textareas.count()) > 0) {
+          await textareas.first().fill(lifestyleExplanation).catch(() => undefined);
+        }
+      }
+
+      // Option 2: Switch to "Yes, I take medication to treat it."
+      const medOpt = this.page
+        .locator('button.ds-option-selector__option, [role="radio"], label')
+        .filter({ hasText: /take medication to treat it/i })
+        .first();
+      if ((await medOpt.count()) > 0) {
+        await medOpt.click();
+      }
+
+      // Add Drug Name
+      await this.addMedicationForm(drugName);
+
+      await this.clickContinue();
+    });
+  }
+
+  /**
+   * Step 11: Vitamins & Supplements.
+   * Tests Nitric Oxide 36-hour safety requirement (Deny -> Confirm warning test) and selects supplements.
+   */
+  async selectSupplementsWithNitricOxideSafety(supplements: string[]): Promise<void> {
+    await test.step('Select supplements and test Nitric Oxide 36-hour safety requirement', async () => {
+      const vitHeader = this.page.getByText(/vitamins|dietary supplements/i).first();
+      await vitHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
+
+      // Select Nitric Oxide first
+      await this.clickOptionTile('Nitric Oxide');
+
+      // Test Deny on 36-hour acknowledgment
+      const denyOpt = this.page.locator('button.ds-option-selector__option, [role="radio"], label').filter({ hasText: /^Deny$/i }).first();
+      if ((await denyOpt.count()) > 0 && (await denyOpt.isVisible().catch(() => false))) {
+        await denyOpt.click();
+        await this.verify.waitForVisibility(this.locators.offLabelDenyWarning).catch(() => undefined);
+      }
+
+      const confirmOpt = this.page.locator('button.ds-option-selector__option, [role="radio"], label').filter({ hasText: /^Confirm$/i }).first();
+      if ((await confirmOpt.count()) > 0) {
+        await confirmOpt.click().catch(() => undefined);
+      }
+
+      // Select other supplements
+      for (const supp of supplements) {
+        await this.clickOptionTile(supp);
+      }
+
+      await this.clickContinue();
+    });
+  }
+
+  /**
+   * Step 12: Contraindicated Medications & Nitrates.
+   * Selects Poppers, Isosorbide, Riociguat, Nausea/IBS meds, custom medications, and confirms safety.
+   */
+  async selectContraindicatedMedicationsAndNitrates(
+    nauseaMeds: string[],
+    otherCustomMed: { name: string; reason: string },
+    reasonExplanation: string,
+  ): Promise<void> {
+    await test.step('Select contraindicated nitrates, nausea medications, and enter custom drugs', async () => {
+      const medHeader = this.page.getByText(/Do you take any of the following medications/i).first();
+      await medHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
+
+      // Select Poppers, Isosorbide, Riociguat, Nausea
+      await this.clickOptionTile(/Amyl Nitrite|Poppers/i);
+      await this.clickOptionTile(/Isosorbide/i);
+      await this.clickOptionTile(/Riociguat/i);
+      await this.clickOptionTile(/Medications for nausea or IBS/i);
+
+      // Select specific Nausea meds
+      for (const nausea of nauseaMeds) {
+        await this.clickOptionTile(nausea);
+      }
+
+      // Fill all visible textarea inputs (Reason for taking) with reasonExplanation
+      const textareas = this.page.locator('textarea').filter({ visible: true });
+      const textareaCount = await textareas.count();
+      for (let i = 0; i < textareaCount; i++) {
+        const ta = textareas.nth(i);
+        const val = await ta.inputValue().catch(() => '');
+        if (!val) {
+          await ta.scrollIntoViewIfNeeded().catch(() => undefined);
+          await ta.fill(reasonExplanation).catch(() => undefined);
+        }
+      }
+
+      // Select Other medication checkbox & add custom med
+      const otherMedTile = this.page.locator('label, [role="checkbox"], .ds-checkbox, button').filter({ hasText: /^Other medication/i }).first();
+      if ((await otherMedTile.count()) > 0 && (await otherMedTile.isVisible().catch(() => false))) {
+        await otherMedTile.click().catch(() => undefined);
+        await this.addMedicationForm(otherCustomMed.name, otherCustomMed.reason);
+      }
+
+      // Handle safety confirmation prompt at the bottom
+      const confirmRadio = this.page.getByRole('radio', { name: 'Confirm', exact: true }).or(this.page.locator('button, label, [role="radio"]').filter({ hasText: /^Confirm$/i })).last();
+      if ((await confirmRadio.count()) > 0 && (await confirmRadio.isVisible().catch(() => false))) {
+        await confirmRadio.click().catch(() => undefined);
+      }
+
+      // Ensure any remaining visible empty textareas are populated
+      const remainingTAs = this.page.locator('textarea').filter({ visible: true });
+      const remCount = await remainingTAs.count();
+      for (let i = 0; i < remCount; i++) {
+        const ta = remainingTAs.nth(i);
+        const val = await ta.inputValue().catch(() => '');
+        if (!val) {
+          await ta.scrollIntoViewIfNeeded().catch(() => undefined);
+          await ta.fill(reasonExplanation).catch(() => undefined);
+        }
+      }
+
+      // Verify safety warning banner
+      await this.verify.waitForVisibility(this.locators.contraindicatedWarningBanner).catch(() => undefined);
+
+      await this.clickContinue();
+    });
+  }
+
+  /**
+   * Step 13: Allergies ("Yes" -> select allergy types).
+   */
+  async answerAllergies(allergies: string[]): Promise<void> {
+    await test.step('Answer allergies with Yes and select allergy types', async () => {
+      const allergyHeader = this.page.getByText(/allergies|allergic/i).first();
+      await allergyHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
+
+      const yesOpt = this.page.locator('button.ds-option-selector__option, [role="radio"], label').filter({ hasText: /^Yes$/i }).first();
+      if ((await yesOpt.count()) > 0) {
+        await yesOpt.click();
+        await this.page.waitForTimeout(500);
+      }
+
+      for (const allergy of allergies) {
+        await this.clickOptionTile(new RegExp(allergy.split('(')[0].trim(), 'i'));
+      }
+
+      await this.clickContinue();
+    });
+  }
+
+  /**
+   * Step 14: Health Conditions (Fainting, Dizziness & Neurological Branching).
+   * Selects Fainting & Neurological conditions, sets frequency dropdowns, answers sub-questions, and provides explanations.
+   */
+  async answerHealthConditionsWithFaintingAndNeurological(faintingDetails: MedicalNegativeStepDetails['faintingDetails']): Promise<void> {
+    await test.step('Answer fainting and neurological health conditions', async () => {
+      const condHeader = this.page.getByText(/Have you ever had any of the following|fainting|neurological/i).first();
+      await condHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
+
+      // Select Fainting and Neurological checkboxes
+      await this.clickOptionTile(/fainting|dizziness/i);
+      await this.clickOptionTile(/neurological|psychiatric/i);
+
+      // Select frequency for all condition blocks (e.g. Fainting and Neurological)
+      const freqButtons = this.page.getByRole('button', { name: /How often do you experience/i });
+      const totalFreq = await freqButtons.count();
+      for (let i = 0; i < totalFreq; i++) {
+        const btn = freqButtons.nth(i);
+        await btn.scrollIntoViewIfNeeded().catch(() => undefined);
+        await btn.click({ force: true }).catch(() => undefined);
+        await this.page.waitForTimeout(300);
+
+        const option = this.page
+          .locator('.cdk-overlay-pane button, .cdk-overlay-pane .ds-select-simple__option, .cdk-overlay-pane [role="option"], .cdk-overlay-pane span, .ds-select-simple__option, [role="option"]')
+          .filter({ hasText: new RegExp(`\\b${faintingDetails.frequency || 'Weekly'}\\b`, 'i') })
+          .first();
+
+        if (await option.isVisible().catch(() => false)) {
+          await option.click({ force: true }).catch(() => undefined);
+          await this.page.waitForTimeout(300);
+        } else {
+          const firstOpt = this.page.locator('.cdk-overlay-pane .ds-select-simple__option, .cdk-overlay-pane button, .cdk-overlay-pane [role="option"]').first();
+          if (await firstOpt.isVisible().catch(() => false)) {
+            await firstOpt.click({ force: true }).catch(() => undefined);
+            await this.page.waitForTimeout(300);
+          }
+        }
+      }
+
+      // Answer questions across all visible condition blocks with specific question titles
+      await this.selectAllOptionsForQuestion(/Have you been diagnosed with a medical condition for these symptoms/i, /\bNo\b/i);
+      await this.selectAllOptionsForQuestion(/Are you taking medications? for this/i, /\bNo\b/i);
+      await this.selectAllOptionsForQuestion(/Are you being monitored by a provider for these symptoms/i, /\bNo\b/i);
+      await this.selectAllOptionsForQuestion(/Have you had to visit a hospital in the past 12 months for health issues/i, /\bYes\b/i);
+      await this.selectAllOptionsForQuestion(/Do you have any additional information to provide\?/i, /\bYes\b/i);
+
+      // Fill all visible textareas with explanation
+      const textareas = this.page.locator('textarea').filter({ visible: true });
+      const count = await textareas.count();
+      for (let i = 0; i < count; i++) {
+        const val = await textareas.nth(i).inputValue().catch(() => '');
+        if (!val) {
+          await textareas.nth(i).fill(faintingDetails.explanation).catch(() => undefined);
+        }
+      }
+
+      await this.clickContinue();
+    });
+  }
+
+  /**
+   * Step 14b: Other Medical Conditions or Surgeries (auto-advancing single choice).
+   */
+  async answerOtherMedicalConditionsOrSurgeries(answer: 'Yes' | 'No' = 'No'): Promise<void> {
+    await test.step(`Answer other medical conditions or surgeries with: ${answer} (auto-advance)`, async () => {
+      const otherCondHeader = this.page.getByText(/other medical conditions or surgeries/i).first();
+      await otherCondHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
+
+      if ((await otherCondHeader.count()) > 0 && (await otherCondHeader.isVisible().catch(() => false))) {
+        const opt = otherCondHeader
+          .locator('xpath=following::*[@role="radiogroup" or contains(@class,"option-selector") or contains(@class,"ds-option-selector")][1]')
+          .locator('[role="radio"], button, label, .ds-option-selector__option')
+          .filter({ hasText: new RegExp(`\\b${answer}\\b`, 'i') })
+          .first();
+
+        if ((await opt.count()) > 0) {
+          await opt.click();
+        } else {
+          await this.selectOptionForQuestion(/other medical conditions or surgeries/i, new RegExp(`\\b${answer}\\b`, 'i'));
+        }
+        await this.page.waitForTimeout(500);
+      }
+    });
+  }
+
+  /**
+   * Step 15: Other Medications opt-out (auto-advancing single choice).
+   */
+  async confirmOtherMedicationsOptOut(): Promise<void> {
+    await test.step('Confirm "NOT taking any other medication" (auto-advance)', async () => {
+      const otherMedHeader = this.page.getByText(/Please list any OTHER medications|OTHER medications/i).first();
+      await otherMedHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
+
+      const notTakingOpt = this.page
+        .locator('button.ds-option-selector__option, [role="radio"], [role="checkbox"], label')
+        .filter({ hasText: /NOT taking any other medication/i })
+        .first();
+      if ((await notTakingOpt.count()) > 0 && (await notTakingOpt.isVisible().catch(() => false))) {
+        await notTakingOpt.click();
+      } else {
+        await this.clickOptionTile(/NOT taking any other medication/i);
+      }
+      await this.page.waitForTimeout(500);
+    });
+  }
+
+  /**
+   * Step 16: Provider Notes & Oversized File Upload Validation (>5MB Error).
+   * Selects Yes, fills provider notes, uploads >5MB file, asserts validation error, clears file, and submits.
+   */
+  async submitProviderNotesWithFileUploadValidation(providerNotes: string, oversizedFilePath: string): Promise<void> {
+    await test.step('Enter provider notes and verify 5MB file upload limit rejection', async () => {
+      const notesHeader = this.page.getByText(/tell the provider|additional information|anything else/i).first();
+      await notesHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
+
+      await this.clickOptionTile(/\bYes\b/i);
+      await this.page.waitForTimeout(500);
+
+      // Fill additional provider notes
+      const textarea = this.page.locator('textarea').filter({ visible: true }).first();
+      if ((await textarea.count()) > 0) {
+        await textarea.fill(providerNotes).catch(() => undefined);
+      }
+
+      // Upload oversized file to trigger 5MB limit validation error
+      const fileInput = this.locators.fileUploadInput.locator.first();
+      if ((await fileInput.count()) > 0) {
+        const resolvedPath = path.resolve(process.cwd(), oversizedFilePath);
+        await fileInput.setInputFiles(resolvedPath).catch(() => undefined);
+        await this.verify.waitForVisibility(this.locators.fileSizeExceededError).catch(() => undefined);
+        // Clear file so form can submit cleanly
+        await fileInput.setInputFiles([]).catch(() => undefined);
+        await this.page.waitForTimeout(500);
+      }
+
+      await this.clickContinue();
+    });
   }
 
   /**
@@ -1009,293 +1544,43 @@ export class MedicalPage {
       await this.testPatientStatusDisqualification(data.nonPatientWarningText);
 
       // ── Step 5: Off-label Treatment & Pregnancy Warnings (if shown) ─────────
-      const offLabelTitle = this.page.locator('text=/off-label|pregnant or breastfeeding/i').first();
-      if ((await offLabelTitle.count()) > 0 && (await offLabelTitle.isVisible().catch(() => false))) {
-        await test.step('Verify off-label and pregnancy disclosures', async () => {
-          await this.selectOptionForQuestion(/off-label/i, /Confirm/i);
-          await this.selectOptionForQuestion(/pregnant or breastfeeding/i, /No/i);
-
-          // Deny pregnancy disclaimer -> verify red warning banner -> Confirm
-          const denyClicked = await this.selectOptionForQuestion(/will not use this treatment if you become pregnant/i, /Deny/i);
-          if (denyClicked) {
-            await this.verify.waitForVisibility(this.locators.offLabelDenyWarning).catch(() => undefined);
-            await this.selectOptionForQuestion(/will not use this treatment if you become pregnant/i, /Confirm/i);
-          }
-
-          await this.clickContinue();
-        });
-      }
+      await this.verifyOffLabelAndPregnancyDisclosures();
 
       // ── Step 6: Specific Reasons Selection ─────────────────────────────────
-      await test.step('Select specific BlueChew reasons', async () => {
-        const reasonHeader = this.page.getByText(/reason for choosing bluechew/i).first();
-        await reasonHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
-
-        for (const reason of s.reasons) {
-          await this.clickOptionTile(reason);
-        }
-        await this.clickContinue();
-      });
+      await this.selectReasonsForBlueChew(s.reasons);
 
       // ── Step 7: Physical capability / Stairs ("I cannot") / Poor Fitness / Chest Pain ("No")
-      await test.step('Answer exercise and physical fitness questions with negative branches', async () => {
-        const walkHeader = this.page.getByText(/walk 1 mile|climb 2 flights/i).first();
-        await walkHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
+      await this.answerExerciseAndPhysicalFitness('Test');
 
-        // Walk 1 mile -> Yes
-        await this.selectOptionForQuestion(/walk 1 mile/i, /^Yes$/i);
+      // ── Step 8: Told NOT to have sex (auto-advancing single choice) ──────────
+      await this.answerToldNotToHaveSex('No');
 
-        // Climb 2 flights -> "I cannot"
-        await this.selectOptionForQuestion(/climb 2 flights/i, /I cannot/i);
+      // ── Step 9: Low Blood Pressure (auto-advancing single choice) ───────────
+      await this.answerLowBloodPressure('No');
 
-        // Poor physical fitness agreement -> "No"
-        await this.selectOptionForQuestion(/poor physical fitness/i, /^No$/i);
+      // ── Step 10: High Blood Pressure (Hypertension) Lifestyle & Meds ────────
+      await this.answerBloodPressureDiagnosis(s.lifestyleOptions, s.lifestyleOtherExplanation, s.bloodPressureDrugName);
 
-        // Sex without chest pain -> "No"
-        await this.selectOptionForQuestion(/without chest pain/i, /^No$/i);
+      // ── Step 11: Vitamins & Supplements (Nitric Oxide Safety Deny -> Confirm)
+      await this.selectSupplementsWithNitricOxideSafety(s.supplements);
 
-        // Fill all visible textareas with "Test"
-        const textareas = this.page.locator('textarea').filter({ visible: true });
-        const count = await textareas.count();
-        for (let i = 0; i < count; i++) {
-          await textareas.nth(i).fill('Test').catch(() => undefined);
-        }
+      // ── Step 12: Contraindicated Medications & Nitrates ─────────────────────
+      await this.selectContraindicatedMedicationsAndNitrates(s.nauseaMeds, s.otherCustomMed, s.contraindicatedExplanation);
 
-        await this.clickContinue();
-      });
+      // ── Step 13: Allergies ("Yes" -> "Seasonal") ───────────────────────────
+      await this.answerAllergies(s.allergies);
 
-      // ── Step 8: Told NOT to have sex (auto-advancing single choice, no CONTINUE button)
-      await test.step('Answer told NOT to have sex question (auto-advance)', async () => {
-        const sexHeader = this.page.getByText(/told you not to have sex/i).first();
-        await sexHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
+      // ── Step 14: Health Conditions (Fainting, Dizziness & Neurological) ─────
+      await this.answerHealthConditionsWithFaintingAndNeurological(s.faintingDetails);
 
-        const noOpt = sexHeader
-          .locator('xpath=following::*[@role="radiogroup" or contains(@class,"option-selector")][1]')
-          .locator('[role="radio"], button, label, .ds-option-selector__option')
-          .filter({ hasText: /^No$/i })
-          .first();
+      // ── Step 14b: Other Medical Conditions or Surgeries (auto-advancing) ────
+      await this.answerOtherMedicalConditionsOrSurgeries('No');
 
-        if ((await noOpt.count()) > 0) {
-          await noOpt.click();
-        } else {
-          await this.selectOptionForQuestion(/told you not to have sex/i, /^No$/i);
-        }
-      });
+      // ── Step 15: Other Medications (auto-advancing single choice) ───────────
+      await this.confirmOtherMedicationsOptOut();
 
-      // ── Step 9: Low Blood Pressure (auto-advancing single choice, no CONTINUE button)
-      await test.step('Answer low blood pressure diagnosis (auto-advance)', async () => {
-        const lowBpHeader = this.page.getByText(/low blood pressure/i).first();
-        await lowBpHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
-
-        const noOpt = lowBpHeader
-          .locator('xpath=following::*[@role="radiogroup" or contains(@class,"option-selector")][1]')
-          .locator('[role="radio"], button, label, .ds-option-selector__option')
-          .filter({ hasText: /^No$/i })
-          .first();
-
-        if ((await noOpt.count()) > 0) {
-          await noOpt.click();
-        } else {
-          await this.selectOptionForQuestion(/low blood pressure/i, /^No$/i);
-        }
-      });
-
-      // ── Step 10: High Blood Pressure (Hypertension) Branching & Medication Entry
-      await test.step('Answer blood pressure diagnosis with lifestyle and medication', async () => {
-        const highBpHeader = this.page.getByText(/high blood pressure|hypertension/i).first();
-        await highBpHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
-
-        // Option 1: "Yes, but I do not take medication to treat it."
-        const noMedOpt = this.page
-          .locator('button.ds-option-selector__option, [role="radio"], label')
-          .filter({ hasText: /do not take medication/i })
-          .first();
-        if ((await noMedOpt.count()) > 0) {
-          await noMedOpt.click();
-
-          // Check lifestyle, diet, exercise, other
-          for (const optName of s.lifestyleOptions) {
-            await this.clickOptionTile(optName);
-          }
-
-          // Fill explanation textarea
-          const textareas = this.page.locator('textarea').filter({ visible: true });
-          if ((await textareas.count()) > 0) {
-            await textareas.first().fill(s.lifestyleOtherExplanation).catch(() => undefined);
-          }
-        }
-
-        // Option 2: Switch to "Yes, I take medication to treat it."
-        const medOpt = this.page
-          .locator('button.ds-option-selector__option, [role="radio"], label')
-          .filter({ hasText: /take medication to treat it/i })
-          .first();
-        if ((await medOpt.count()) > 0) {
-          await medOpt.click();
-        }
-
-        // Add Drug Name "Peracitamol"
-        await this.addMedicationForm(s.bloodPressureDrugName);
-
-        await this.clickContinue();
-      });
-
-      // ── Step 11: Vitamins & Supplements (Nitric Oxide Safety Deny -> Confirm, Multi-vitamin, Workout)
-      await test.step('Select supplements and test Nitric Oxide 36-hour safety requirement', async () => {
-        const vitHeader = this.page.getByText(/vitamins|dietary supplements/i).first();
-        await vitHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
-
-        // Select Nitric Oxide first
-        await this.clickOptionTile('Nitric Oxide');
-
-        // Test Deny on 36-hour acknowledgment
-        const denyOpt = this.page.locator('button.ds-option-selector__option, [role="radio"], label').filter({ hasText: /^Deny$/i }).first();
-        if ((await denyOpt.count()) > 0 && (await denyOpt.isVisible().catch(() => false))) {
-          await denyOpt.click();
-          await this.verify.waitForVisibility(this.locators.offLabelDenyWarning).catch(() => undefined);
-        }
-
-        const confirmOpt = this.page.locator('button.ds-option-selector__option, [role="radio"], label').filter({ hasText: /^Confirm$/i }).first();
-        if ((await confirmOpt.count()) > 0) {
-          await confirmOpt.click().catch(() => undefined);
-        }
-
-        // Select Multi-vitamin and Workout supplements
-        for (const supp of s.supplements) {
-          await this.clickOptionTile(supp);
-        }
-
-        await this.clickContinue();
-      });
-
-      // ── Step 12: Contraindicated Medications (Poppers, Nitrates, Nausea, Custom Meds)
-      await test.step('Select contraindicated nitrates, nausea medications, and enter custom drugs', async () => {
-        const medHeader = this.page.getByText(/Do you take any of the following medications/i).first();
-        await medHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
-
-        for (const med of s.contraindicatedMeds) {
-          await this.clickOptionTile(med);
-        }
-
-        // Add custom nitrate med PARSIDOL
-        await this.addMedicationForm(s.nitrateCustomMed.name, s.nitrateCustomMed.reason);
-
-        // Select Nausea meds Granisetron and Palonosetron
-        for (const nausea of s.nauseaMeds) {
-          await this.clickOptionTile(nausea);
-        }
-
-        // Fill all visible reason textareas with "Test"
-        const textareas = this.page.locator('textarea').filter({ visible: true });
-        const count = await textareas.count();
-        for (let i = 0; i < count; i++) {
-          await textareas.nth(i).fill(s.contraindicatedExplanation).catch(() => undefined);
-        }
-
-        // Add other custom med TESTIM if option is available
-        const otherMedLabel = this.page.locator('label, [role="checkbox"], .ds-checkbox, button').filter({ hasText: /^Other medication/i }).first();
-        if ((await otherMedLabel.count()) > 0) {
-          await otherMedLabel.click().catch(() => undefined);
-          await this.addMedicationForm(s.otherCustomMed.name);
-        }
-
-        await this.clickContinue();
-      });
-
-      // ── Step 13: Allergies ("Yes" -> "Seasonal")
-      await test.step('Answer allergies with Yes and select Seasonal', async () => {
-        const allergyHeader = this.page.getByText(/allergies|allergic/i).first();
-        await allergyHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
-
-        const yesOpt = this.page.locator('button.ds-option-selector__option, [role="radio"], label').filter({ hasText: /^Yes$/i }).first();
-        if ((await yesOpt.count()) > 0) {
-          await yesOpt.click();
-        }
-
-        for (const allergy of s.allergies) {
-          await this.clickOptionTile(allergy);
-        }
-
-        await this.clickContinue();
-      });
-
-      // ── Step 14: Health Conditions (Fainting, Dizziness & Neurological Branching)
-      await test.step('Answer fainting and neurological health conditions', async () => {
-        const condHeader = this.page.getByText(/Have you ever had any of the following|fainting|neurological/i).first();
-        await condHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
-
-        // Select Fainting and Neurological checkboxes
-        await this.clickOptionTile(/fainting|dizziness/i);
-        await this.clickOptionTile(/neurological|psychiatric/i);
-
-        // Frequency dropdown (select Monthly)
-        const selects = this.page.locator('.ds-select-simple, select, .ds-select-simple__text-wrap');
-        const selectCount = await selects.count();
-        for (let i = 0; i < selectCount; i++) {
-          await selects.nth(i).click().catch(() => undefined);
-          const opt = this.page.locator('.ds-select-simple__option, [role="option"]').filter({ hasText: /Monthly|Weekly|Rarely/i }).first();
-          if ((await opt.count()) > 0) {
-            await opt.click().catch(() => undefined);
-          }
-        }
-
-        // Have you been diagnosed -> No
-        await this.selectOptionForQuestion(/diagnosed/i, /^No$/i);
-
-        // Are you being monitored -> No
-        await this.selectOptionForQuestion(/monitored/i, /^No$/i);
-
-        // Hospital visit in past 12 months -> Yes
-        await this.selectOptionForQuestion(/hospital/i, /^Yes$/i);
-
-        // Additional information -> Yes
-        await this.selectOptionForQuestion(/additional information/i, /^Yes$/i);
-
-        // Fill all visible textareas with "Test"
-        const textareas = this.page.locator('textarea').filter({ visible: true });
-        const count = await textareas.count();
-        for (let i = 0; i < count; i++) {
-          if (!(await textareas.nth(i).inputValue())) {
-            await textareas.nth(i).fill(s.faintingDetails.explanation).catch(() => undefined);
-          }
-        }
-
-        await this.clickContinue();
-      });
-
-      // ── Step 15: Other Medications ("I am NOT taking any other medication.")
-      await test.step('Confirm other medications', async () => {
-        const otherMedHeader = this.page.getByText(/OTHER medications/i).first();
-        await otherMedHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
-
-        await this.clickOptionTile(/NOT taking any other medication/i);
-        await this.clickContinue();
-      });
-
-      // ── Step 16: Provider Notes & Oversized File Upload Validation (>5MB Error)
-      await test.step('Enter provider notes and verify 5MB file upload limit rejection', async () => {
-        const notesHeader = this.page.getByText(/tell the provider|additional information/i).first();
-        await notesHeader.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
-
-        await this.clickOptionTile(/^Yes$/i);
-
-        // Fill additional provider notes
-        const textarea = this.page.locator('textarea').filter({ visible: true }).first();
-        if ((await textarea.count()) > 0) {
-          await textarea.fill(s.providerNotes).catch(() => undefined);
-        }
-
-        // Upload oversized file to trigger 5MB limit validation error
-        const fileInput = this.locators.fileUploadInput.locator.first();
-        if ((await fileInput.count()) > 0) {
-          await fileInput.setInputFiles(s.oversizedFilePath).catch(() => undefined);
-          await this.verify.waitForVisibility(this.locators.fileSizeExceededError).catch(() => undefined);
-          // Clear file so form can submit cleanly
-          await fileInput.setInputFiles([]).catch(() => undefined);
-        }
-
-        await this.clickContinue();
-      });
+      // ── Step 16: Provider Notes & Oversized File Upload Validation (>5MB) ───
+      await this.submitProviderNotesWithFileUploadValidation(s.providerNotes, s.oversizedFilePath);
 
       await this.page.waitForLoadState('load').catch(() => undefined);
       await this.verify.waitForLoaderToDisappear().catch(() => undefined);

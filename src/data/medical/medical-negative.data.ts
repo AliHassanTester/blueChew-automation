@@ -56,7 +56,7 @@ export function getMedicalNegativeData(testCase = 'AQ-09-Medical-Negative-Flow')
           ],
           lifestyleOptions: ['Diet', 'Exercise', 'Other'],
           lifestyleOtherExplanation: 'test',
-          bloodPressureDrugName: 'High Blood Pressure',
+          bloodPressureDrugName: 'Peracitamol',
           bloodPressureDrugReason: 'High Blood Pressure',
           supplements: [
             "Multi-vitamin (e.g. Centrum, Men's Daily)",
