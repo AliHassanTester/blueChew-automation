@@ -19,7 +19,16 @@
   scroll-behavior: auto !important;
 }
 
-/* 2. Freeze BlueChew site-specific animation classes */
+/* 2. Deterministic font rendering & typography stabilization */
+html,
+body,
+* {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+}
+
+/* 3. Freeze BlueChew site-specific animation classes */
 .fadeIn,
 .mobile-fade-in,
 .fadeOut,
@@ -38,7 +47,7 @@
   visibility: visible !important;
 }
 
-/* 3. Hide BlueChew site loading spinners, SVG paths, and overlays */
+/* 4. Hide BlueChew site loading spinners, SVG paths, overlays & skeleton placeholders */
 #app-loading,
 #app-loading .spinner,
 #app-loading .spinner .path,
@@ -48,22 +57,30 @@ app-loader,
 .processing-loader,
 .spinner,
 [data-test-id*="loader"],
-[class*="loading-overlay"] {
+[class*="loading-overlay"],
+.skeleton,
+[class*="skeleton"],
+.shimmer,
+[class*="shimmer"],
+.animated-bg {
   visibility: hidden !important;
   opacity: 0 !important;
   animation: none !important;
 }
 
-/* 4. Hide third-party live chat widgets (Chatwoot / Woot) and dynamic tooltips */
+/* 5. Hide third-party live chat widgets (Chatwoot / Woot), intercoms, and dynamic tooltips */
 html .woot--bubble-holder,
 html .woot-widget-bubble,
 #woot-widget,
-.tooltip .tooltiptext {
+.tooltip .tooltiptext,
+#intercom-container,
+.drift-frame-controller,
+#chat-widget-container {
   visibility: hidden !important;
   display: none !important;
 }
 
-/* 5. Hide blinking text cursor (caret) across all inputs and textareas */
+/* 6. Hide blinking text cursor (caret) across all inputs and textareas */
 input,
 textarea,
 select,
@@ -72,7 +89,21 @@ select,
   caret-color: transparent !important;
 }
 
-/* 6. Freeze background videos and embedded video players */
+/* 7. Normalize scrollbars to prevent OS-level visual diffs */
+html,
+body,
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* 8. Freeze background videos and embedded video players */
 video,
 audio,
 iframe[src*="vimeo"],

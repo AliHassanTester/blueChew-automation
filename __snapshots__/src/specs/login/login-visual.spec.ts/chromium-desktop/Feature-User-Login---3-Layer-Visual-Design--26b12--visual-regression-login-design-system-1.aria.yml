@@ -1,0 +1,14 @@
+- text: Welcome back!
+- button "Continue with google"
+- button "Continue with apple"
+- text: or Email Address
+- textbox "Email Address"
+- link "Forgot Email?":
+  - /url: /auth/forgot-email
+- text: Password
+- textbox "Password"
+- text:  Forgot Password?
+- button "CONTINUE" [disabled]
+- text: Not a member yet?
+- link "Create an account":
+  - /url: /register

@@ -43,48 +43,48 @@ export const test = base.extend<TestFixtures>({
   },
 
   // ── Page Object Fixtures ───────────────────────────────────────────────────
-  loginPage: async ({ page, visual }, use) => {
-    await use(new LoginPage(page, base.info(), visual));
+  loginPage: async ({ page, visual }, use, testInfo) => {
+    await use(new LoginPage(page, testInfo, visual));
   },
-  registrationPage: async ({ page, visual }, use) => {
-    await use(new RegistrationPage(page, base.info(), visual));
+  registrationPage: async ({ page, visual }, use, testInfo) => {
+    await use(new RegistrationPage(page, testInfo, visual));
   },
-  quizPage: async ({ page, visual }, use) => {
-    await use(new QuizPage(page, base.info(), visual));
+  quizPage: async ({ page, visual }, use, testInfo) => {
+    await use(new QuizPage(page, testInfo, visual));
   },
-  resultsPage: async ({ page }, use) => {
-    await use(new ResultsPage(page, base.info()));
+  resultsPage: async ({ page }, use, testInfo) => {
+    await use(new ResultsPage(page, testInfo));
   },
-  medicalPage: async ({ page, visual }, use) => {
-    await use(new MedicalPage(page, base.info(), visual));
+  medicalPage: async ({ page, visual }, use, testInfo) => {
+    await use(new MedicalPage(page, testInfo, visual));
   },
-  checkoutPage: async ({ page, visual }, use) => {
-    await use(new CheckoutPage(page, base.info(), visual));
+  checkoutPage: async ({ page, visual }, use, testInfo) => {
+    await use(new CheckoutPage(page, testInfo, visual));
   },
-  confirmationPage: async ({ page, visual }, use) => {
-    await use(new ConfirmationPage(page, base.info(), visual));
+  confirmationPage: async ({ page, visual }, use, testInfo) => {
+    await use(new ConfirmationPage(page, testInfo, visual));
   },
   // Admin tab is created lazily — no tab opens until navigateAndLogin() is called
-  adminPage: async ({ context }, use) => {
-    const adminPage = new AdminPage(context, base.info());
+  adminPage: async ({ context }, use, testInfo) => {
+    const adminPage = new AdminPage(context, testInfo);
     await use(adminPage);
     await adminPage.close();
   },
-  profilePage: async ({ page, visual }, use) => {
-    await use(new ProfilePage(page, base.info(), visual));
+  profilePage: async ({ page, visual }, use, testInfo) => {
+    await use(new ProfilePage(page, testInfo, visual));
   },
-  productPage: async ({ page, visual }, use) => {
-    await use(new ProductPage(page, base.info(), visual));
+  productPage: async ({ page, visual }, use, testInfo) => {
+    await use(new ProductPage(page, testInfo, visual));
   },
-  landingMaxPage: async ({ page, visual }, use) => {
-    await use(new LandingMaxPage(page, base.info(), visual));
+  landingMaxPage: async ({ page, visual }, use, testInfo) => {
+    await use(new LandingMaxPage(page, testInfo, visual));
   },
-  footerRedirectsPage: async ({ page, visual }, use) => {
-    await use(new FooterRedirectsPage(page, base.info(), visual));
+  footerRedirectsPage: async ({ page, visual }, use, testInfo) => {
+    await use(new FooterRedirectsPage(page, testInfo, visual));
   },
 
-  visual: async ({ page }, use) => {
-    const visual = new VisualHelper(page, base.info());
+  visual: async ({ page }, use, testInfo) => {
+    const visual = new VisualHelper(page, testInfo);
     // initialize configured providers (lazy init occurs in captureCheckpoint, but
     // provide an explicit hook if providers need setup)
     await use(visual);

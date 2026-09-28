@@ -9,9 +9,9 @@
 
 | Metric | Count | Breakdown |
 |:---|:---:|:---|
-| **Total Automated Scenarios** | **20** | 7 Functional · 10 Hybrid · 3 Dedicated Visual |
+| **Total Automated Scenarios** | **19** | 6 Functional · 10 Hybrid · 3 Dedicated Visual |
 | **Tier 1 (Critical Smoke / P0)** | **2** | `AQ-01` (Sign-up to Approved Order), `AQ-02` (User Login) |
-| **Tier 2 (Deep Flows / P1)** | **15** | 8 Product Checkouts, 3 Profile Settings, 1 Duplicate Reg, 2 Med Safety/Negative, 1 Visual Suite |
+| **Tier 2 (Deep Flows / P1)** | **14** | 8 Product Checkouts, 3 Profile Settings, 1 Duplicate Reg, 1 Med Safety/Negative, 1 Visual Suite |
 | **Tier 3 (Landings & Navigation / P2)** | **3** | MAX Landing, Footer Redirects, Applitools Demo |
 
 ---
@@ -32,8 +32,7 @@
 | ID | Test Case & File | Type | Plain-Language Flow | Status |
 |:---|:---|:---:|:---|:---:|
 | **AQ-07** | **Duplicate Email Block**<br>[`registration-validation.spec.ts`](file:///c:/Users/BrainNotFound/Documents/GitHub/blueChew-automation/src/specs/registration/registration-validation.spec.ts) | 🟢 Functional | **Validation:** Attempts registration with an existing email; confirms the system blocks progress with an error alert. | ✅ Automated |
-| **AQ-08** | **Medical Safety & Edge Cases**<br>[`medical-edge-cases.spec.ts`](file:///c:/Users/BrainNotFound/Documents/GitHub/blueChew-automation/src/specs/medical/medical-edge-cases.spec.ts) | 🟢 Functional | **Clinical Safety:** Verifies non-patient warnings, conditional blood pressure questions, dangerous drug alerts (poppers/nitrates), and rejection of >5MB files. | ✅ Automated |
-| **AQ-09** | **Medical Negative Flow**<br>[`medical-negative.spec.ts`](file:///c:/Users/BrainNotFound/Documents/GitHub/blueChew-automation/src/specs/medical/medical-negative.spec.ts) | 🟢 Functional | **Clinical Safety:** Exercises disqualification alert on behalf-of registration, conditional chest pain explanations, and mandatory blood pressure disclosures. | ✅ Automated |
+| **AQ-09** | **Medical Safety & Negative Flow**<br>[`medical-negative.spec.ts`](file:///c:/Users/BrainNotFound/Documents/GitHub/blueChew-automation/src/specs/medical/medical-negative.spec.ts) | 🟢 Functional | **Clinical Safety:** Full 16-step clinical intake flow verifying non-patient warnings, off-label/pregnancy disclosures, physical fitness limitations, lifestyle vs. blood pressure medications, Nitric Oxide safety acknowledgments, contraindicated nitrates alerts, dizziness/fainting dropdowns, and >5MB file upload limit rejection. | ✅ Automated |
 | **PRODUCT-SILDENAFIL** | **Sildenafil Checkout**<br>[`product-checkout.spec.ts`](file:///c:/Users/BrainNotFound/Documents/GitHub/blueChew-automation/src/specs/product/product-checkout.spec.ts) | ⚡ Hybrid | **E2E Order:** Selects Sildenafil plan, completes registration wizard, medical profile, card checkout, and order approval. | ✅ Automated |
 | **PRODUCT-TADALAFIL** | **Tadalafil Checkout**<br>[`product-checkout.spec.ts`](file:///c:/Users/BrainNotFound/Documents/GitHub/blueChew-automation/src/specs/product/product-checkout.spec.ts) | ⚡ Hybrid | **E2E Order:** Selects Tadalafil plan, completes registration, medical questionnaire, payment, and approval. | ✅ Automated |
 | **PRODUCT-VARDENAFIL** | **Vardenafil Checkout**<br>[`product-checkout.spec.ts`](file:///c:/Users/BrainNotFound/Documents/GitHub/blueChew-automation/src/specs/product/product-checkout.spec.ts) | ⚡ Hybrid | **E2E Order:** Selects Vardenafil plan and navigates complete checkout and order verification flow. | ✅ Automated |
@@ -66,7 +65,6 @@
 npm run test:smoke              # Tier 1 Critical Smoke (AQ-01, AQ-02)
 npm run test:regression         # Tier 1 & Tier 2 Regression suite
 npm run test:product            # All Product checkout flows
-npm run test:profile            # Password, Shipping Address & Notification preferences
-npm run test:visual             # All Visual Regression tests (Applitools / Percy)
-npm run test:login:visual:playwright # Native Playwright snapshot regression
+npm run test:visual             # All Visual Regression tests (Playwright Native)
+npm run test:login:visual      # Login visual regression flow
 ```

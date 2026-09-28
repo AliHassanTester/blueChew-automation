@@ -178,16 +178,8 @@ export class PlaywrightVerificationFactory {
   }
 
   private async waitForPageToSettle(timeout = 5_000): Promise<void> {
-    const settleDelay = process.env.VISUAL_SETTLE_DELAY_MS ? parseInt(process.env.VISUAL_SETTLE_DELAY_MS, 10) : 1000;
-    if (settleDelay > 0) {
-      await this.page.waitForTimeout(settleDelay);
-    }
-    try {
-      await this.page.waitForLoadState('load', { timeout: Math.min(timeout, 2_000) });
-    } catch {
-      // Some pages never reach a fully idle state; falling back to the load event keeps
-      // the test moving without relying on a fragile app-specific loader check.
-    }
+    await this.page.waitForLoadState('domcontentloaded').catch(() => undefined);
+    await this.page.waitForLoadState('load', { timeout: Math.min(timeout, 3_000) }).catch(() => undefined);
   }
 
   /**
@@ -203,18 +195,9 @@ export class PlaywrightVerificationFactory {
     interval = 500,
   ): Promise<void> {
     console.log('[Verify] Waiting for assertion to pass');
-    const deadline = Date.now() + timeout;
-    let lastError: Error | undefined;
-    while (Date.now() < deadline) {
-      try {
-        await assertion();
-        return;
-      } catch (e) {
-        lastError = e as Error;
-        await this.page.waitForTimeout(interval);
-      }
-    }
-    throw lastError;
+    await expect(async () => {
+      await assertion();
+    }).toPass({ timeout, intervals: [interval] });
   }
 
   /**

@@ -142,7 +142,7 @@ export class LandingMaxPage {
 
       await this.actions.scrollIntoView(ctaInfo);
       await this.actions.click(ctaInfo);
-      await this.page.waitForTimeout(1000);
+      await this.page.waitForLoadState('domcontentloaded');
       await this.verify.expectElementExist(this.locators.destinationPageHeader);
     });
   }

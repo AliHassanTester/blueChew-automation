@@ -45,16 +45,16 @@ that's a trigger concern — out of scope here.)* Medical portal's only "e2e" is
 boilerplate — zero real coverage.
 
 ### 1.3 `bluechew-patient-portal` — most mature suite (42 specs)
-Two projects (`portal` + `visitor`), POM + fixtures + Percy. **Runs on every PR** against a
+Two projects (`portal` + `visitor`), POM + fixtures + visual regression. **Runs on every PR** against a
 local `ng serve` with **mocked backends + a Stripe shim**.
 
 | Area | Files | Nature |
 |---|---|---|
 | `medical-profile/**` | 20 | **Deep functional** — per-step; asserts draft-clear, exact PUT/raw-POST bodies, nav/back-forward/restore-draft/invalid-step guard |
 | `payment-errors` | 1 | **Deep functional** — mocks `/subscription`→400 for all 7 PaymentError codes; asserts friendly banner, no raw-JSON leak |
-| `common/**` (sign-in, contact, account-profile) | 3 | Mostly **visual** (Percy snapshot) |
+| `common/**` (sign-in, contact, account-profile) | 3 | Mostly **visual** (Visual snapshot) |
 | `account-membership-orders` | 1 | Visual + light nav |
-| `percy-only/**` (manage-plan, medical-tab, profile, switch-paused) | 13 | **Pure visual** state snapshots |
+| `visual-only/**` (manage-plan, medical-tab, profile, switch-paused) | 13 | **Pure visual** state snapshots |
 | `visitor/**` (landing, product, product-plan, root-baseline) | 4 | **Pure visual** (marketing) |
 
 **Key nuance:** functional tests are localhost + mocked + Stripe-shimmed. They never complete a

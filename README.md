@@ -89,7 +89,7 @@ For a complete, plain-language breakdown of all automated tests across Tiers and
 | `signup-to-approved-order.spec.ts` | AQ-01 | Full new-customer onboarding: sign up → quiz → medical → checkout → payment → ID verification → admin approval | Functional E2E + Visual |
 | `login.spec.ts` | AQ-02 | Login with registered credentials & navigate account areas | Functional + Visual |
 | `registration-validation.spec.ts` | AQ-07 | Registration duplicate-email validation & rejection | Functional Negative |
-| `medical-edge-cases.spec.ts` | AQ-08 | Clinical safety warnings, non-patient alerts, dangerous drug alerts, and file size limits | Functional Safety |
+| `medical-negative.spec.ts` | AQ-09 | Clinical intake flow: safety warnings, non-patient alerts, lifestyle vs. BP medication, dangerous drug alerts, and file size limits | Functional Safety |
 | `product-checkout.spec.ts` | `PRODUCT-*` | Product plan selection & checkout across 7 medication lines (Sildenafil, Tadalafil, etc.) | Functional E2E + Visual |
 | `profile.spec.ts` | `PROF-010..012` | Account settings (Change password, update shipping address, toggle notifications) | Functional |
 | `landing-max.spec.ts` | Product-007 | BlueChew MAX promotional landing page validation | Functional |
@@ -154,16 +154,12 @@ Playwright Test includes native visual regression comparison via `expect(page).t
 ### Run commands
 
 ```bash
-# Run all visual tests
+# Run all visual tests with Playwright native engine
 npm run test:visual
 
-# Run Login visual demo
-npm run test:login:visual:playwright
+# Run Login visual flow
+npm run test:login:visual
 
 # Update reference baseline snapshots
-npm run test:login:visual:update
+npm run test:visual:update
 ```
-
-- If snapshots are not being uploaded: confirm `PERCY_TOKEN` is set in the environment available to the test process, and check the Percy CLI output in the test logs. You can also verify the CLI installation with `npx percy --version`.
-
-If you'd like, I can add a short dedicated `docs/percy.md` with CI YAML snippets and an npm script shortcut (e.g. `npm run test:visual`).

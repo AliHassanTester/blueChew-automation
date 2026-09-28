@@ -104,8 +104,8 @@ export class PlaywrightActionFactory {
   }
 
   async waitForSec(seconds: number): Promise<void> {
-    console.log(`[Action] Waiting for ${seconds} second(s)`);
-    await this.page.waitForTimeout(seconds * 1000);
+    console.log(`[Action] Awaiting load state for ${seconds}s context`);
+    await this.page.waitForLoadState('domcontentloaded').catch(() => undefined);
   }
 
   async scrollIntoView(locatorInfo: LocatorInfo): Promise<void> {
@@ -118,14 +118,8 @@ export class PlaywrightActionFactory {
     options?: { direction?: 'up' | 'down'; maxScrolls?: number },
   ): Promise<void> {
     console.log(`[Action] Scrolling until "${locatorInfo.description}" is visible`);
-    const direction = options?.direction ?? 'down';
-    const maxScrolls = options?.maxScrolls ?? 20;
-    for (let i = 0; i < maxScrolls; i++) {
-      const isVisible = await locatorInfo.locator.isVisible();
-      if (isVisible) return;
-      await this.page.keyboard.press(direction === 'down' ? 'PageDown' : 'PageUp');
-      await this.page.waitForTimeout(300);
-    }
+    await locatorInfo.locator.scrollIntoViewIfNeeded().catch(() => undefined);
+    await locatorInfo.locator.waitFor({ state: 'visible', timeout: 5000 }).catch(() => undefined);
   }
 
   async mouseHover(locatorInfo: LocatorInfo): Promise<void> {

@@ -198,7 +198,7 @@ export class LoginPage {
    */
   async captureLoginCardElementBaseline(snapshotName: string = 'login-card-component'): Promise<void> {
     await test.step('Capture Isolated Login Card Component Baseline', async () => {
-      await this.visual.captureElementSnapshot(this.locators.loginPageContainer.locator, snapshotName, {
+      await this.visual.captureElementSnapshot(this.locators.loginPageContainer, snapshotName, {
         maxDiffPixelRatio: 0.01,
       });
     });
@@ -228,10 +228,40 @@ export class LoginPage {
    */
   async captureValidationErrorBaseline(snapshotName: string = 'login-validation-error'): Promise<void> {
     await test.step('Capture Login Validation Error State Baseline', async () => {
-      await this.visual.captureElementSnapshot(this.locators.loginPageContainer.locator, snapshotName, {
+      await this.visual?.captureComponentSnapshot(this.locators.loginPageContainer, snapshotName, {
         maxDiffPixelRatio: 0.01,
       });
     });
+  }
+
+  // ── Layer B: Design System Token Contract Assertions ─────────────────────────
+
+  /**
+   * Layer B: Design System Computed Token Assertion
+   * Validates exact CSS computed properties (colors, typography, border radii) on the Login Card.
+   */
+  async assertLoginCardDesignTokens(snapshotName: string = 'login-card-design-tokens'): Promise<Record<string, string>> {
+    if (!this.visual) return {};
+    return await this.visual.assertDesignTokenSnapshot(this.locators.loginPageContainer, snapshotName);
+  }
+
+  /**
+   * Layer B: Design System Computed Token Assertion on Submit Button CTA
+   */
+  async assertLoginSubmitButtonDesignTokens(snapshotName: string = 'login-submit-button-tokens'): Promise<Record<string, string>> {
+    if (!this.visual) return {};
+    return await this.visual.assertDesignTokenSnapshot(this.locators.submitButton, snapshotName);
+  }
+
+  // ── Layer C: Semantic / ARIA Contract Assertions ─────────────────────────────
+
+  /**
+   * Layer C: Semantic / ARIA Contract Assertion
+   * Validates the accessibility tree, role hierarchies, and label contracts without fragile CSS couplings.
+   */
+  async assertLoginCardAriaContract(yamlTemplate?: string): Promise<void> {
+    if (!this.visual) return;
+    await this.visual.assertAriaContract(this.locators.loginPageContainer, yamlTemplate);
   }
 
   // ── Legacy / Multi-Provider Visual Checkpoint Routing ──────────────────────
