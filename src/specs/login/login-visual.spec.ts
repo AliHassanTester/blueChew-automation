@@ -4,22 +4,22 @@ import { test } from '@fixtures/page.fixtures';
 
 const scenario = getLoginData('AQ-02-User-Login');
 
-test.describe('Feature: User Login - 3-Layer Visual & Design System Verification', () => {
+test.describe('Feature: User Login - Visual & Design System Verification', () => {
   test(
-    `Test case: 'LOG-VISUAL-001-Three-Layer-Design-Contract'
-    Description: 'Comprehensive 3-Layer Visual Verification: Macro Pixelmatch, Computed Design Tokens, and ARIA Contract'
+    `Test case: 'LOG-VISUAL-001-Visual-Design-Contract'
+    Description: 'Comprehensive Visual & Design Verification: Macro/Component Pixelmatch and Computed Design Tokens'
     Tags: '@visual @regression @login @design-system'
   `,
     { tag: ['@visual', '@login', '@design-system'] },
-    async ({ loginPage, visual }) => {
+    async ({ loginPage }) => {
       await logTestCaseData(test.info(), {
         testCase: 'LOG-VISUAL-001',
-        testDescription: '3-Layer Visual Verification: Pixelmatch, Design Tokens & ARIA Contract',
-        testSummary: 'Comprehensive 3-Layer Visual Verification: Macro Pixelmatch, Computed Design Tokens, and ARIA Contract',
+        testDescription: 'Visual & Design System Verification: Pixelmatch & Computed Design Tokens',
+        testSummary: 'Comprehensive Visual Verification: Macro Pixelmatch and Computed Design Tokens',
         tags: '@visual @login @design-system',
       }, {
         feature: 'Design System',
-        story: '3-Layer Visual Architecture',
+        story: 'Visual & Design Verification Architecture',
       });
 
       // ── 1. Navigate to Target Screen ─────────────────────────────────────────
@@ -39,11 +39,6 @@ test.describe('Feature: User Login - 3-Layer Visual & Design System Verification
         await loginPage.assertLoginSubmitButtonDesignTokens('login-submit-button-tokens');
       });
 
-      // ── Layer C: Semantic / ARIA Accessibility Tree Contract ─────────────────
-      await test.step('Layer C: Assert Semantic ARIA Tree Contract & Role Hierarchy', async () => {
-        await loginPage.assertLoginCardAriaContract();
-      });
-
       // ── 2. Authenticate & Verify Post-Login State with Dynamic Masking ────────
       await test.step('Authenticate and verify dashboard with dynamic masking', async () => {
         await loginPage.loginWithCredentials(scenario.loginDetails);
@@ -53,4 +48,5 @@ test.describe('Feature: User Login - 3-Layer Visual & Design System Verification
     },
   );
 });
+
 

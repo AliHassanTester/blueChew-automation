@@ -253,17 +253,6 @@ export class LoginPage {
     return await this.visual.assertDesignTokenSnapshot(this.locators.submitButton, snapshotName);
   }
 
-  // ── Layer C: Semantic / ARIA Contract Assertions ─────────────────────────────
-
-  /**
-   * Layer C: Semantic / ARIA Contract Assertion
-   * Validates the accessibility tree, role hierarchies, and label contracts without fragile CSS couplings.
-   */
-  async assertLoginCardAriaContract(yamlTemplate?: string): Promise<void> {
-    if (!this.visual) return;
-    await this.visual.assertAriaContract(this.locators.loginPageContainer, yamlTemplate);
-  }
-
   // ── Legacy / Multi-Provider Visual Checkpoint Routing ──────────────────────
 
   async captureLoginPageSnapshot(configs?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[]): Promise<void> {

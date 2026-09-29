@@ -1,30 +1,29 @@
 # Visual & Design System Verification Architecture
 
-Technical reference and implementation documentation for automated visual regression, design system token validation, and accessibility contract verification within the Playwright automation framework.
+Technical reference and implementation documentation for automated visual regression and design system token validation within the Playwright automation framework.
 
 ---
 
 ## Executive Summary
 
-Visual and design verification ensures user interface fidelity, brand token adherence, and accessibility compliance across target viewports and browsers.
+Visual and design verification ensures user interface fidelity and brand token adherence across target viewports and browsers.
 
 ### Problem Context
 Standard screenshot comparison tools frequently encounter test flakiness caused by asynchronous font rendering (FOIT/FOUT), network settling delays, CSS animations, and platform-specific antialiasing differences.
 
-### 3-Layer Verification Architecture
-The framework implements a native, multi-tiered verification strategy executing directly within Playwright:
+### 2-Layer Verification Architecture
+The framework implements a native, multi-tiered visual and design verification strategy executing directly within Playwright:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        3-LAYER VERIFICATION MATRIX                     │
-├──────────────────┬───────────────────────┬─────────────────────────────┤
-│ Layer A: Visual  │ Layer B: Design Tokens│ Layer C: Semantic ARIA      │
-│  (Pixel Camera)  │     (Brand Ruler)     │    (Accessibility Tree)     │
-├──────────────────┼───────────────────────┼─────────────────────────────┤
-│ Captures actual  │ Validates exact CSS   │ Validates structure, roles, │
-│ rendered pixels  │ (colors, fonts, radii)│ headings, and screen-reader │
-│ (.png)           │ (.json)               │ contracts (.aria.yml)       │
-└──────────────────┴───────────────────────┴─────────────────────────────┘
+│                        2-LAYER VERIFICATION MATRIX                     │
+├──────────────────────────────────┬─────────────────────────────────────┤
+│ Layer A: Visual Pixelmatch       │ Layer B: Design System Tokens       │
+│  (Pixel Camera)                  │     (Brand CSS Ruler)               │
+├──────────────────────────────────┼─────────────────────────────────────┤
+│ Captures actual rendered pixels  │ Validates exact computed CSS tokens │
+│ (.png snapshots)                 │ (colors, fonts, radii) (.json)      │
+└──────────────────────────────────┴─────────────────────────────────────┘
 ```
 
 ---
@@ -33,10 +32,9 @@ The framework implements a native, multi-tiered verification strategy executing 
 
 ```mermaid
 flowchart LR
-    A["Target Component / Screen"] --> B["Pre-Capture Stabilization Engine<br/>• Network Idle<br/>• document.fonts.ready<br/>• Loader Dismissal<br/>• Injected CSS Normalization"]
+    A["Target Component / Screen"] --> B["Pre-Capture Stabilization Engine<br/>• document.fonts.ready<br/>• Loader Dismissal<br/>• Injected CSS Normalization"]
     B --> C["Layer A: Pixelmatch<br/>(expect.toHaveScreenshot)"]
     B --> D["Layer B: Design Tokens<br/>(Computed CSS JSON)"]
-    B --> E["Layer C: Semantic ARIA<br/>(expect.toMatchAriaSnapshot)"]
 ```
 
 ### Layer A: Macro & Component Pixelmatch (`.png`)
@@ -49,11 +47,6 @@ flowchart LR
 * **Coverage**: Brand typography (`font-family`, `font-size`, `font-weight`, `line-height`), palette colors (`color`, `background-color`, `border-color`), and geometry (`border-radius`, `box-shadow`, `padding`).
 * **Mechanism**: Executes `window.getComputedStyle(el)` in browser context; evaluated via `expect(tokens).toMatchSnapshot('name.json')`.
 
-### Layer C: Semantic ARIA Structure (`.aria.yml`)
-* **Scope**: Accessibility tree structure, landmark roles, and accessible label validation.
-* **Coverage**: Heading hierarchy integrity, accessible button/link naming, and form control semantics.
-* **Mechanism**: Native Playwright `expect(locator).toMatchAriaSnapshot()`.
-
 ---
 
 ## Implementation Reference: Authentication Module
@@ -62,7 +55,7 @@ flowchart LR
 The test specification declares verification steps at the business level without exposing low-level assertion mechanisms:
 
 ```typescript
-test('3-Layer Visual Verification: Macro Pixelmatch, Computed Design Tokens, and ARIA Contract',
+test('Visual Verification: Macro Pixelmatch & Computed Design Tokens',
   { tag: ['@visual', '@login', '@design-system'] },
   async ({ loginPage }) => {
     // 1. Navigate to target screen
@@ -75,9 +68,6 @@ test('3-Layer Visual Verification: Macro Pixelmatch, Computed Design Tokens, and
     // Layer B: Computed Design System Tokens (JSON Contract)
     await loginPage.assertLoginCardDesignTokens('login-card-tokens');
     await loginPage.assertLoginSubmitButtonDesignTokens('login-submit-button-tokens');
-
-    // Layer C: Semantic ARIA Accessibility Tree Contract
-    await loginPage.assertLoginCardAriaContract();
 
     // 2. Authenticate & Verify Post-Login State with Dynamic Masking
     await loginPage.loginWithCredentials(scenario.loginDetails);
@@ -94,7 +84,7 @@ Encapsulates element locators, stabilization routines, and verification delegate
 // Layer A: Isolated component capture
 async captureLoginCardElementBaseline(snapshotName: string = 'login-card-component'): Promise<void> {
   await test.step('Capture Isolated Login Card Component Baseline', async () => {
-    await this.visual.captureElementSnapshot(this.locators.loginPageContainer.locator, snapshotName, {
+    await this.visual.captureElementSnapshot(this.locators.loginPageContainer, snapshotName, {
       maxDiffPixelRatio: 0.01,
     });
   });
@@ -102,12 +92,7 @@ async captureLoginCardElementBaseline(snapshotName: string = 'login-card-compone
 
 // Layer B: Computed token assertion
 async assertLoginCardDesignTokens(snapshotName: string = 'login-card-tokens'): Promise<Record<string, string>> {
-  return await this.visual.assertDesignTokenSnapshot(this.locators.loginPageContainer.locator, snapshotName);
-}
-
-// Layer C: ARIA structure assertion
-async assertLoginCardAriaContract(yamlTemplate?: string): Promise<void> {
-  await this.visual.assertAriaContract(this.locators.loginPageContainer.locator, yamlTemplate);
+  return await this.visual.assertDesignTokenSnapshot(this.locators.loginPageContainer, snapshotName);
 }
 ```
 
@@ -158,7 +143,7 @@ async assertLoginCardAriaContract(yamlTemplate?: string): Promise<void> {
 ## Execution Reference
 
 ```bash
-# Execute 3-Layer Visual Verification on Authentication Module
+# Execute 2-Layer Visual Verification on Authentication Module
 npm run test:visual:layers
 
 # Update Snapshot Baselines (after intentional UI/Design changes)

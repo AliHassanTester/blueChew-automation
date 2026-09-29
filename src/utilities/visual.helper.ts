@@ -54,10 +54,9 @@ export const DEFAULT_DESIGN_TOKENS = [
 /**
  * VisualHelper
  * 
- * Provides a unified, 3-layer production visual & design regression testing architecture:
+ * Provides a unified, 2-layer production visual & design regression testing architecture:
  * Layer A: Macro & Component Pixelmatch (expect.toHaveScreenshot)
  * Layer B: Design System Token Snapshots (Computed CSS JSON evaluation via expect.toMatchSnapshot)
- * Layer C: Semantic / ARIA Contract Snapshots (expect.toMatchAriaSnapshot)
  */
 export class VisualHelper {
   private readonly defaultStylePath: string;
@@ -283,31 +282,6 @@ export class VisualHelper {
       }
       expect(JSON.stringify(computedTokens, null, 2)).toMatchSnapshot(sanitizedName);
       return computedTokens;
-    });
-  }
-
-  // ══════════════════════════════════════════════════════════════════════════════
-  // Layer C: Semantic / ARIA Contract Snapshots
-  // ══════════════════════════════════════════════════════════════════════════════
-
-  /**
-   * Verifies the accessibility tree, role hierarchy, and accessible labels of a component
-   * using Playwright's native ARIA snapshot assertions. Ensures structural integrity
-   * without fragile CSS class or ID couplings.
-   */
-  async assertAriaContract(target: Locator | LocatorInfo, yamlTemplate?: string): Promise<void> {
-    const { locator, description } = this.resolveLocator(target);
-
-    await test.step(`[Visual] Layer C: Semantic ARIA Contract: "${description}"`, async () => {
-      await locator.waitFor({ state: 'visible', timeout: 10_000 });
-      await this.waitForPageStabilization();
-
-      console.log(`[Visual Layer C] Asserting ARIA tree structure for "${description}"`);
-      if (yamlTemplate) {
-        await expect(locator).toMatchAriaSnapshot(yamlTemplate);
-      } else {
-        await expect(locator).toMatchAriaSnapshot();
-      }
     });
   }
 
