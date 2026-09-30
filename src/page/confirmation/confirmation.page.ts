@@ -157,10 +157,10 @@ export class ConfirmationPage {
   }
 
   /** Complete full post-checkout ID submission, admin approval, televisit verification, and capture final profile state. */
-  async approveAndVerifyOrder(adminPage: any, details: any, visualConfig: ApplitoolsVisualConfig = PROFILE_FIGMA_CONFIG): Promise<void> {
+  async approveAndVerifyOrder(adminPage: any, details: any, visualConfig: ApplitoolsVisualConfig = PROFILE_FIGMA_CONFIG, tag: string = 'Profile page loaded'): Promise<void> {
     await this.submitIdAndAwaitProvider();
     await adminPage.approveAndCreateFirstOrder(details);
     await this.verifyTelevisit();
-    await this.captureConfirmationSnapshot(visualConfig, 'Profile page loaded');
+    await this.captureConfirmationSnapshot(visualConfig, tag);
   }
 }

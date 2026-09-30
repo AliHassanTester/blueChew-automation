@@ -28,7 +28,7 @@ test.describe('Feature: Unified Product Checkout Flows', () => {
         await registrationPage.completeRegistrationWizard(d);
         await medicalPage.completeMedicalAndProceed(d.medical);
         await checkoutPage.completeCheckoutWithVisual(data.visualConfig, d.shipping, d.payment, `${data.productName} checkout page`);
-        await confirmationPage.approveAndVerifyOrder(adminPage, d);
+        await confirmationPage.approveAndVerifyOrder(adminPage, d, data.visualConfig, `${data.productName} profile page`);
       },
     );
   }
