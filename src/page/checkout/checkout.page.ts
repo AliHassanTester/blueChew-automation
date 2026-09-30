@@ -68,6 +68,8 @@ export class CheckoutPage {
         description: 'Add Shipping Address Submit Button',
         locator: this.page.locator('//button[@data-test-id="address-form-submit"]')
           .or(this.page.locator('//button[normalize-space()="PROCEED TO PAYMENT"]'))
+          .or(this.page.locator('//button[contains(translate(text(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "add shipping address")]'))
+          .or(this.page.locator('//button[contains(translate(., "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "add shipping address")]'))
           .filter({ visible: true })
           .first(),
       },

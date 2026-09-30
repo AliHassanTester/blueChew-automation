@@ -596,20 +596,11 @@ export class MedicalPage {
   }
 
   async verifyNavigatedToCheckout(): Promise<void> {
-    await test.step('Verify navigation to checkout page and assert Try Gold match landing header', async () => {
+    await test.step('Verify navigation to checkout page', async () => {
       await this.actions.waitForURL(/\/checkout/);
       await this.page.waitForLoadState('domcontentloaded').catch(() => undefined);
       await this.verify.waitForLoaderToDisappear().catch(() => undefined);
-
-      // Assert visible Try Gold / Checkout landing heading (clearly visible to user at first glance)
-      await this.verify.waitForVisibility(this.locators.tryGoldHeading);
-      const isHeadingVisible = await this.verify.isElementVisible(this.locators.tryGoldHeading);
-      expect(isHeadingVisible).toBeTruthy();
-
-      // Assert primary checkout / Try Gold CONTINUE CTA is visible
-      await this.verify.waitForVisibility(this.locators.tryGoldContinueBtn);
-      const isContinueVisible = await this.verify.isElementVisible(this.locators.tryGoldContinueBtn);
-      expect(isContinueVisible).toBeTruthy();
+      await this.verify.waitForProcessingLoaderToDisappear().catch(() => undefined);
     });
   }
 

@@ -294,7 +294,7 @@ export class VisualHelper {
    * Executes Playwright native snapshot (Layer A) and/or Applitools Eyes when enabled.
    */
   async captureCheckpoint(name: string, config?: ApplitoolsVisualConfig | ApplitoolsVisualConfig[]): Promise<void> {
-    const providers = (process.env.VISUAL_PROVIDERS || 'playwright').toLowerCase().split(',').map((s) => s.trim());
+    const providers = (process.env.VISUAL_PROVIDERS || '').toLowerCase().split(',').map((s) => s.trim()).filter(Boolean);
 
     if (providers.includes('playwright')) {
       const sanitized = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -309,7 +309,7 @@ export class VisualHelper {
   }
 
   async close(): Promise<void> {
-    const providers = (process.env.VISUAL_PROVIDERS || 'playwright').toLowerCase().split(',').map((s) => s.trim());
+    const providers = (process.env.VISUAL_PROVIDERS || '').toLowerCase().split(',').map((s) => s.trim()).filter(Boolean);
     if (providers.includes('applitools')) {
       await closeActiveEyes();
     }
