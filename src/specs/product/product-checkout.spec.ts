@@ -3,9 +3,8 @@ import { getProductCheckoutData } from '@data/product/product-checkout.data';
 import { test } from '@fixtures/page.fixtures';
 import { GOLD_TRANSITION_FIGMA_CONFIG } from '@data/visual/figma.visual.data';
 
-// ── 1. Unified Product Checkout Flows (Serial Execution) ─────────────────────
+// ── 1. Unified Product Checkout Flows ────────────────────────────────────────
 test.describe('Feature: Unified Product Checkout Flows', () => {
-  test.describe.configure({ mode: 'serial' });
 
   const products = [
     { key: 'PRODUCT-SILDENAFIL', tag: '@sildenafil' },

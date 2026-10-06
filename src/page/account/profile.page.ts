@@ -92,7 +92,7 @@ export class ProfilePage {
       confirmAddressButton: {
         description: 'Confirm Delivery Address Modal — Confirm Button',
         locator: this.page.locator(
-          "//*[@aria-label='Confirm Your Delivery Address']//button[normalize-space()='Confirm']",
+          "//*[@aria-label='Confirm Your Delivery Address']//button[normalize-space()='Confirm'] | //button[normalize-space()='Confirm' or normalize-space()='CONFIRM']",
         ),
       },
     };
@@ -205,23 +205,24 @@ export class ProfilePage {
         await this.actions.sendKeys(this.locators.shippingAptInput, target.aptSuite ?? '');
         await this.actions.sendKeys(this.locators.shippingCityInput, target.city);
         await this.actions.sendKeys(this.locators.shippingZipInput, target.zip);
+        await this.page.keyboard.press('Tab').catch(() => undefined);
         await this.actions.click(this.locators.saveShippingButton);
       });
 
       await test.step('Confirm the delivery-address modal (shown on USPS non-exact match)', async () => {
         // Conditional — an exact USPS match saves without asking for confirmation.
-        try {
-          await this.locators.confirmAddressButton.locator.waitFor({ state: 'visible', timeout: 6000 });
-          await this.actions.click(this.locators.confirmAddressButton);
-          await this.locators.confirmAddressButton.locator.waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined);
-        } catch {
-          // No confirmation prompt — address accepted as entered.
+        const confirmBtn = this.locators.confirmAddressButton.locator.filter({ visible: true }).first();
+        const hasModal = await confirmBtn.waitFor({ state: 'visible', timeout: 8000 }).then(() => true).catch(() => false);
+        if (hasModal) {
+          await confirmBtn.click().catch(() => undefined);
+          await confirmBtn.waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined);
         }
         await this.verify.waitForLoaderToDisappear();
       });
 
       await test.step('Reload the profile and assert the new address is shown', async () => {
-        if (!this.page.url().includes('/account/profile')) {
+        await this.page.waitForURL(/\/account\/profile(?!\/update)/, { timeout: 10_000 }).catch(() => undefined);
+        if (!this.page.url().endsWith('/account/profile')) {
           await this.actions.navigateToURL('/account/profile');
         }
         await this.actions.waitForDomLoad();

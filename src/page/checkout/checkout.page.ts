@@ -197,37 +197,6 @@ export class CheckoutPage {
       await this.page.waitForLoadState('domcontentloaded').catch(() => undefined);
     });
   }
-  private async findFrameField(name: RegExp, fallbackSelector?: string): Promise<Locator | null> {
-    for (const frame of this.page.frames()) {
-      const roleField = frame.getByRole('textbox', { name }).first();
-      if (await roleField.isVisible().catch(() => false)) return roleField;
-      if (fallbackSelector) {
-        const selectorField = frame.locator(fallbackSelector).first();
-        if (await selectorField.isVisible().catch(() => false)) return selectorField;
-      }
-    }
-    const mainRole = this.page.getByRole('textbox', { name }).first();
-    if (await mainRole.isVisible().catch(() => false)) return mainRole;
-    if (fallbackSelector) {
-      const mainSelector = this.page.locator(fallbackSelector).first();
-      if (await mainSelector.isVisible().catch(() => false)) return mainSelector;
-    }
-    return null;
-  }
-
-  private async typeIntoFrameField(name: RegExp, value: string, fallbackSelector?: string): Promise<boolean> {
-    const field = await this.findFrameField(name, fallbackSelector);
-    if (!field) return false;
-    await field.focus().catch(() => undefined);
-    try {
-      await field.pressSequentially(value, { delay: 35 });
-    } catch {
-      await field.click({ force: true }).catch(() => undefined);
-      await field.pressSequentially(value, { delay: 35 });
-    }
-    return true;
-  }
-
   async fillPaymentDetails(payment: PaymentDetails): Promise<void> {
     await test.step('Fill card details (Stripe/Adyen secured fields)', async () => {
       // Keep billing = shipping BEFORE typing card numbers so form changes don't wipe the iframe
@@ -239,58 +208,77 @@ export class CheckoutPage {
         }
       }
 
-      const cardNumSelector =
+      const cardSelectors =
         'input[data-fieldtype*="CardNumber" i], input[name="cardnumber"], input[name="cardNumber"], input[autocomplete="cc-number"], input[data-elements-stable-field-name="cardNumber"], input[placeholder*="Card number" i], input[aria-label*="card number" i], input[name*="encryptedCardNumber" i]';
-      const expSelector =
+      const expSelectors =
         'input[data-fieldtype*="Expiry" i], input[name="exp-date"], input[name="expiry"], input[name="cardExpiry"], input[autocomplete="cc-exp"], input[data-elements-stable-field-name="cardExpiry"], input[placeholder*="MM" i], input[aria-label*="expir" i], input[aria-label*="Expiration" i], input[name*="encryptedExpiry" i]';
-      const cvcSelector =
+      const cvcSelectors =
         'input[data-fieldtype*="Security" i], input[name="cvc"], input[name="cvv"], input[name="cardCvc"], input[name="securityCode"], input[autocomplete="cc-csc"], input[data-elements-stable-field-name="cardCvc"], input[placeholder*="Security code" i], input[placeholder*="CVC" i], input[placeholder*="CVV" i], input[aria-label*="security code" i], input[aria-label*="CVC" i], input[name*="encryptedSecurity" i]';
-
-      // 1. Wait until ALL three fields have mounted before typing
-      await expect
-        .poll(
-          async () => {
-            const card = await this.findFrameField(/card number/i, cardNumSelector);
-            const exp = await this.findFrameField(/expir/i, expSelector);
-            const cvc = await this.findFrameField(/security code|cvc|cvv/i, cvcSelector);
-            return card !== null && exp !== null && cvc !== null;
-          },
-          { timeout: 45_000, message: 'Card fields (number, expiry, cvc) never fully mounted' },
-        )
-        .toBeTruthy();
 
       const sanitizedCardNumber = payment.cardNumber.replace(/\D/g, '');
       const sanitizedExpiry = payment.expiry.replace(/\D/g, '');
       const sanitizedCvv = payment.cvv.replace(/\D/g, '');
 
-      // 2. Type card number
-      await this.typeIntoFrameField(/card number/i, sanitizedCardNumber, cardNumSelector);
+      const findField = async (selectors: string): Promise<Locator | null> => {
+        const allContexts = [this.page, ...this.page.frames()];
+        for (const ctx of allContexts) {
+          try {
+            const matches = await ctx.locator(selectors).all();
+            for (const input of matches) {
+              if (await input.isVisible().catch(() => false)) {
+                return input;
+              }
+            }
+          } catch {}
+        }
+        return null;
+      };
 
-      // 3. Type expiry
-      const expField = await this.findFrameField(/expir/i, expSelector);
-      if (expField) {
-        await expField.focus().catch(() => undefined);
-        await expField.pressSequentially(sanitizedExpiry, { delay: 35 }).catch(() => undefined);
-      }
+      // 1. Wait until all three fields mount
+      await expect
+        .poll(
+          async () => {
+            const num = await findField(cardSelectors);
+            const exp = await findField(expSelectors);
+            const cvc = await findField(cvcSelectors);
+            return num !== null && exp !== null && cvc !== null;
+          },
+          { timeout: 45_000, message: 'Card fields (number, expiry, cvc) never fully mounted' },
+        )
+        .toBeTruthy();
 
-      // 4. Type CVC
-      const cvcField = await this.findFrameField(/security code|cvc|cvv/i, cvcSelector);
-      if (cvcField) {
-        await cvcField.focus().catch(() => undefined);
-        await cvcField.pressSequentially(sanitizedCvv, { delay: 35 }).catch(() => undefined);
-      }
+      const fillInput = async (input: Locator, value: string, alternateVal?: string) => {
+        await input.scrollIntoViewIfNeeded().catch(() => undefined);
+        await input.click({ force: true }).catch(() => undefined);
+        await input.focus().catch(() => undefined);
+        await input.fill(value).catch(() => undefined);
+        let val = await input.inputValue().catch(() => '');
+        if (!val && alternateVal) {
+          await input.fill(alternateVal).catch(() => undefined);
+          val = await input.inputValue().catch(() => '');
+        }
+        if (!val) {
+          await input.pressSequentially(value, { delay: 35 }).catch(() => undefined);
+        }
+      };
 
-      // 5. Postal / ZIP if present (Stripe)
-      const zipField = await this.findFrameField(
-        /postal|zip/i,
-        'input[name="postal"], input[autocomplete="postal-code"], input[placeholder*="ZIP" i]',
-      );
-      if (zipField) {
-        await zipField.focus().catch(() => undefined);
-        await zipField.fill('10001').catch(() => undefined);
-      }
+      // 2. Fill each field once in sequence
+      const cardInput = await findField(cardSelectors);
+      if (cardInput) await fillInput(cardInput, sanitizedCardNumber);
 
-      // 6. Trigger change detection / blur across frames & await enabled BUY NOW
+      const expInput = await findField(expSelectors);
+      if (expInput) await fillInput(expInput, sanitizedExpiry, payment.expiry);
+
+      const cvcInput = await findField(cvcSelectors);
+      if (cvcInput) await fillInput(cvcInput, sanitizedCvv);
+
+      // 3. Postal if present (Stripe)
+      const zipSelectors = 'input[name="postal"], input[autocomplete="postal-code"], input[placeholder*="ZIP" i]';
+      const zipInput = await findField(zipSelectors);
+      if (zipInput) await fillInput(zipInput, '10001');
+
+      // 4. Blur across contexts and await enabled BUY NOW
+      await this.page.locator('body').click({ position: { x: 10, y: 10 } }).catch(() => undefined);
       await this.page.keyboard.press('Tab').catch(() => undefined);
       await this.verify.waitForVisibility(this.locators.buyNowButton);
       await expect(this.locators.buyNowButton.locator).toBeEnabled({ timeout: 30_000 });
