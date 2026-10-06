@@ -307,10 +307,19 @@ export class MedicalPage {
    */
   private async clickProceed(): Promise<void> {
     await this.dismissSnackbar();
-    if (await this.verify.isElementVisible(this.locators.continueButton).catch(() => false)) {
+    if (await this.locators.continueButton.locator.isVisible().catch(() => false)) {
       await this.actions.click(this.locators.continueButton);
+    } else if (await this.locators.proceedLink.locator.isVisible().catch(() => false)) {
+      await this.locators.proceedLink.locator.filter({ visible: true }).first().click().catch(() => undefined);
     } else {
-      await this.locators.proceedLink.locator.filter({ visible: true }).first().click();
+      const fallbackBtn = this.page
+        .locator('button, a, div[role="button"]')
+        .filter({ hasText: /^(?:CONTINUE|NEXT|SUBMIT|GET STARTED|START)$/i })
+        .filter({ visible: true })
+        .first();
+      if (await fallbackBtn.isVisible().catch(() => false)) {
+        await fallbackBtn.click().catch(() => undefined);
+      }
     }
   }
 
@@ -329,14 +338,18 @@ export class MedicalPage {
     let walk1MileCount = 0;
 
     for (let step = 0; step < 50; step++) {
-      if (!this.page.url().includes('/medical')) break;
+      if (this.page.url().includes('/checkout') || !this.page.url().includes('/medical')) break;
       await stepControl.waitFor({ state: 'visible', timeout: 6000 }).catch(() => undefined);
-      if (!this.page.url().includes('/medical')) break;
+      if (this.page.url().includes('/checkout') || !this.page.url().includes('/medical')) break;
 
       const bodyText      = (await this.locators.pageBody.locator.innerText().catch(() => '')).toLowerCase();
       const hasCheckbox   = (await this.locators.checkboxes.locator.count()) > 0;
       const hasRadiogroup = (await this.locators.radioGroups.locator.count()) > 0;
       const hasOptions    = (await this.optionTiles().count()) > 0;
+
+      // Check if page already transitioned to checkout elements
+      const hasCheckoutHeading = (await this.page.locator('text=/Express checkout|Enter Shipping Address|Shipping Method/i').count()) > 0;
+      if (hasCheckoutHeading) break;
 
       if (captureCheckpoints) {
         // Extract a clean segment from the bodyText or title for the snapshot tag

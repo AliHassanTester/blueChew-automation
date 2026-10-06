@@ -3,8 +3,10 @@ import { getProductCheckoutData } from '@data/product/product-checkout.data';
 import { test } from '@fixtures/page.fixtures';
 import { GOLD_TRANSITION_FIGMA_CONFIG } from '@data/visual/figma.visual.data';
 
-// ── 1. Standard Product Checkout Flows ───────────────────────────────────────
+// ── 1. Unified Product Checkout Flows (Serial Execution) ─────────────────────
 test.describe('Feature: Unified Product Checkout Flows', () => {
+  test.describe.configure({ mode: 'serial' });
+
   const products = [
     { key: 'PRODUCT-SILDENAFIL', tag: '@sildenafil' },
     { key: 'PRODUCT-TADALAFIL',   tag: '@tadalafil' },
@@ -32,38 +34,38 @@ test.describe('Feature: Unified Product Checkout Flows', () => {
       },
     );
   }
+
+  // ── 2. Homepage Checkout Visual Flow ─────────────────────────────────────────
+  test(
+    `Product Checkout Flow - Home ('PRODUCT-HOME')`,
+    { tag: ['@home', '@product', '@visual'] },
+    async ({ productPage, registrationPage, quizPage, resultsPage, medicalPage, checkoutPage }, testInfo) => {
+      const data = getProductCheckoutData('PRODUCT-HOME');
+      const d = data.registrationDetails;
+      await logTestCaseData(testInfo, data.testCaseData, { feature: 'Product Checkout', story: 'Home Page Checkout' });
+      testInfo.annotations.push({ type: 'Test Email', description: d.email });
+
+      await productPage.startHomepageFunnel(data, quizPage, resultsPage);
+      await registrationPage.completeRegistrationAndMedical(d, medicalPage);
+      await productPage.handleTransitionScreen();
+      await checkoutPage.completeCheckoutAndConfirmation(data.visualConfig, d, productPage, 'Homepage checkout page');
+    },
+  );
+
+  // ── 3. Gold Product E2E Checkout Flow ────────────────────────────────────────
+  test(
+    `Product Checkout Flow - Gold ('PRODUCT-GOLD')`,
+    { tag: ['@gold', '@product', '@visual'] },
+    async ({ productPage, registrationPage, medicalPage, checkoutPage }, testInfo) => {
+      const data = getProductCheckoutData('PRODUCT-GOLD');
+      const d = data.registrationDetails;
+      await logTestCaseData(testInfo, data.testCaseData, { feature: 'Product Checkout', story: 'Gold Product Checkout' });
+      testInfo.annotations.push({ type: 'Test Email', description: d.email });
+
+      await productPage.selectPlanAndProceedToRegistration(data);
+      await registrationPage.completeGoldRegistrationAndMedical(d, medicalPage);
+      await productPage.handleTransitionScreen(GOLD_TRANSITION_FIGMA_CONFIG, 'Gold Transition Page');
+      await checkoutPage.completeCheckoutAndConfirmation(data.visualConfig, d, productPage, 'Gold checkout page');
+    },
+  );
 });
-
-// ── 2. Homepage Checkout Visual Flow ─────────────────────────────────────────
-test(
-  `Product Checkout Flow - Home ('PRODUCT-HOME')`,
-  { tag: ['@home', '@product', '@visual'] },
-  async ({ productPage, registrationPage, quizPage, resultsPage, medicalPage, checkoutPage }, testInfo) => {
-    const data = getProductCheckoutData('PRODUCT-HOME');
-    const d = data.registrationDetails;
-    await logTestCaseData(testInfo, data.testCaseData, { feature: 'Product Checkout', story: 'Home Page Checkout' });
-    testInfo.annotations.push({ type: 'Test Email', description: d.email });
-
-    await productPage.startHomepageFunnel(data, quizPage, resultsPage);
-    await registrationPage.completeRegistrationAndMedical(d, medicalPage);
-    await productPage.handleTransitionScreen();
-    await checkoutPage.completeCheckoutAndConfirmation(data.visualConfig, d, productPage, 'Homepage checkout page');
-  },
-);
-
-// ── 3. Gold Product E2E Checkout Flow ────────────────────────────────────────
-test(
-  `Product Checkout Flow - Gold ('PRODUCT-GOLD')`,
-  { tag: ['@gold', '@product', '@visual'] },
-  async ({ productPage, registrationPage, medicalPage, checkoutPage }, testInfo) => {
-    const data = getProductCheckoutData('PRODUCT-GOLD');
-    const d = data.registrationDetails;
-    await logTestCaseData(testInfo, data.testCaseData, { feature: 'Product Checkout', story: 'Gold Product Checkout' });
-    testInfo.annotations.push({ type: 'Test Email', description: d.email });
-
-    await productPage.selectPlanAndProceedToRegistration(data);
-    await registrationPage.completeGoldRegistrationAndMedical(d, medicalPage);
-    await productPage.handleTransitionScreen(GOLD_TRANSITION_FIGMA_CONFIG, 'Gold Transition Page');
-    await checkoutPage.completeCheckoutAndConfirmation(data.visualConfig, d, productPage, 'Gold checkout page');
-  },
-);
