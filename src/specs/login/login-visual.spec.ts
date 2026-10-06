@@ -42,7 +42,7 @@ test.describe('Feature: User Login - Visual & Design System Verification', () =>
       // ── 2. Authenticate & Verify Post-Login State with Dynamic Masking ────────
       await test.step('Authenticate and verify dashboard with dynamic masking', async () => {
         await loginPage.loginWithCredentials(scenario.loginDetails);
-        await loginPage.verifySuccessfulLogin();
+        await loginPage.verifySuccessfulLogin(scenario.loginDetails);
         await loginPage.captureDashboardBaselineWithMasking('account-dashboard-masked');
       });
     },

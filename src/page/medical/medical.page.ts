@@ -330,7 +330,7 @@ export class MedicalPage {
 
     for (let step = 0; step < 50; step++) {
       if (!this.page.url().includes('/medical')) break;
-      await stepControl.waitFor({ state: 'visible' }).catch(() => undefined);
+      await stepControl.waitFor({ state: 'visible', timeout: 6000 }).catch(() => undefined);
       if (!this.page.url().includes('/medical')) break;
 
       const bodyText      = (await this.locators.pageBody.locator.innerText().catch(() => '')).toLowerCase();
@@ -554,9 +554,15 @@ export class MedicalPage {
 
       // ── Step 2: Date of birth ──────────────────────────────────────────────
       await test.step('Enter date of birth', async () => {
+        const input = this.locators.birthdayInput.locator;
         await this.actions.click(this.locators.birthdayInput);
-        // Type digits only — the field auto-formats to MM/DD/YYYY
-        await this.locators.birthdayInput.locator.pressSequentially(details.birthday.replace(/\//g, ''), { delay: 50 });
+        const digits = details.birthday.replace(/\D/g, '');
+        await input.fill('');
+        await input.pressSequentially(digits, { delay: 40 });
+        const val = await input.inputValue().catch(() => '');
+        if (val.replace(/\D/g, '').length < 8) {
+          await input.fill(details.birthday).catch(() => undefined);
+        }
         await this.clickContinue();
       });
 
@@ -663,8 +669,15 @@ export class MedicalPage {
    */
   async enterDateOfBirth(birthday: string): Promise<void> {
     await test.step(`Enter date of birth: ${birthday}`, async () => {
+      const input = this.locators.birthdayInput.locator;
       await this.actions.click(this.locators.birthdayInput);
-      await this.locators.birthdayInput.locator.pressSequentially(birthday.replace(/\//g, ''), { delay: 50 });
+      const digits = birthday.replace(/\D/g, '');
+      await input.fill('');
+      await input.pressSequentially(digits, { delay: 40 });
+      const val = await input.inputValue().catch(() => '');
+      if (val.replace(/\D/g, '').length < 8) {
+        await input.fill(birthday).catch(() => undefined);
+      }
       await this.clickContinue();
     });
   }
@@ -814,9 +827,10 @@ export class MedicalPage {
 
     if ((await addBtn.count()) > 0) {
       await addBtn.scrollIntoViewIfNeeded().catch(() => undefined);
-      await addBtn.click({ force: true }).catch(() => undefined);
-
-      // If ADD is still visible, press Enter and click again
+      await addBtn.click().catch(async () => {
+        await addBtn.click({ force: true }).catch(() => undefined);
+      });
+      await this.page.waitForTimeout(400);
       if (await addBtn.isVisible().catch(() => false)) {
         await this.page.keyboard.press('Enter').catch(() => undefined);
         await addBtn.click({ force: true }).catch(() => undefined);

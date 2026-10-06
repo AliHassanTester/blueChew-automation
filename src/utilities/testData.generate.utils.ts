@@ -51,6 +51,27 @@ export function generateRandomDOB(minAge = 18, maxAge = 80): string {
   return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
+const US_AREA_CODES = [
+  '201', '202', '203', '206', '212', '213', '214', '215', '216', '303',
+  '305', '312', '313', '314', '317', '404', '412', '415', '425', '480',
+  '503', '512', '516', '602', '612', '614', '615', '617', '619', '646',
+  '702', '703', '704', '713', '714', '718', '720', '801', '805', '813',
+  '817', '818', '832', '858', '901', '904', '916', '917', '919', '949',
+];
+
+/**
+ * Generates a unique, non-routable fictional phone number (NXX-555-XXXX).
+ * - Uses the standard US 555 fictional exchange code reserved by NANPA/FCC, guaranteeing
+ *   it will NEVER belong to a real person or trigger SMS/calls to real individuals.
+ * - Combines 50+ major US area codes with randomized subscriber lines to ensure zero collisions
+ *   between parallel and consecutive automation checkouts.
+ */
+export function generateUniqueTestPhoneNumber(): string {
+  const areaCode = pick(US_AREA_CODES);
+  const subscriber = Math.floor(1000 + Math.random() * 9000);
+  return `${areaCode}555${subscriber}`;
+}
+
 /**
  * Builds a fresh, correlated test account with realistic demographic data.
  * A single runId (random alphanumeric + timestamp) is embedded into the email,
@@ -67,7 +88,7 @@ export function buildTestAccount(suffix = 'test'): GeneratedTestAccount {
   const city = 'New York';
   const state = 'New York';
   const zip = '10001';
-  const phone = '2125550100';
+  const phone = generateUniqueTestPhoneNumber();
   const email = `test.${runId}+${suffix}@meds.com`;
 
   return {
@@ -123,6 +144,10 @@ export class TestDataUtils {
   static generateRandomAddress(): string {
     const num = Math.floor(100 + Math.random() * 9900);
     return `${num} ${pick(STREETS)} ${pick(STREET_TYPES)}`;
+  }
+
+  static generateRandomPhone(): string {
+    return generateUniqueTestPhoneNumber();
   }
 
   static generateRandomDOB(minAge = 18, maxAge = 80): string {

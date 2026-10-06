@@ -103,7 +103,7 @@ export class ProfilePage {
     await this.verify.waitForLoaderToDisappear();
   }
 
-  private async ensureAuthenticated(targetUrl?: string): Promise<void> {
+  private async ensureAuthenticated(targetUrl?: string, currentPassword?: string): Promise<void> {
     await this.page.waitForLoadState('domcontentloaded').catch(() => undefined);
     const loginInput = this.page
       .locator("//input[@data-test-id='sign-in-email-input'] | //input[@type='email'] | //input[contains(@placeholder,'Email')]")
@@ -111,10 +111,10 @@ export class ProfilePage {
     const isLogin =
       this.page.url().includes('/log-in') ||
       (await loginInput.waitFor({ state: 'visible', timeout: 3500 }).then(() => true).catch(() => false));
-    if (isLogin) {
+    if (isLogin || this.page.url().includes('/log-in')) {
       console.log('[ProfilePage] Session expired or redirected to login; re-authenticating...');
       const email = process.env.user_name || 'ali@meds.com';
-      const pass = process.env.password || 'certa@123';
+      const pass = currentPassword || process.env.password || 'certa@123';
       if (await loginInput.isVisible().catch(() => false)) {
         await loginInput.fill(email);
         const passInput = this.page
@@ -137,26 +137,37 @@ export class ProfilePage {
   // ── PROF-010 ────────────────────────────────────────────────────────────────
 
   /**
-   * Changes the password with a valid current + new password, then switches back.
-   * The second successful change (whose "current password" is the temporary one) both
-   * proves the first change actually took effect and restores the original password,
-   * keeping the account credentials stable for every other test.
+   * Complete E2E Password Verification:
+   * 1. Updates password from current → temporary password and asserts success.
+   * 2. Navigates to /log-in and verifies successful authentication using the new temporary password.
+   * 3. Restores the original password in a finally block so subsequent test suites never fail.
    */
   async changePasswordAndRestore(currentPassword: string, tempPassword: string): Promise<void> {
-    await test.step('Change password with valid current + new password, then restore', async () => {
-      await test.step('Change current → temporary password (expect success)', async () => {
-        await this.submitPasswordChange(currentPassword, tempPassword);
-      });
-      await test.step('Change temporary → original password (restore + proves first change stuck)', async () => {
-        await this.submitPasswordChange(tempPassword, currentPassword);
-      });
+    await test.step('E2E Change Password Flow: Modify → Authenticate with New Password → Restore', async () => {
+      try {
+        await test.step('Step 1: Change current → temporary password', async () => {
+          await this.submitPasswordChange(currentPassword, tempPassword);
+        });
+
+        await test.step('Step 2: Verify login with the new temporary password on /log-in', async () => {
+          await this.actions.navigateToURL('/log-in');
+          await this.page.waitForLoadState('domcontentloaded').catch(() => undefined);
+          await this.ensureAuthenticated('/account/profile', tempPassword);
+          await this.page.waitForURL(/\/account/, { timeout: 25_000 });
+          await this.verify.waitForLoaderToDisappear();
+        });
+      } finally {
+        await test.step('Step 3: Restore original password', async () => {
+          await this.submitPasswordChange(tempPassword, currentPassword);
+        });
+      }
     });
   }
 
   /** Opens the change-password card, submits old/new/confirm, and asserts the success message. */
   private async submitPasswordChange(oldPassword: string, newPassword: string): Promise<void> {
     await this.actions.navigateToURL('/account/profile/change-password');
-    await this.ensureAuthenticated();
+    await this.ensureAuthenticated('/account/profile/change-password', oldPassword);
     if (this.page.url().includes('/account') && !this.page.url().includes('change-password')) {
       await this.actions.navigateToURL('/account/profile/change-password');
     }
@@ -182,7 +193,7 @@ export class ProfilePage {
     await test.step('Update shipping address and verify it persists', async () => {
       await test.step('Fill the form with an address different from the current one, and save', async () => {
         await this.actions.navigateToURL('/account/profile/update-shipping-address');
-        await this.ensureAuthenticated();
+        await this.ensureAuthenticated('/account/profile/update-shipping-address');
         if (this.page.url().includes('/account') && !this.page.url().includes('update-shipping-address')) {
           await this.actions.navigateToURL('/account/profile/update-shipping-address');
         }
@@ -200,25 +211,32 @@ export class ProfilePage {
       await test.step('Confirm the delivery-address modal (shown on USPS non-exact match)', async () => {
         // Conditional — an exact USPS match saves without asking for confirmation.
         try {
-          await this.locators.confirmAddressButton.locator.waitFor({ state: 'visible', timeout: 8000 });
+          await this.locators.confirmAddressButton.locator.waitFor({ state: 'visible', timeout: 6000 });
           await this.actions.click(this.locators.confirmAddressButton);
+          await this.locators.confirmAddressButton.locator.waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined);
         } catch {
           // No confirmation prompt — address accepted as entered.
         }
+        await this.verify.waitForLoaderToDisappear();
       });
 
       await test.step('Reload the profile and assert the new address is shown', async () => {
-        await this.actions.navigateToURL('/account/profile');
+        if (!this.page.url().includes('/account/profile')) {
+          await this.actions.navigateToURL('/account/profile');
+        }
         await this.actions.waitForDomLoad();
         if (this.visual) {
           await this.visual.captureCheckpoint('Profile - shipping address updated', PROFILE_FIGMA_CONFIG);
         }
         await this.verify.waitForLoaderToDisappear();
         await this.actions.waitForVisibility(this.locators.shippingSummary);
-        const summary = await this.actions.getText(this.locators.shippingSummary);
-        const normalizedSummary = summary.replace(/\s+/g, ' ').trim();
+
         const normalizedStreet = target.streetAddress.replace(/\s+/g, ' ').trim();
-        this.verify.verifyContains(normalizedSummary, normalizedStreet);
+        await this.verify.expectToPass(async () => {
+          const summary = await this.actions.getText(this.locators.shippingSummary);
+          const normalizedSummary = summary.replace(/\s+/g, ' ').trim();
+          this.verify.verifyContains(normalizedSummary, normalizedStreet);
+        }, 15000);
         await this.waitForProfileReady();
       });
     });

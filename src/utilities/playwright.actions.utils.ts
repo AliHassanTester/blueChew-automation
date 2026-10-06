@@ -69,7 +69,13 @@ export class PlaywrightActionFactory {
 
   async navigateToURL(url: string): Promise<void> {
     console.log(`[Action] Navigating to URL: "${url}"`);
-    await this.page.goto(url);
+    try {
+      await this.page.goto(url, { waitUntil: 'domcontentloaded' });
+    } catch (err) {
+      console.warn(`[Action] Navigation to "${url}" encountered transient error (${(err as Error).message}), retrying once...`);
+      await this.page.waitForTimeout(1000);
+      await this.page.goto(url, { waitUntil: 'domcontentloaded' });
+    }
   }
 
   /**

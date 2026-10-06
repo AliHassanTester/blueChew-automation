@@ -167,10 +167,27 @@ export class LoginPage {
     });
   }
 
-  async verifyLoginSuccess(): Promise<void> {
+  async verifyLoginSuccess(retryLoginDetails?: LoginDetails): Promise<void> {
     await test.step('Verify login succeeded — account page rendered', async () => {
       await this.page.waitForLoadState('domcontentloaded');
-      await this.playwrightActionsFactory.waitForURL(/\/account/);
+      try {
+        await this.playwrightActionsFactory.waitForURL(/\/account/);
+      } catch (err) {
+        if (await this.locators.errorMessageBanner.locator.isVisible().catch(() => false)) {
+          const errorMsg = await this.locators.errorMessageBanner.locator.textContent().catch(() => '');
+          console.warn(`[LoginPage] Login alert banner detected: "${errorMsg}". Re-attempting login...`);
+          if (retryLoginDetails) {
+            await this.page.waitForTimeout(2000);
+            await this.fillLoginCredentials(retryLoginDetails);
+            await this.submitLogin();
+            await this.playwrightActionsFactory.waitForURL(/\/account/);
+          } else {
+            throw err;
+          }
+        } else {
+          throw err;
+        }
+      }
       await this.playwrightVerificationsFactory.waitForLoaderToDisappear();
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.accountTabMyPlan);
       await this.playwrightVerificationsFactory.expectElementExist(this.locators.accountMembershipPage);
@@ -286,8 +303,8 @@ export class LoginPage {
     await this.submitLogin();
   }
 
-  async verifySuccessfulLogin(): Promise<void> {
-    await this.verifyLoginSuccess();
+  async verifySuccessfulLogin(loginDetails?: LoginDetails): Promise<void> {
+    await this.verifyLoginSuccess(loginDetails);
   }
 
   async clickForgotPasswordLink(): Promise<void> {

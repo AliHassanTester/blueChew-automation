@@ -81,7 +81,7 @@ export default defineConfig({
   },
   retries: process.env.CI ? 1 : 0,
   fullyParallel: true,
-  workers: 1,
+  workers: 4,
   reporter: reporters,
   use: {
     baseURL: baseURLs[envType] ?? baseURLs['dev'],
@@ -91,7 +91,7 @@ export default defineConfig({
       username: process.env.HTTP_AUTH_USERNAME || '',
       password: process.env.HTTP_AUTH_PASSWORD || '',
     },
-    headless: !!process.env.CI,
+    headless: true,
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     trace: 'retain-on-failure',

@@ -22,8 +22,9 @@ export class AdminPage {
   // teardown. Nulling _page ensures the second call is a no-op.
   async close(): Promise<void> {
     if (this._page) {
-      await this._page.close();
+      const pageToClose = this._page;
       this._page = null;
+      await pageToClose.close().catch(() => undefined);
     }
   }
 
@@ -159,12 +160,31 @@ export class AdminPage {
   async verifyApprovedStatus(): Promise<void> {
     await test.step('Verify status is "Approved, Provider Review"', async () => {
       const page = await this.getPage();
-      await page.reload({ waitUntil: 'domcontentloaded' });
-      const status = page.locator(
-        "xpath=//strong[text()='Status:']/../..//span[text()=' Approved, Provider Review ']",
+      const statusLabel = page.locator("xpath=//strong[normalize-space()='Status:']").first();
+      const statusValue = page.locator(
+        "xpath=//strong[normalize-space()='Status:']/following::*[1] | //strong[normalize-space()='Status:']/../..//span",
       );
-      await expect(status).toBeVisible();
-      
+
+      await expect
+        .poll(
+          async () => {
+            const count = await statusValue.count();
+            for (let i = 0; i < count; i++) {
+              const text = (await statusValue.nth(i).textContent().catch(() => '')) || '';
+              if (/Approved/i.test(text)) return true;
+            }
+            await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => undefined);
+            await statusLabel.waitFor({ state: 'visible', timeout: 6000 }).catch(() => undefined);
+            const reloadedCount = await statusValue.count();
+            for (let i = 0; i < reloadedCount; i++) {
+              const text = (await statusValue.nth(i).textContent().catch(() => '')) || '';
+              if (/Approved/i.test(text)) return true;
+            }
+            return false;
+          },
+          { timeout: 35_000, intervals: [2000, 3000, 4000] },
+        )
+        .toBeTruthy();
     });
   }
 

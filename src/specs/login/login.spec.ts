@@ -40,7 +40,7 @@ test.describe('Feature: User Login', () => {
       });
 
       await test.step('Verify successful login — account page rendered', async () => {
-        await loginPage.verifySuccessfulLogin();
+        await loginPage.verifySuccessfulLogin(scenario.loginDetails);
         await loginPage.captureVisualCheckpoint('Account Dashboard - My Plan', scenario.visualConfigs);
       });
     },

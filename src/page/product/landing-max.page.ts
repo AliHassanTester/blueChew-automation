@@ -87,13 +87,15 @@ export class LandingMaxPage {
       destinationPageHeader: {
         description: 'destination page header / plan options',
         locator: this.page
-          .locator("//product-plan-modal | //*[contains(translate(normalize-space(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'choose a plan') or contains(translate(normalize-space(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'choose your plan')] | //div[contains(@class, 'plan-card')]")
+          .locator(
+            "//product-plan-modal | //*[contains(translate(normalize-space(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'choose a plan') or contains(translate(normalize-space(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'choose your plan') or contains(translate(normalize-space(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'flexible plans')] | //div[contains(@class, 'plan-card')]",
+          )
           .first(),
       },
       safetyPageHeader: {
         description: 'Important Safety Information header',
         locator: this.page
-          .locator("//h1[normalize-space()='IMPORTANT SAFETY INFORMATION'] | //h1[contains(text(),'IMPORTANT SAFETY INFORMATION')]")
+          .locator("//h1[contains(translate(normalize-space(), 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 'IMPORTANT SAFETY INFORMATION')] | //h2[contains(translate(normalize-space(), 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 'IMPORTANT SAFETY INFORMATION')] | //h3[contains(translate(normalize-space(), 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 'IMPORTANT SAFETY INFORMATION')] | //*[contains(@class,'safety') or contains(@class,'modal')][contains(translate(., 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 'IMPORTANT SAFETY INFORMATION')]")
           .first(),
       },
       backBtn: {
@@ -108,7 +110,7 @@ export class LandingMaxPage {
   /**
    * Navigate to the Landing Max page and verify URL and MAX Logo visibility.
    */
-  async navigateToLandingMax(url: string): Promise<void> {
+  async navigateToLandingMax(url: string = '/landing/max'): Promise<void> {
     await test.step(`Navigate to MAX landing page: ${url}`, async () => {
       await this.actions.navigateToURL(url);
       await this.page.waitForLoadState('domcontentloaded');
@@ -131,7 +133,9 @@ export class LandingMaxPage {
    */
   async verifyCtaButtonNavigation(ctaInfo: LocatorInfo): Promise<void> {
     await test.step(`Verify CTA button "${ctaInfo.description}" navigates to Choose a Plan`, async () => {
-      await this.navigateToLandingMax('/landing/max');
+      if (!this.page.url().includes('/landing/max')) {
+        await this.navigateToLandingMax('/landing/max');
+      }
 
       // Check if button is rendered/visible in current viewport (e.g. desktop top-nav is hidden on mobile)
       const isVisible = await ctaInfo.locator.isVisible().catch(() => false);
@@ -177,30 +181,26 @@ export class LandingMaxPage {
       await this.navigateToLandingMax('/landing/max');
       await this.actions.scrollIntoView(this.locators.readSafteyInfoBtn);
 
-      const pagePromise = this.page.context().waitForEvent('page', { timeout: 8000 }).catch(() => null);
-      await this.actions.click(this.locators.readSafteyInfoBtn);
-      const safetyTab = await pagePromise;
+      const [safetyTab] = await Promise.all([
+        this.page.context().waitForEvent('page', { timeout: 25_000 }),
+        this.actions.click(this.locators.readSafteyInfoBtn),
+      ]);
 
-      if (safetyTab) {
-        await safetyTab.waitForLoadState('domcontentloaded');
-        await safetyTab.waitForURL(/\/safety-info/);
-        expect(safetyTab.url()).toContain('/safety-info');
-        console.log(`[Verify] Safety Information tab verified with URL: "${safetyTab.url()}"`);
+      await safetyTab.waitForLoadState('domcontentloaded');
+      await safetyTab.waitForURL(/\/safety-info/, { timeout: 25_000 });
+      expect(safetyTab.url()).toContain('/safety-info');
+      console.log(`[Verify] Safety Information tab verified with URL: "${safetyTab.url()}"`);
 
-        // Assert page header //h1[text()='IMPORTANT SAFETY INFORMATION']
-        const safetyHeader = safetyTab
-          .locator("//h1[normalize-space()='IMPORTANT SAFETY INFORMATION']")
-          .or(safetyTab.locator("//h1[text()='IMPORTANT SAFETY INFORMATION']"));
-        await expect(safetyHeader).toBeVisible();
-        console.log('[Verify] Safety Information header "IMPORTANT SAFETY INFORMATION" is visible');
+      // Assert page header
+      const safetyHeader = safetyTab
+        .locator("//h1[normalize-space()='IMPORTANT SAFETY INFORMATION'] | //h1[contains(text(),'IMPORTANT SAFETY INFORMATION')] | //h1[contains(text(),'Important Safety Information')]")
+        .first();
+      await expect(safetyHeader).toBeVisible({ timeout: 15_000 });
+      console.log('[Verify] Safety Information header "IMPORTANT SAFETY INFORMATION" is visible');
 
-        // Close the new tab and return to the main landing page
-        await safetyTab.close();
-        console.log('[Action] Closed Safety Information tab and returned to main page');
-      } else {
-        // Fallback if rendered on current page or modal
-        await this.verify.expectElementExist(this.locators.safetyPageHeader);
-      }
+      // Close the new tab and return to the main landing page
+      await safetyTab.close();
+      console.log('[Action] Closed Safety Information tab and returned to main page');
     });
   }
 

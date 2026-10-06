@@ -39,7 +39,7 @@ export const test = base.extend<TestFixtures>({
       permissions: ['camera', 'microphone'],
     });
     await use(context);
-    await context.close();
+    await context.close().catch(() => undefined);
   },
 
   // ── Page Object Fixtures ───────────────────────────────────────────────────

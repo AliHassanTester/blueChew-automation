@@ -190,7 +190,6 @@ export class RegistrationPage {
   /** Asserts the duplicate-email danger alert is shown and the funnel did not advance. */
   async verifyDuplicateEmailErrorShown(): Promise<void> {
     await test.step('Verify duplicate-email error shown and registration blocked', async () => {
-      await this.actions.waitForSec(10);
       await this.actions.waitForVisibility(this.locators.duplicateEmailError);
       await this.verify.expectElementExist(this.locators.duplicateEmailError);
       if (this.visual) {
