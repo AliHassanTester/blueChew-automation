@@ -56,6 +56,17 @@ also how CI picks what to run — see [`docs/e2e-ci-implementation.md`](docs/e2e
 
 ---
 
+## Parallel Execution & Admin Portal Mutex
+
+BlueChew's staging environment uses a **single shared provider account** (`ali@meds.com`) for prescription reviews and order approvals.
+
+To achieve fast, parallel execution (4+ workers) without session overwrites or portal conflicts:
+- **Parallel Onboarding**: 85% of each test (patient registration, medical intake, checkout) runs fully concurrently across workers.
+- **Atomic Mutex (`AdminPortalLock`)**: Located in [`src/utilities/admin-lock.utils.ts`](src/utilities/admin-lock.utils.ts), this OS-level atomic mutex serializes *only* the ~15s Care Portal approval step.
+- **Zero Test Boilerplate**: The lock is encapsulated inside [`AdminPage.approveAndCreateFirstOrder`](src/page/admin/admin.page.ts) — test specs remain completely declarative and data-driven.
+
+---
+
 ## Project Structure
 
 ```

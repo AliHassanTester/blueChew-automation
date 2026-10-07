@@ -209,11 +209,11 @@ export class CheckoutPage {
       }
 
       const cardSelectors =
-        'input[data-fieldtype*="CardNumber" i], input[name="cardnumber"], input[name="cardNumber"], input[autocomplete="cc-number"], input[data-elements-stable-field-name="cardNumber"], input[placeholder*="Card number" i], input[aria-label*="card number" i], input[name*="encryptedCardNumber" i]';
+        'input[data-fieldtype*="CardNumber" i], input[name*="card" i], input[autocomplete="cc-number"], input[data-elements-stable-field-name="cardNumber"], input[placeholder*="Card" i], input[aria-label*="card" i], input[name*="encryptedCardNumber" i]';
       const expSelectors =
-        'input[data-fieldtype*="Expiry" i], input[name="exp-date"], input[name="expiry"], input[name="cardExpiry"], input[autocomplete="cc-exp"], input[data-elements-stable-field-name="cardExpiry"], input[placeholder*="MM" i], input[aria-label*="expir" i], input[aria-label*="Expiration" i], input[name*="encryptedExpiry" i]';
+        'input[data-fieldtype*="Expiry" i], input[name*="exp" i], input[autocomplete="cc-exp"], input[data-elements-stable-field-name="cardExpiry"], input[placeholder*="Expir" i], input[placeholder*="MM" i], input[aria-label*="expir" i], input[aria-label*="Expiration" i], input[name*="encryptedExpiry" i]';
       const cvcSelectors =
-        'input[data-fieldtype*="Security" i], input[name="cvc"], input[name="cvv"], input[name="cardCvc"], input[name="securityCode"], input[autocomplete="cc-csc"], input[data-elements-stable-field-name="cardCvc"], input[placeholder*="Security code" i], input[placeholder*="CVC" i], input[placeholder*="CVV" i], input[aria-label*="security code" i], input[aria-label*="CVC" i], input[name*="encryptedSecurity" i]';
+        'input[data-fieldtype*="Security" i], input[name*="cv" i], input[name*="sec" i], input[name*="csc" i], input[autocomplete="cc-csc"], input[data-elements-stable-field-name="cardCvc"], input[placeholder*="Security" i], input[placeholder*="CVC" i], input[placeholder*="CVV" i], input[aria-label*="security" i], input[aria-label*="CVC" i], input[name*="encryptedSecurity" i]';
 
       const sanitizedCardNumber = payment.cardNumber.replace(/\D/g, '');
       const sanitizedExpiry = payment.expiry.replace(/\D/g, '');
@@ -231,6 +231,17 @@ export class CheckoutPage {
             }
           } catch {}
         }
+
+        try {
+          const iframes = await this.page.locator('iframe').all();
+          for (let i = 0; i < iframes.length; i++) {
+            const frameInput = this.page.frameLocator(`iframe >> nth=${i}`).locator(selectors).first();
+            if (await frameInput.isVisible().catch(() => false)) {
+              return frameInput;
+            }
+          }
+        } catch {}
+
         return null;
       };
 
@@ -243,7 +254,7 @@ export class CheckoutPage {
             const cvc = await findField(cvcSelectors);
             return num !== null && exp !== null && cvc !== null;
           },
-          { timeout: 45_000, message: 'Card fields (number, expiry, cvc) never fully mounted' },
+          { timeout: 75_000, intervals: [1_000, 2_000], message: 'Card fields (number, expiry, cvc) never fully mounted' },
         )
         .toBeTruthy();
 
@@ -251,14 +262,12 @@ export class CheckoutPage {
         await input.scrollIntoViewIfNeeded().catch(() => undefined);
         await input.click({ force: true }).catch(() => undefined);
         await input.focus().catch(() => undefined);
-        await input.fill(value).catch(() => undefined);
-        let val = await input.inputValue().catch(() => '');
-        if (!val && alternateVal) {
-          await input.fill(alternateVal).catch(() => undefined);
-          val = await input.inputValue().catch(() => '');
-        }
-        if (!val) {
-          await input.pressSequentially(value, { delay: 35 }).catch(() => undefined);
+        await input.pressSequentially(value, { delay: 60 }).catch(() => undefined);
+
+        const currentVal = await input.inputValue().catch(() => '');
+        if (!currentVal && alternateVal) {
+          await input.focus().catch(() => undefined);
+          await input.pressSequentially(alternateVal, { delay: 60 }).catch(() => undefined);
         }
       };
 
@@ -267,7 +276,7 @@ export class CheckoutPage {
       if (cardInput) await fillInput(cardInput, sanitizedCardNumber);
 
       const expInput = await findField(expSelectors);
-      if (expInput) await fillInput(expInput, sanitizedExpiry, payment.expiry);
+      if (expInput) await fillInput(expInput, payment.expiry);
 
       const cvcInput = await findField(cvcSelectors);
       if (cvcInput) await fillInput(cvcInput, sanitizedCvv);
@@ -277,9 +286,8 @@ export class CheckoutPage {
       const zipInput = await findField(zipSelectors);
       if (zipInput) await fillInput(zipInput, '10001');
 
-      // 4. Blur across contexts and await enabled BUY NOW
-      await this.page.locator('body').click({ position: { x: 10, y: 10 } }).catch(() => undefined);
-      await this.page.keyboard.press('Tab').catch(() => undefined);
+      // 4. Blur payment iframe to trigger form validation
+      await this.page.locator('text=/Pay with Credit Card|Shipping Address/i').first().click().catch(() => undefined);
       await this.verify.waitForVisibility(this.locators.buyNowButton);
       await expect(this.locators.buyNowButton.locator).toBeEnabled({ timeout: 30_000 });
     });

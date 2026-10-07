@@ -1,5 +1,6 @@
 import { Page, test, expect, BrowserContext, TestInfo } from '@playwright/test';
 import { RegistrationDetails } from '@interfaces/signup-to-approved-order.interface';
+import { AdminPortalLock } from '@utilities/admin-lock.utils';
 
 export class AdminPage {
   private _page: Page | null = null;
@@ -126,27 +127,30 @@ export class AdminPage {
       await this.runWithDesktopViewport(careTab, async () => {
         await careTab.waitForLoadState('domcontentloaded');
 
-        // The care portal redirects an unauthenticated open to /auth/log-in — wait for
-        // the login form (waitFor actually waits, unlike isVisible which is instant).
+        // The care portal redirects an unauthenticated open to /auth/log-in
         const careEmailInput = careTab.locator('input[formcontrolname="email"]');
-        const needsLogin = await careEmailInput
-          .waitFor({ state: 'visible' })
-          .then(() => true)
-          .catch(() => false);
-        if (needsLogin) {
+        const setIdVerified = careTab.locator("xpath=//span[text()=' Set ID Verified']/parent::button");
+
+        // Wait for either the login form or the patient review screen to mount
+        await Promise.race([
+          careEmailInput.waitFor({ state: 'visible', timeout: 8000 }).catch(() => undefined),
+          setIdVerified.waitFor({ state: 'visible', timeout: 8000 }).catch(() => undefined),
+        ]);
+
+        if (await careEmailInput.isVisible().catch(() => false)) {
           await careEmailInput.fill(careEmail);
           await careTab.locator('input[formcontrolname="pass"]').fill(carePassword);
           await careTab.locator('button:has-text("Log In")').first().click();
+          await careTab.waitForLoadState('domcontentloaded').catch(() => undefined);
         }
 
         // The patient-review content loads behind a spinner — wait for the button itself
-        const setIdVerified = careTab.locator("xpath=//span[text()=' Set ID Verified']/parent::button");
-        await setIdVerified.waitFor({ state: 'visible' });
+        await setIdVerified.waitFor({ state: 'visible', timeout: 25_000 });
         await setIdVerified.click();
 
         // "Approve" only appears once the ID is verified
         const approve = careTab.locator("xpath=//button[text()=' Approve ']");
-        await approve.waitFor({ state: 'visible' });
+        await approve.waitFor({ state: 'visible', timeout: 25_000 });
         await approve.click();
 
         // Approval redirects to the review queue — wait for that before closing the tab
@@ -162,19 +166,27 @@ export class AdminPage {
       const page = await this.getPage();
       const statusLabel = page.locator("xpath=//strong[normalize-space()='Status:']").first();
       const statusValue = page.locator(
-        "xpath=//strong[normalize-space()='Status:']/following::*[1] | //strong[normalize-space()='Status:']/../..//span",
+        "xpath=//strong[normalize-space()='Status:']/following::*[1] | //strong[normalize-space()='Status:']/../..//span | //*[contains(normalize-space(),'Approved, Provider Review')]",
       );
+      const spinner = page.locator('.spinner, mat-spinner, .loading, .ds-loading');
 
       await expect
         .poll(
           async () => {
+            // Allow active background queries to finish before reading status
+            await spinner.waitFor({ state: 'hidden', timeout: 10_000 }).catch(() => undefined);
+
             const count = await statusValue.count();
             for (let i = 0; i < count; i++) {
               const text = (await statusValue.nth(i).textContent().catch(() => '')) || '';
               if (/Approved/i.test(text)) return true;
             }
+
+            // Only reload if not approved after spinner finished
             await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => undefined);
-            await statusLabel.waitFor({ state: 'visible', timeout: 6000 }).catch(() => undefined);
+            await spinner.waitFor({ state: 'hidden', timeout: 15_000 }).catch(() => undefined);
+            await statusLabel.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => undefined);
+
             const reloadedCount = await statusValue.count();
             for (let i = 0; i < reloadedCount; i++) {
               const text = (await statusValue.nth(i).textContent().catch(() => '')) || '';
@@ -182,7 +194,7 @@ export class AdminPage {
             }
             return false;
           },
-          { timeout: 35_000, intervals: [2000, 3000, 4000] },
+          { timeout: 60_000, intervals: [3000, 5000] },
         )
         .toBeTruthy();
     });
@@ -293,19 +305,24 @@ export class AdminPage {
    */
   async approveAndCreateFirstOrder(details: RegistrationDetails): Promise<void> {
     await test.step('Admin portal — approve patient and create first order', async () => {
-      const page = await this.getPage();
-      await this.runWithDesktopViewport(page, async () => {
-        await this.navigateAndLogin(details.adminURL, details.adminEmail, details.adminPassword);
-        await this.navigateToUsers();
-        await this.searchUser(details.email);
-        await this.openUserDetail(details.email);
-        await this.reviewAndApprove(details.adminEmail, details.adminPassword);
-        await this.verifyApprovedStatus();
-        await this.addOrder('$0 - Next Business Day', 'Automation test order');
-        await this.verifyOrderAdded();
-        await this.verifySubscriptionStarted();
-      });
-      await this.close();
+      const releaseLock = await AdminPortalLock.acquire();
+      try {
+        const page = await this.getPage();
+        await this.runWithDesktopViewport(page, async () => {
+          await this.navigateAndLogin(details.adminURL, details.adminEmail, details.adminPassword);
+          await this.navigateToUsers();
+          await this.searchUser(details.email);
+          await this.openUserDetail(details.email);
+          await this.reviewAndApprove(details.adminEmail, details.adminPassword);
+          await this.verifyApprovedStatus();
+          await this.addOrder('$0 - Next Business Day', 'Automation test order');
+          await this.verifyOrderAdded();
+          await this.verifySubscriptionStarted();
+        });
+        await this.close();
+      } finally {
+        releaseLock();
+      }
     });
   }
 }

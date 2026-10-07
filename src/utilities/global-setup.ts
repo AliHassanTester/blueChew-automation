@@ -2,10 +2,12 @@ import { chromium, FullConfig } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
+import { AdminPortalLock } from './admin-lock.utils';
 
 export const AUTH_FILE_PATH = path.resolve(process.cwd(), '.auth/user.json');
 
 export default async function globalSetup(config: FullConfig) {
+  AdminPortalLock.clean();
   const envType = process.env.ENV_TYPE || 'dev';
   dotenv.config({ path: `.env.${envType}` });
 
