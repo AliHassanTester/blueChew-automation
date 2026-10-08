@@ -11,6 +11,7 @@ import { ProfilePage } from '@page/account/profile.page';
 import { ProductPage } from '@page/product/product.page';
 import { LandingMaxPage } from '@page/product/landing-max.page';
 import { FooterRedirectsPage } from '@page/product/footer-redirects.page';
+import { HeroesPage } from '@page/product/heroes.page';
 import { VisualHelper } from '@utilities/visual.helper';
 import { AUTH_FILE_PATH } from '@utilities/global-setup';
 
@@ -30,6 +31,7 @@ type TestFixtures = {
   productPage: ProductPage;
   landingMaxPage: LandingMaxPage;
   footerRedirectsPage: FooterRedirectsPage;
+  heroesPage: HeroesPage;
   visual: VisualHelper;
 };
 
@@ -81,6 +83,9 @@ export const test = base.extend<TestFixtures>({
   },
   footerRedirectsPage: async ({ page, visual }, use, testInfo) => {
     await use(new FooterRedirectsPage(page, testInfo, visual));
+  },
+  heroesPage: async ({ page, visual }, use, testInfo) => {
+    await use(new HeroesPage(page, testInfo, visual));
   },
 
   visual: async ({ page }, use, testInfo) => {

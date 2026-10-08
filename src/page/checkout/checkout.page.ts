@@ -34,7 +34,12 @@ export class CheckoutPage {
       // but for the active one, so each CTA is scoped to the visible copy.
       checkoutButton: {
         description: 'Order Summary → Checkout Button',
-        locator: this.page.locator("//button[normalize-space()='Checkout']").filter({ visible: true }).first(),
+        locator: this.page
+          .locator(
+            "//button[contains(@class,'cta-bar-payment-btn')] | //button[contains(translate(normalize-space(), 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 'CHECKOUT')]",
+          )
+          .filter({ visible: true })
+          .first(),
       },
 
       // ── Shipping address form ──────────────────────────────────────────────
